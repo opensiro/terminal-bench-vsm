@@ -3,17 +3,20 @@
 S1 stateless: fresh-per-invocation. Budget enforcement. Trace collection.
 Failure observations extraction. Artifacts diff.
 
-Two execution modes:
-  1. AgentLoop (testing): RuleBasedSolver drives MCP tools in-process.
-  2. HarnessRunner (production): external harness (Claude Code / Goose) drives
+Three execution modes:
+  1. AgentLoop + RuleBasedSolver (mono, testing): drives MCP tools in-process.
+  2. AgentLoop + MultiAgentSolver (multi, VSM-007 Split): planner + executor +
+     verifier sub-agents via SessionStore.
+  3. HarnessRunner (production): external harness (Claude Code / Goose) drives
      MCP server as subprocess. Harness = brain, MCP = hands (VSM-005 membrane).
 """
 from .types import S1Input, S1Output, TraceEntry, FailureObservation, Verdict, Budget, RecoveryDirective, Artifact
 from .budget import BudgetTracker
 from .dispatcher import S1Dispatcher, invoke
 from .agent_loop import AgentLoop, RuleBasedSolver, SolverProtocol
-from .llm_interface import LLMConfig, LLMSolverProtocol, build_llm_solver
+from .llm_interface import LLMConfig, LLMSolverProtocol, build_llm_solver, HarnessSolverAdapter
 from .harness import HarnessRunner, HarnessConfig
+from .multi_agent import MultiAgentSolver
 
 __all__ = [
     "S1Dispatcher", "invoke",
@@ -21,6 +24,7 @@ __all__ = [
     "Budget", "RecoveryDirective", "Artifact",
     "BudgetTracker",
     "AgentLoop", "RuleBasedSolver", "SolverProtocol",
-    "LLMConfig", "LLMSolverProtocol", "build_llm_solver",
+    "LLMConfig", "LLMSolverProtocol", "build_llm_solver", "HarnessSolverAdapter",
     "HarnessRunner", "HarnessConfig",
+    "MultiAgentSolver",
 ]

@@ -1,6 +1,7 @@
 # `src/session_sync/` — session sync для мультиагентных прогонов (FUTURE)
 
-> **Status: НЕ НУЖЕН (mono-agent).** Создан как placeholder для future.
+> **Status: ACTIVE (VSM-007).** Session sync activated by OSM Split S1
+> (planner + executor + verifier). Implementation: `store.py` → `SessionStore`.
 
 ## Решение (T5)
 

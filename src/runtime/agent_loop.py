@@ -103,6 +103,12 @@ class AgentLoop:
             tool_name = decision.get("tool", "")
             tool_args = decision.get("args", {})
 
+            # "__skip__" — solver signals a no-op (e.g. MultiAgentSolver hit a
+            # planner step whose tool is unavailable). Continue the loop without
+            # consuming budget, executing a tool, or polluting the trace.
+            if tool_name == "__skip__":
+                continue
+
             if tool_name not in available:
                 # Unknown tool — log as error
                 trace_idx += 1

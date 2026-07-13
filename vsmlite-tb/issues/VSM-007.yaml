@@ -1,0 +1,120 @@
+id: VSM-007
+source_system: S5            # parent (vsmlite) S5 — structural change to child
+signal_type: policy          # OSM Split primitive — structural
+severity: S1                 # structural — меняет S1 identity (mono→multi)
+target_unit: child           # дочерний VSM (продукт)
+
+title: "OSM Split S1 → planner + executor + verifier (multi-agent solver)"
+summary: |
+  Применение OSM-примитива Split к S1 дочернего VSM. S1 был mono-agent
+  (single solver per invocation, stateless — CONTRACT.md §5). Split разбивает
+  S1 на три рекурсивно-жизнеспособных суб-агента:
+
+  - **planner** — декомпозирует task_prompt на упорядоченные шаги (plan).
+  - **executor** — выполняет шаги через MCP tools (hands).
+  - **verifier** — проверяет результат каждого шага (tests/exit codes/artifacts).
+
+  Координация между суб-агентами — через session sync (shared state: plan,
+  artifacts, exploration_map, intermediate_results, verifier_feedback). Session
+  sync был placeholder (src/session_sync/README.md — «НЕ НУЖЕН (mono-agent)»);
+  Split активирует его.
+
+  Почему сейчас: recovery cycle orchestrator (S1→S3→S3*→recovery→S2→retry)
+  требует связывания 5 слоёв. Multi-agent S1 повышает viability для long-horizon
+  coding-задач: planner снижает cognitive load, executor фокусируется на
+  выполнении, verifier обеспечивает early-failure detection (до budget
+  exhaustion). Это разгружает recovery cycle — verifier может поймать failure
+  до того, как он станет observation для S3.
+
+  S2 conflict detection (resource_overlaps, output_contradictions,
+  custom_triggers из vsm.yaml system_2) активируется параллельно — для
+  параллельных attempts/tasks (resource registry), не для sub-agents внутри
+  одного invocation (там session sync).
+
+evidence:
+  - "primitives.yaml → Split: requires_human_decision: true, primitive_class: structural"
+  - "VSM-006 → identity/values change — единственное исключение автономии product S5; Split требует родительского решения"
+  - "PIPELINES.md §6 — «если S1 станет мультиагентным через OSM-примитив Split (planner + executor + verifier), понадобится session sync»"
+  - "src/session_sync/README.md — placeholder с contract: {task_id, agents, shared_state, created, ttl}"
+  - "CONTRACT.md §5 — S1 stateless (fresh-per-invocation); Split сохраняет это: каждый sub-agent stateless, state в session sync (per-task, TTL)"
+  - "VSM-005 — S5 = архитектор (вмешивается при алгедонике); Split — упреждающее структурное улучшение, не algedonic response"
+
+preconditions:
+  - "source unit (S1) достаточно сложен — long-horizon coding задачи требуют декомпозиции"
+  - "каждая часть удовлетворяет критериям жизнеспособности: planner (decision-making), executor (action), verifier (audit) — чёткие роли"
+  - "session sync contract определён (src/session_sync/README.md)"
+
+postconditions:
+  - "исходный VSM остаётся (S1 остаётся system_1, но теперь = ансамбль 3 суб-агентов)"
+  - "каждая часть — рекурсивно жизнеспособна (planner/executor/verifier имеют свои decision/action/audit циклы)"
+  - "остаточная организация удовлетворяет жизнеспособности (S2/S3/S3*/S4/S5 не меняются)"
+
+proposal: |
+  Применить Split через child-dispatcher:
+
+  (1) src/runtime/multi_agent.py — MultiAgentSolver:
+      - planner: декомпозирует task_prompt → list[step] (через HarnessRunner/LLM
+        или rule-based для тестов).
+      - executor: выполняет steps через MCP tools (через HarnessRunner или
+        AgentLoop), пишет intermediate_results в session.
+      - verifier: проверяет каждый step (exit codes, artifacts, tests), пишет
+        verifier_feedback в session.
+      - Координация через SessionStore: planner writes plan → executor reads
+        plan + writes intermediate_results → verifier reads + writes feedback
+        → executor корректирует при fail.
+      - MultiAgentSolver реализует SolverProtocol (та же сигнатура
+        decide_next_action), внутренне оркестрируя 3 суб-агента.
+
+  (2) src/session_sync/store.py — SessionStore (реализация вместо placeholder):
+      - create(task_id, agents) → Session
+      - get/update/read/close — per-task isolation, TTL cleanup.
+      - shared_state: {plan, artifacts, exploration_map, intermediate_results,
+        verifier_feedback}.
+
+  (3) src/runtime/dispatcher.py — solver_mode:
+      - S1Dispatcher(solver_mode="mono"|"multi").
+      - "multi" → MultiAgentSolver; "mono" → RuleBasedSolver/HarnessRunner.
+      - Session lifecycle: create в начале invocation, close в конце.
+
+  (4) src/s2/ — S2 conflict detection runtime:
+      - coordinator.py: authorize_retry (4-check: anti-repeat → conflict →
+        oscillation → authorize).
+      - conflict.py: ConflictDetector (resource_overlaps, output_contradictions,
+        custom_triggers из vsm.yaml).
+      - Resource registry для multi-agent изоляции (register/release claims).
+
+  (5) src/orchestrator.py — recovery cycle:
+      - Связывает S1→S3→S3*→recovery→S2→retry в цикл.
+      - Budget: cumulative cost tracking, budget reduction per retry.
+
+  (6) src/runtime/llm_interface.py — update:
+      - Убрать NotImplementedError из build_llm_solver().
+      - Production LLM path = HarnessRunner (Goose+ZAI), не in-process API.
+
+acceptance:
+  - "src/runtime/multi_agent.py: MultiAgentSolver (planner+executor+verifier) реализует SolverProtocol"
+  - "src/session_sync/store.py: SessionStore (create/get/update/read/close, per-task isolation, TTL)"
+  - "src/runtime/dispatcher.py: solver_mode='multi' использует MultiAgentSolver"
+  - "src/s2/coordinator.py: authorize_retry (4-check pipeline из PIPELINES.md §2)"
+  - "src/s2/conflict.py: ConflictDetector (resource_overlaps, output_contradictions, custom_triggers)"
+  - "src/orchestrator.py: run_recovery_cycle (S1→S3→S3*→recovery→S2→retry, CONTRACT.md §4)"
+  - "src/runtime/llm_interface.py: build_llm_solver не raises NotImplementedError"
+  - "smoke tests A-F pass (детерминированные, через RuleBasedSolver + dry_run recovery)"
+  - "ни одного упоминания Terminal Bench/benchmark/eval/harbor в vsm/ и src/"
+  - "validate.sh GREEN"
+
+needs_human_decision: true   # OSM Split — structural change (primitives.yaml: requires_human_decision: true)
+
+decision: approved            # parent S5 (vsmlite) approves — мы = vsmlite S5
+
+executor: child-dispatcher   # OSM Split executor (primitives.yaml: executor: child-dispatcher)
+
+notes:
+  - "Split = единственное исключение автономии product S5 (VSM-006: identity/values change)."
+  - "Product S5 НЕ мог применить Split сам — родительское решение. Мы = vsmlite S5, постановляем."
+  - "S1 остаётся stateless (CONTRACT.md §5): state в session sync (per-task, TTL), не в solver."
+  - "S2 conflict detection — для параллельных attempts/tasks (resource registry), не для sub-agents внутри invocation."
+  - "Правки src/ — через child-dispatcher (главный инвариант)."
+
+created: 2026-07-13
+updated: 2026-07-13

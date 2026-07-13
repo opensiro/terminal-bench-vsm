@@ -95,10 +95,26 @@ def get_executor(policy_id: str):
 
 
 def run_executor(ctx: RecoveryContext) -> RecoveryResult:
-    """Запускает executor для ctx, с anti-repeat check."""
+    """Запускает executor для ctx, с anti-repeat check.
+
+    If ctx.extra['dry_run'] is True, returns a mock result without calling
+    the real executor (for testing — no real pip install / git reset).
+    The anti-repeat check still runs first, so dry-run respects the same
+    limits as a real run.
+    """
     reason = check_anti_repeat(ctx)
     if reason:
         return RecoveryResult(applied=False, blocked=reason)
+
+    # Dry-run mode: return mock result without real side-effects. Used by the
+    # smoke tests (test_orchestrator) to exercise the recovery cycle end-to-end
+    # without performing real pip install / git reset / etc.
+    if ctx.extra.get("dry_run"):
+        return RecoveryResult(
+            applied=True,
+            env_changes=[f"dry_run: {ctx.policy_id} (no real side-effect)"],
+        )
+
     executor = get_executor(ctx.policy_id)
     if executor is None:
         return RecoveryResult(applied=False, blocked=f"unknown_policy: {ctx.policy_id}")
