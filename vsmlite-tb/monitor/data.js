@@ -1,5 +1,5 @@
 window.VSM_DATA = {
-  "generated": "2026-07-13T19:59:16",
+  "generated": "2026-07-13T20:48:13",
   "project": "vsmlite-template",
   "operational_mode": "normal",
   "systems": {
@@ -173,6 +173,64 @@ window.VSM_DATA = {
       ],
       "status": "accepted",
       "decision": "accept — оба решения утверждены человеком в init-сессии (полная изоляция рантайма + S4 открытый интернет с трансдукцией через мембрану)",
+      "selected_options": [
+        "accept"
+      ],
+      "created": "2026-07-13",
+      "updated": "2026-07-13"
+    },
+    {
+      "id": "VSM-002",
+      "source_system": "S5",
+      "signal_type": "policy",
+      "severity": "S1",
+      "target_unit": "child",
+      "title": "Продукт = benchmark-agnostic failure-aware coding harness; TB уезжает в родитель-оценщик",
+      "summary": "Концептуальный поворот, зафиксированный в сессии после обсуждения архитектуры\n«VSM ↔ harness ↔ солвер». Истинный продукт проекта — НЕ «VSM, решающий Terminal\nBench». Истинный продукт = failure-aware coding harness для long-horizon\nагентов (с failure taxonomy → recovery policy → retry как первичной онтологией).\nTerminal Bench — калибровочный стенд (один из возможных: мог быть SWE-bench или\nреальный поток тикетов), живёт ТОЛЬКО в родительском vsmlite-tb (оценщик) +\nкорневой README. Продукт (vsm/ + src/) полностью benchmark-agnostic — не знает\nо TB ни в design-time, ни в runtime, ни в S5. Мембрана VSM-001 переформулируется:\nраньше была design-time/runtime внутри продукта, теперь — граница\nproduct↔evaluation (родитель↔дочерний).\n\nДополнительное решение: failure-aware runtime (Failure Classifier → Recovery\nPolicy → Retry) — первичная онтология в src/, benchmark-agnostic по природе.\nКлассы сбоев: ToolNotFound→InstallTool, DependencyConflict→CreateFreshVenv,\nGitConflict→ResetAndReplay, и т.д. Ложится на VSM: S1 выполняет действия, S2\nкоординирует восстановление (anti-repetition одинаковых неудач), S3 классифицирует\nсбои и выбирает политику восстановления, S3* аудирует recovery, S4 ищет coding\npatterns / новые recovery policies.\n",
+      "evidence": [
+        "сессия 2026-07-13: обсуждение «VSM ↔ TB harness ↔ солвер», выбран вариант 2 (VSM=harness)",
+        "решение: продукт полностью benchmark-agnostic (S5 тоже), blind даже к факту оценки",
+        "архитектура: VSM сам и есть harness; солвер = S1; harness-функции = S2/S3-слой",
+        "src/ роли: failure taxonomy (первичная онтология), кэш прогонов, skill DB, session sync",
+        "KPI продукта: recovery rate / retry efficiency / policy effectiveness (НЕ pass_rate по TB)",
+        "VSM-001 переформулируется: мембрана = product↔evaluation, не design-time/runtime",
+        "история: новые коммиты поверх (видимая эволюция, remote нет)"
+      ],
+      "proposal": "Рефакторинг продукта (vsm/ + src/) в полностью benchmark-agnostic форму:\n(1) vsm.yaml → name/purpose/mission = coding harness; KPI = recovery/retry/policy;\n    never_do = product-level (убрать train_on_eval/harbor_tb2/change_target_tb_version);\n    system_1 = солвер (не harness); удалить runtime_membrane из identity продукта.\n(2) .intent.yaml → миссия = coding harness; TB упоминается только в parent: vsmlite-tb.\n(3) CLAUDE.md → S5-конституция продукта, agnostic.\n(4) systems/{s2,s3,s4} SOUL/SKILL → failure-aware roles.\n(5) src/README.md + src/failure_taxonomy.yaml — skeleton первичной онтологии.\n(6) vsm/state/* дочернего — вычистить TB-маркеры.\nРодитель vsmlite-tb/vsmlite.yaml → identity оценщика продукта.\nКорневой README → обновить картинку product↔evaluator.\n",
+      "acceptance": [
+        "ни одного упоминания Terminal Bench/TB/benchmark/бенчмарк/harbor в vsm/ и src/",
+        "vsm/vsm.yaml → name ≠ Terminal Bench; purpose = coding harness (не решение TB)",
+        "vsm/vsm.yaml → system_3.kpi_list = recovery/retry/policy KPI (НЕ pass_rate по TB)",
+        "vsm/vsm.yaml → identity.never_do НЕ содержит train_on_eval/harbor_tb2/change_target_tb_version",
+        "vsm/vsm.yaml → identity.runtime_membrane удалена (мембрана уезжает на границу parent↔child)",
+        "vsm/.intent.yaml → mission = coding harness; 'Terminal Bench' встречается только в parent-комментарии",
+        "vsm/CLAUDE.md — S5 agnostic, не упоминает TB как домен",
+        "vsm/systems/s4-scout/{SOUL,SKILL}.md — S4 scope = coding patterns/recovery policies (не benchmark-agnostic Skill DB)",
+        "src/failure_taxonomy.yaml существует, содержит skeleton классов сбоев + recovery policies",
+        "vsmlite-tb/vsmlite.yaml → identity purpose явно: оценить coding-harness продукт через TB",
+        "validate.sh GREEN"
+      ],
+      "needs_human_decision": true,
+      "policy_question": "Рефакторинг продукта (vsm/ + src/) в полностью benchmark-agnostic failure-aware coding harness, TB уезжает только в родитель-оценщик?\n",
+      "options": [
+        {
+          "id": "accept",
+          "label": "Принять рефакторинг",
+          "hint": "Полный benchmark-agnostic продукт + failure taxonomy (Recommended)"
+        },
+        {
+          "id": "partial",
+          "label": "Частично",
+          "hint": "Только identity/mission, без failure taxonomy сейчас"
+        },
+        {
+          "id": "defer",
+          "label": "Отложить",
+          "hint": "Оставить как есть, вернуться позже"
+        }
+      ],
+      "status": "accepted",
+      "decision": "accept — полный рефакторинг продукта в benchmark-agnostic failure-aware coding harness; история: новые коммиты поверх",
       "selected_options": [
         "accept"
       ],

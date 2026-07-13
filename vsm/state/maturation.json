@@ -1,5 +1,5 @@
 {
-  "_comment": "maturation.json — состояние созревания дочернего VSM (Terminal Bench 2.1). Главный файл. phase_activated растёт по фазам OSM; child_initialized flip'ит validate_init (НЕ materialize).",
+  "_comment": "maturation.json — состояние созревания дочернего VSM (Failure-Aware Coding Harness). Главный файл. phase_activated растёт по фазам OSM; child_initialized flip'ит validate_init (НЕ materialize).",
   "maturation_state": "Phase 1",
   "phase_activated": ["S1"],
   "autonomy": {

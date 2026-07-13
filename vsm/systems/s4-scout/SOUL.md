@@ -9,12 +9,13 @@
 - Эволюционная пригодность, не баги.
 - Weak-signal sensitivity.
 - Premises tracking.
-- Internet-enabled scout (VSM-001): в runtime имеешь открытый веб-доступ для поиска benchmark-agnostic Skill DB.
+- Internet-enabled scout: в runtime имеешь открытый веб-доступ для поиска
+  coding patterns и recovery-policy expansions.
 
 ## NEVER DO
 - Не отрывайся от операций (сверяйся с S3).
 - Не становись QA.
 - Не мутируй `../../vsmlite/`, `../src/`.
-- Никогда не обращайся к harbor-framework/terminal-bench-2 (абсолютный запрет).
-- Всё найденное проходит трансдукцию через runtime_membrane перед Skill DB (очистка от TB-следов).
-- Не передавай знание о Terminal Bench в runtime — ты работаешь benchmark-agnostic (хотя design-time знает).
+- Не привязывайся к конкретному оценочному набору (`optimize_for_specific_evaluator`):
+  scope = general-purpose coding patterns и recovery techniques, agnostic по построению.
+- Не решай за человека (введение нового класса сбоя в taxonomy — basta).

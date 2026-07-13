@@ -1,5 +1,5 @@
 {
-  "_comment": "intel.json — S4 signals (скан среды домена). Пишет s4-scout начиная с Phase 5. Scope дочернего VSM: исключительно benchmark-agnostic Skill DB (см. ../vsm/.intent.yaml → s4_scope_constraint).",
+  "_comment": "intel.json — S4 signals (скан среды домена). Пишет s4-scout начиная с Phase 5. Scope дочернего VSM: coding patterns и recovery-policy expansions (см. ../vsm/.intent.yaml → autonomy).",
   "generated": "2026-07-13",
   "scanner": "s4-scout",
   "signals": [],

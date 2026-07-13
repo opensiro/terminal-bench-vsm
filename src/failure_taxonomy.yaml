@@ -1,0 +1,65 @@
+# src/failure_taxonomy.yaml — первичная онтология coding harness (VSM-002).
+# General-purpose по построению (не привязан к конкретному оценочному набору).
+# Классы сбоев → recovery policies.
+# S3 (failure classifier) читает это; S2 координирует применение; S4 ищет expansions.
+version: 0.1.0
+generated: 2026-07-13
+principle: "retry by failure CLASS, never by task id (Failure Classifier → Recovery Policy → Retry)"
+
+failure_classes:
+  - id: ToolNotFound
+    description: "требуемый tool не установлен/не найден в окружении"
+    signals: ["command not found", "No module named", "tool unavailable"]
+    recovery_policy: InstallTool
+    recovery_steps:
+      - "определить требуемый tool/package"
+      - "установить в текущее окружение"
+      - "повторить исходное действие"
+    s2_anti_repeat: "не повторять установку >1 раза за прогон"
+
+  - id: DependencyConflict
+    description: "конфликт версий зависимостей в окружении"
+    signals: ["version conflict", "incompatible", "DependencyResolutionError"]
+    recovery_policy: CreateFreshVenv
+    recovery_steps:
+      - "создать свежее venv"
+      - "установить deps заново"
+      - "повторить прогон"
+    s2_anti_repeat: "не пересоздавать venv >1 раза; при рецидиве → S4 (policy expansion)"
+
+  - id: GitConflict
+    description: "git-конфликт при операции над репозиторием задачи"
+    signals: ["merge conflict", "CONFLICT", "unresolved"]
+    recovery_policy: ResetAndReplay
+    recovery_steps:
+      - "reset на чистое состояние задачи"
+      - "повторить последовательность действий"
+    s2_anti_repeat: "не повторять ту же последовательность; при рецидиве → S3 реклассификация"
+
+  - id: TimeoutExpired
+    description: "действие превысило допустимое время"
+    signals: ["timeout", "timed out", "deadline exceeded"]
+    recovery_policy: RetryWithSmallerScope
+    recovery_steps:
+      - "декомпозировать действие"
+      - "повторить с меньшим scope"
+    s2_anti_repeat: "не повторять с тем же scope; при рецидиве → S3 пересмотр policy"
+
+  - id: Unknown
+    description: "сбой не классифицирован (S3 должен расширить taxonomy)"
+    signals: []
+    recovery_policy: EscalateToS3
+    recovery_steps:
+      - "S3 анализирует trace"
+      - "если ≥ порога Unknown за цикл → S4 (policy expansion) → new_failure_class_introduction (basta)"
+    s2_anti_repeat: "n/a (эскалация)"
+
+policy_effectiveness_tracking:
+  metric: policy_effectiveness
+  threshold: 0.6
+  below_threshold_action: "S3-mark policy как flaky → S4 ищет alternative"
+
+notes:
+  - "Онтология — skeleton (VSM-002 поэтапно). Классы добавляются по мере наблюдений S3."
+  - "Полная форма (как opensiro-arctic: per-class метаподходы, grade/disclosure) — когда S3 созреет."
+  - "Taxonomy по построению general-purpose: классы и policies не привязаны к конкретному оценочному набору."

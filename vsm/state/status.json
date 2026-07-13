@@ -3,7 +3,7 @@
   "generated": "2026-07-13",
   "operational_mode": "normal",
   "systems": {
-    "S1":  { "name": "s1-dispatcher",    "summary": "Phase 1 активен; ../src/ подключён как operational unit terminal-bench-solver", "current_task": "awaiting first cycle", "health": "green",   "active": true  },
+    "S1":  { "name": "s1-dispatcher",    "summary": "Phase 1 активен; ../src/ подключён как operational unit solver", "current_task": "awaiting first cycle", "health": "green",   "active": true  },
     "S2":  { "name": "s2-coordinator",   "summary": "dormant (проявляется на Phase 2)", "current_task": "", "health": "unknown", "active": false },
     "S3":  { "name": "s3-optimizer",     "summary": "dormant (проявляется на Phase 3)", "current_task": "", "health": "unknown", "active": false },
     "S3*": { "name": "s3-star-auditor",  "summary": "dormant (проявляется на Phase 4)", "current_task": "", "health": "unknown", "active": false },

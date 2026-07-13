@@ -1,38 +1,37 @@
-# `src/` — прикладной домен дочернего VSM
+# `src/` — данные и инфраструктура coding harness продукта
 
-> **Placeholder.** Этот каталог зарегистрирован как дочерний S1 родительского
-> vsmlite (`../vsm/`) на шаге `materialize` пайплайна `/vsmlite-init`.
-> Прикладной код появится здесь на следующих фазах созревания VSM, через
-> `s1-dispatcher` дочернего VSM (когда Phase 1 активна).
+> Этот каталог зарегистрирован как дочерний S1 родительского vsmlite (`../vsm/`)
+> на шаге `materialize` пайплайна `/vsmlite-init`. Заполняется на следующих фазах
+> созревания VSM, через `s1-dispatcher` дочернего VSM (когда Phase 1 активна).
 
-## Прикладной домен
+## Назначение
 
-**Решение бенчмарка Terminal Bench 2.1.**
+Здесь живут данные и инфраструктура failure-aware coding harness. Роли каталога:
 
-Дочерний VSM держит жизнеспособным домен решения agentic-задач Terminal Bench 2.1:
-полнота покрытия категорий задач, наблюдаемость ходов решений (трассы, затраты,
-тайминги), адаптация к эволюции бенчмарка строго в рамках его правил, и
-формирование reusable benchmark-agnostic Skill DB.
-
-Конкретизация организационной миссии — в `../vsm/.intent.yaml` (OSM Phase 0).
-Конкретизация домена (какой именно прикладной код и инфраструктура здесь живут)
-выполняется на последующих фазах через `tailor` + циклы дочернего VSM.
+1. **Failure taxonomy — первичная онтология** (`failure_taxonomy.yaml`):
+   классы сбоев → recovery policies. S3 (failure classifier) читает это; S2
+   координирует применение; S4 ищет expansions.
+2. **Кэш прогонов** — traces + verdicts. Verdict — от продукта: «задача
+   решена / сбой / неизвестно» (не от внешнего грейдера; продукт не знает о
+   внешней оценке).
+3. **Skill DB** — general-purpose coding patterns, пополняется S4.
+4. **Session sync** — coordination space для мультиагентных прогонов.
 
 ## Hard constraints (NEVER)
 
-- **`train_on_eval`** — любая тренировка/обучение на eval-разметке Terminal Bench
-  запрещена правилами бенчмарка. Никогда.
-- **`use_harbor_tb2`** — не использовать `github.com/harbor-framework/terminal-bench-2`
-  ни в каком виде. Явное требование человека; абсолютный запрет, без исключений.
-- **`auto_submit`** — автоматическая отправка результатов во внешние системы
-  (leaderboard, внешние репо) запрещена (`basta_constraint` — только человек).
+- **`optimize_for_specific_evaluator`** — не оптимизироваться под конкретный
+  оценочный набор; оставаться general-purpose coding harness.
+- **`skip_failure_classification`** — никогда не retry без классификации сбоя
+  (blind retry запрещён); всегда failure → classifier → policy → retry.
+- **`circumvent_recovery`** — не обходить recovery policies (напр. не повторять
+  одну и ту же неудачу >N раз; это задача S2).
 - **`modify_parent_directly`** — родительский `../vsmlite/` трогает этот домен
   только через `child-dispatcher` (главный инвариант VSM).
 
 ## Intent
 
-- `license_intent: open_source` — методы решения TB-задач формируются как
-  воспроизводимые и пригодные для опенсорс-сообщества.
+- `license_intent: open_source` — coding patterns и recovery policies формируются
+  как воспроизводимые и пригодные для опенсорс-сообщества.
 - Полная формулировка intent, basta-границ и 4 знаков автономности — в
   `../vsm/.intent.yaml`.
 
@@ -42,5 +41,5 @@
 Родительский vsmlite не трогает `../src/` напрямую (рекурсия VSM: его
 `child-dispatcher` работает с дочерним VSM, а не с его S1 напрямую).
 
-_Заполнение этого каталога реальным прикладным кодом — будущие фазы созревания
-дочернего VSM. Сейчас здесь placeholder._
+_Заполнение этого каталога реальным кодом runtime coding harness — будущие фазы
+созревания дочернего VSM. Сейчас здесь skeleton (failure_taxonomy.yaml)._

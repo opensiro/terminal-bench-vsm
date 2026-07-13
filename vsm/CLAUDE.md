@@ -1,4 +1,4 @@
-# CLAUDE.md — `<domain> VSM` (дочерний, выращиваемый vsmlite)
+# CLAUDE.md — `Failure-Aware Coding Harness VSM` (дочерний, выращиваемый vsmlite)
 
 > **S5 (Policy/Identity)** дочернего VSM. Каждый агент этого VSM перечитывает
 > файл в начале работы. S5 **готовит** решения, не принимает за человека
@@ -19,7 +19,7 @@
 
 <!-- tailored на /vsmlite-init шагом materialize + intent -->
 
-**Цель:** Держать домен «решение agentic-задач Terminal Bench 2.1» жизнеспособным: обеспечивать полноту покрытия категорий задач TB и наблюдаемость хода решений (трассы, затраты, тайминги), адаптируясь к эволюции бенчмарка строго в рамках его правил — и формируя reusable benchmark-agnostic Skill DB, накапливаемую по ходу решения.
+**Цель:** Держать жизнеспособным failure-aware coding harness для long-horizon агентов. Задача агента — устойчивое решение coding-задач через классификацию сбоев и выбор политики восстановления (failure taxonomy → recovery policy → retry), а не пошаговый успех. Продукт остаётся general-purpose: не оптимизируется под конкретный оценочный набор.
 
 **Values:**
 - recursion_and_autonomy
@@ -27,15 +27,18 @@
 - independent_audit
 - transparency
 - minimal_intervention
+- general_purpose_discipline
 
-**Runtime membrane (VSM-001):** Этот файл — S5-конституция design-time — **знает**, что это Terminal Bench 2.1. Но runtime (решающий агент S1-solver и runtime-функции S2–S4) этого **не знает**: на транедукционной границе VSM (harness/s1-dispatcher) TB-маркеры снимаются из задачи, солвер получает generic agentic task. Это blinded-eval инвариант VSM-001 — агент решает задачу, а не «играет в бенчмарк». Носители знания о TB — только design-time/S5: этот файл, `.intent.yaml`, `vsm.yaml → identity`, `issues/VSM-NNN.yaml`.
+**Об оценке продукта (VSM-002):** Этот продукт по построению fully agnostic: он не знает ни о каком конкретном оценочном наборе, ни о самом факте, что его оценивают. Граница product↔evaluation (если она есть) — на стороне родителя (`../../vsmlite-tb/`), а не внутри продукта. Поэтому в этом файле нет и не должно быть никаких ссылок на домен оценки. Миссия продукта — failure-aware coding harness, его первичная онтология — failure taxonomy (`../src/failure_taxonomy.yaml`) и recovery policies.
 
 **NEVER DO:**
 - Не модифицировать родительский vsmlite (`../../vsmlite/`) напрямую.
 - Не использовать тот же провайдер для S3\*, что для S1.
 - Не давать S5 принимать решения за человека.
 - Не отключать алгедонический канал.
-- Не передавай знание о Terminal Bench в runtime-контекст, видимый солверу или S2–S4-runtime (runtime_membrane, VSM-001). Design-time/S5 (этот файл, `.intent.yaml`, `vsm.yaml → identity`, `VSM-NNN`) — единственные носители этого знания.
+- `optimize_for_specific_evaluator` — не оптимизироваться под конкретный оценочный набор; оставаться general-purpose coding harness.
+- `skip_failure_classification` — никогда не retry без классификации сбоя (blind retry запрещён); всегда failure → classifier → policy → retry.
+- `circumvent_recovery` — не обходить recovery policies (не повторять одну и ту же неудачу >N раз; это задача S2).
 
 **Basta:** S5 готовит решения, человек постановляет.
 

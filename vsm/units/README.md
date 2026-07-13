@@ -9,7 +9,7 @@
 
 | Юнит | Путь | Роль | Owner | Рекурсия |
 |---|---|---|---|---|
-| `terminal-bench-solver` | `../src` | агент-решатель + harness + обёртка грейдера Terminal Bench 2.1 | `s1-dispatcher` | может стать VSM при сложности (Split, basta) |
+| `solver` | `../src` | агент-солвер long-horizon coding-задач (S1 coding harness) | `s1-dispatcher` | может стать VSM при сложности (Split, basta) |
 
 <!-- tailored на /vsmlite-init: если ../src/ содержит несколько подкаталогов
      (meta.layout: siblings), они регистрируются как отдельные юниты. -->
