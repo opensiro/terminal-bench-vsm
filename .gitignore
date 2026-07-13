@@ -1,0 +1,21 @@
+# ── terminal-bench-vsm — корневой .gitignore (monorepo) ──
+
+# OS / editor
+.DS_Store
+*.swp
+.idea/
+.vscode/
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+
+# ZCode session artifacts (не часть проекта)
+.zcode/
+
+# временные runtime-артефакты
+*.tmp
+
+# первичные материалы Beer VSM (binary, не входят в репо; референс-only)
+*.pdf
