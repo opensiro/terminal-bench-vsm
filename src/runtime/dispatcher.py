@@ -1,34 +1,55 @@
 """dispatcher — s1-dispatcher runtime (T2 CONTRACT §4 lifecycle).
 
 Stateless (CONTRACT §5): fresh-per-invocation. No state between runs.
-Budget enforcement. Trace collection. Failure observations extraction.
+
+Two execution modes:
+  1. AgentLoop (default, for testing): RuleBasedSolver drives MCP tools in-process.
+  2. HarnessRunner (production): external harness (Claude Code / Goose) drives
+     MCP server as subprocess. Harness = brain, MCP = hands (VSM-005 membrane).
 """
 from __future__ import annotations
-import time
+
 from pathlib import Path
 from .types import S1Input, S1Output, Verdict
 from .budget import BudgetTracker
 from .artifacts import snapshot, diff
-from .solver import solve
 
 
 class S1Dispatcher:
     """S1 dispatcher: launch → isolate → trace → collect output.
 
     Stateless: each invoke() is independent. No state between invocations.
+
+    Args:
+        mcp_server: in-process MCP server (for AgentLoop mode). If None + no
+            harness, creates one automatically.
+        harness: HarnessRunner for production mode. If set, uses external harness
+            instead of in-process AgentLoop.
     """
 
-    def __init__(self, mcp_server=None):
+    def __init__(self, mcp_server=None, harness=None):
         self._mcp_server = mcp_server
+        self._harness = harness
 
     def invoke(self, input: S1Input) -> S1Output:
         """One invocation of S1 solver (CONTRACT §4 lifecycle).
 
         1. Snapshot filesystem (for artifacts diff).
-        2. Launch solver in task-scoped workspace, under budget.
+        2. Launch solver (AgentLoop or HarnessRunner), under budget.
         3. Solver works until verdict OR budget exhaustion.
         4. Collect trace + artifacts diff + failure_observations.
         """
+        # Harness mode: external harness + MCP subprocess
+        if self._harness is not None:
+            return self._harness.invoke(input)
+
+        # AgentLoop mode: in-process solver + MCP
+        return self._invoke_agent_loop(input)
+
+    def _invoke_agent_loop(self, input: S1Input) -> S1Output:
+        """In-process AgentLoop mode (for testing)."""
+        from .solver import solve
+
         # 1. Snapshot
         fs_before = snapshot(input.workspace)
 
@@ -59,7 +80,11 @@ class S1Dispatcher:
         return output
 
 
-def invoke(input: S1Input, mcp_server=None) -> S1Output:
-    """Convenience function: create dispatcher and invoke."""
-    dispatcher = S1Dispatcher(mcp_server=mcp_server)
+def invoke(input: S1Input, mcp_server=None, harness=None) -> S1Output:
+    """Convenience function: create dispatcher and invoke.
+
+    If harness is provided, uses HarnessRunner (production mode).
+    Otherwise uses AgentLoop with RuleBasedSolver (testing mode).
+    """
+    dispatcher = S1Dispatcher(mcp_server=mcp_server, harness=harness)
     return dispatcher.invoke(input)

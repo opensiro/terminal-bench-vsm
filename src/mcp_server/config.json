@@ -3,11 +3,11 @@
     "coding-harness-tools": {
       "transport": "stdio",
       "command": "python3",
-      "args": ["-m", "src.mcp_server.server"],
+      "args": ["-m", "mcp_server.server", "--workspace", "${workspace}", "--trace-file", "${trace_file}"],
       "env": {
         "WORKSPACE_ROOT": "${workspace}"
       }
     }
   },
-  "_comment": "MCP access restriction (VSM-005): tool surface does NOT include eval-access. Structural absence, not filter."
+  "_comment": "MCP access restriction (VSM-005): tool surface does NOT include eval-access. Structural absence, not filter. trace-file: MCP server writes trace on exit for HarnessRunner collection."
 }

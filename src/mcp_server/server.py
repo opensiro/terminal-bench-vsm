@@ -148,22 +148,59 @@ def create_server(workspace: str = ".") -> MCPServer:
     return server
 
 
-def serve_stdio(workspace: str = "."):
-    """Run MCP server over stdio (JSON-RPC 2.0 line-delimited)."""
+def serve_stdio(workspace: str = ".", trace_file: str | None = None):
+    """Run MCP server over stdio (JSON-RPC 2.0 line-delimited).
+
+    If trace_file is set, writes the full trace (T2 CONTRACT §3 format) to that
+    file on exit — for external collection by HarnessRunner or other orchestrator.
+    """
     server = create_server(workspace)
-    for line in sys.stdin:
-        line = line.strip()
-        if not line:
-            continue
-        try:
-            request = json.loads(line)
-            response = server.handle_request(request)
-            if response is not None:
-                sys.stdout.write(json.dumps(response) + "\n")
+
+    def _write_trace():
+        if trace_file:
+            try:
+                from pathlib import Path
+                trace_data = {
+                    "trace": server.get_trace(),
+                    "failure_observations": server.get_failure_observations(),
+                }
+                Path(trace_file).write_text(
+                    json.dumps(trace_data, ensure_ascii=False, indent=2) + "\n",
+                    encoding="utf-8",
+                )
+            except Exception:
+                traceback.print_exc(file=sys.stderr)
+
+    try:
+        for line in sys.stdin:
+            line = line.strip()
+            if not line:
+                continue
+            try:
+                request = json.loads(line)
+                response = server.handle_request(request)
+                if response is not None:
+                    sys.stdout.write(json.dumps(response) + "\n")
+                    sys.stdout.flush()
+            except json.JSONDecodeError:
+                err = {"jsonrpc": "2.0", "id": None, "error": {"code": -32700, "message": "parse error"}}
+                sys.stdout.write(json.dumps(err) + "\n")
                 sys.stdout.flush()
-        except json.JSONDecodeError:
-            err = {"jsonrpc": "2.0", "id": None, "error": {"code": -32700, "message": "parse error"}}
-            sys.stdout.write(json.dumps(err) + "\n")
-            sys.stdout.flush()
-        except Exception:
-            traceback.print_exc(file=sys.stderr)
+            except Exception:
+                traceback.print_exc(file=sys.stderr)
+    finally:
+        _write_trace()
+
+
+def _main():
+    """CLI entry point: python3 -m mcp_server.server [options]."""
+    import argparse
+    parser = argparse.ArgumentParser(description="MCP tools-server for coding harness")
+    parser.add_argument("--workspace", default=".", help="workspace root path")
+    parser.add_argument("--trace-file", default=None, help="write trace to this file on exit")
+    args = parser.parse_args()
+    serve_stdio(workspace=args.workspace, trace_file=args.trace_file)
+
+
+if __name__ == "__main__":
+    _main()
