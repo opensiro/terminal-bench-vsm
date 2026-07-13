@@ -92,10 +92,11 @@ eval / grading — проверяется grep.
 - **How-to-start**: спавни `child-dispatcher` из `vsmlite-tb/` с task `tailor: s1_design`. Запись `../vsm/systems/s1-dispatcher/` — через child-dispatcher.
 
 ### Sync 1 — точка синхронизации (после T1 + T2)
-- **Status**: ✅ ready (оба dependency done: T1 + T2)
+- **Status**: ✅ done (сессия 2026-07-13)
 - **Что**: сверка failure observations из T2 CONTRACT ↔ классы в T1 taxonomy.
 - **Критерий pass**: каждый signal-паттерн в T2 CONTRACT маппится хотя бы на один класс в T1 taxonomy (или добавляется новый). Иначе — итерация: T1 дополняет классы, или T2 уточняет observation format.
 - **Решает человек** (или сессия, выполняющая sync): есть ли расхождения, требующие доработки T1/T2.
+- **Результат**: ✅ PASS — no gaps. 4 observation kinds (error_string/exit_code/timeout/signal) ↔ 16 классов. 15 классов детектятся через error_string (signals — substring-matchable); 7 через exit_code (auxiliary); 3 через timeout (TimeoutExpired/HangDetected); 1 через signal (ResourceLimit — OOM/SIGKILL). AmbiguousSpec — diagnostic (no observation kind), покрыт через S4 uncertainty_driven_expansion (VSM-005 §5). Unknown — escape hatch (любое unmatched observation). T3 (retry) и T4 (MCP) разблокированы.
 
 ### T3 — Retry-механизм (волна 2)
 - **Status**: blocked on Sync 1
@@ -175,9 +176,9 @@ eval / grading — проверяется grep.
 |---|---|---|---|
 | T1: failure taxonomy | **✅ done** | — | 1 |
 | T2: S1-агент дизайн | **✅ done** | — | 1 |
-| Sync 1 | **ready** | T1✅, T2✅ | — |
-| T3: retry-механизм | blocked | Sync 1 | 2 |
-| T4: MCP tools-server | blocked | Sync 1 (T2) | 2 |
+| Sync 1 | **✅ done** | T1✅, T2✅ | — |
+| T3: retry-механизм | **ready** | Sync 1✅ | 2 |
+| T4: MCP tools-server | **ready** | Sync 1✅ (T2) | 2 |
 | Sync 2 | blocked | T3, T4 | — |
 | T5: S2-пайплайны | blocked | Sync 2 | 3 |
 
