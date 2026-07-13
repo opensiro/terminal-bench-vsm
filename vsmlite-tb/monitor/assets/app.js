@@ -103,6 +103,7 @@ function renderHeader(active) {
       <a href="index.html"   class="${active==='index'?'active':''}">Системы / maturation</a>
       <a href="metrics.html" class="${active==='metrics'?'active':''}">Метрики по датам</a>
       <a href="issues.html"  class="${active==='issues'?'active':''}">Запросы корректировки (${(D.issues||[]).length})</a>
+      <a href="reference.html" class="${active==='reference'?'active':''}">Памятка VSM↔vsmlite</a>
     </nav>`;
 }
 
@@ -374,4 +375,153 @@ function renderIssuesPage() {
 function renderMetricsPage() {
   renderHeader("metrics");
   if (window.renderMetricsHistory) window.renderMetricsHistory();
+}
+
+// ════════════════════════ Памятка VSM ↔ vsmlite (reference.html) ════════════════════════
+// Статичный reference-контент + живая таблица систем из window.VSM_DATA.
+// Канон берётся из ref/vsm-theory.md, meta/reference-mapping.md, systems/README.md.
+function sysHealthDot(h) {
+  const map = { healthy: "green", unknown: "amber", alert: "red" };
+  return `<span class="dot ${map[h] || 'amber'}"></span>`;
+}
+function renderReference() {
+  renderHeader("reference");
+  const root = document.getElementById("reference"); if (!root) return;
+
+  // ── живая таблица систем: имена агентов и health — из data.js, остальное — канон ──
+  const SYS = [
+    { k:"S1",  horizon:"now",             canon:"Реальная работа. Может состоять из множества автономных операционных единиц.",
+      lite:"<code>synthesis-operator</code> (планирует) + <code>child-dispatcher</code> (единственный исполнитель, трогает <code>../vsm/</code> и <code>../src/</code>). S1 = <b>синтез</b> дочернего VSM.",
+      shift:"переинтерпретация" },
+    { k:"S2",  horizon:"now",             canon:"Анти-осцилляция: гасит конфликты между S1-единицами, синхронизирует, изолирует.",
+      lite:"<code>s2-coordinator</code> — anti-looping, изоляция, маршрутизация; статус дочернего VSM → <code>state/status.json</code>.",
+      shift:"аналог" },
+    { k:"S3",  horizon:"inside-and-now",  canon:"Исполнительный уровень: ресурсы, KPI, бюджет, перераспределение; балансирует S1-единицы.",
+      lite:"<code>s3-optimizer</code> — <code>A(t) ∈ [0,1]</code>, бюджет созревания, тройной индекс → <code>state/metrics.json</code>.",
+      shift:"аналог" },
+    { k:"S3*", horizon:"inside-and-now",  canon:"Независимый канал только-для-чтения: проверяет что <i>реально</i> происходит — другой наблюдатель, не S1/S3.",
+      lite:"<code>s3-star-auditor</code> — аудит <b>жизнеспособности</b> child (структурно), <b>ДРУГАЯ модель-провайдер</b>, read-only → <code>state/audit.json</code>.",
+      shift:"аналог + мандат" },
+    { k:"S4",  horizon:"outside-and-then",canon:"Скан внешней среды: угрозы/возможности, R&D, сценарии будущего.",
+      lite:"<code>s4-scout</code> — среда прикладного домена child: пробелы, дрейф child-vs-seed, weak signals → <code>state/intel.json</code>. <b>≠ QA.</b>",
+      shift:"аналог" },
+    { k:"S5",  horizon:"meta",            canon:"«Кто мы»; ценности; балансирует гомеостаз S3↔S4; решения на уровне идентичности.",
+      lite:"<code>s5-guardian</code> + <code>CLAUDE.md</code> (конституция). <b>Готовит, но не принимает</b> решения за человека.",
+      shift:"аналог + basta" },
+  ];
+  const sysRows = SYS.map(s => {
+    const live = (D.systems || {})[s.k] || {};
+    const agent = live.name ? `<code>${esc(live.name)}</code>` : "—";
+    const health = sysHealthDot(live.health);
+    const shiftCls = s.shift.startsWith("переинтерпретация") ? "badge warn" : "badge phase";
+    return `<tr>
+      <td><b>${s.k}</b><div class="muted" style="font-size:11px;margin-top:2px">${s.horizon}</div></td>
+      <td>${s.canon}</td>
+      <td>${agent} ${health}<div class="task" style="margin-top:6px">${s.lite}</div></td>
+      <td><span class="${shiftCls}">${esc(s.shift)}</span></td>
+    </tr>`;
+  }).join("");
+
+  root.innerHTML = `
+  <div class="note" style="margin-bottom:20px">
+    <b>VSM ↔ vsmlite.</b> Это не «VSM минус фичи» — vsmlite <em>полноценный</em> родительский VSM
+    (все S1–S5 + S3*), но <b>S1 переинтерпретирован</b>: операция здесь — не код, а
+    <b>организационный синтез</b> дочернего VSM (<code>../vsm/</code>) по модели OSM. Имена агентов и
+    health ниже — <b>живые</b> (из <code>window.VSM_DATA</code>); остальное — канон из
+    <code>ref/vsm-theory.md</code>, <code>meta/reference-mapping.md</code>, <code>systems/README.md</code>.
+  </div>
+
+  <section>
+    <h2>Системы — постолбцовое сравнение</h2>
+    <div class="card" style="padding:0;overflow-x:auto">
+      <table>
+        <thead><tr><th>Система</th><th>VSM — канон (Beer)</th><th>vsmlite — реализация (живое)</th><th>статус</th></tr></thead>
+        <tbody>${sysRows}</tbody>
+      </table>
+    </div>
+  </section>
+
+  <section>
+    <h2>Чем vsmlite легче — конкретные отличия</h2>
+    <div class="card" style="padding:0;overflow-x:auto">
+      <table>
+        <thead><tr><th>В VSM (эталон opensiro-arctic/vsm)</th><th>В vsmlite</th><th>Что изменилось</th></tr></thead>
+        <tbody>
+          <tr><td>Управляет 6 S1-репо (флот)</td><td>Управляет <b>одним</b> дочерним VSM</td><td>Фокус на синтезе одного домена</td></tr>
+          <tr><td><code>s1-dispatcher</code> (boundary в <code>../&lt;repo&gt;</code>)</td><td><code>child-dispatcher</code> (в <code>../vsm/</code> + <code>../src/</code>)</td><td>Та же идея, другой target</td></tr>
+          <tr><td><code>issue-liaison</code> → Gitea</td><td><span class="badge warn">убран</span></td><td>Решения в REPL-дайджесте + <code>issues/VSM-NNN.yaml</code></td></tr>
+          <tr><td>HTML-дашборд (<code>monitor/*.html</code>)</td><td>только телеметрия <code>monitor/data.js</code></td><td>UX — терминальный; UI — этот самый монитор (lite)</td></tr>
+          <tr><td>Heartbeats как основной режим</td><td>On-demand (<code>/vsmlite-cycle</code>)</td><td>Юзер запускает цикл; heartbeats опциональны</td></tr>
+          <tr><td>Доменные скрипты (<code>bench_match.py</code>…)</td><td>Свои: <code>autonomy.py</code>, <code>collect_metrics.py</code>, <code>cycle_digest.py</code></td><td>Паттерн сохранён, скрипты свои</td></tr>
+          <tr><td>Алгедонический → Gitea</td><td>Алгедонический → <code>VSM-NNN</code> + REPL</td><td>Gitea → forward-контракт vsmforge</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px" id="ref-twocol">
+    <section>
+      <h2>Матрица коммуникаций VSM</h2>
+      <div class="card" style="padding:0;overflow-x:auto">
+        <table style="font-size:12px;text-align:center">
+          <thead><tr><th style="text-align:left">От ↓ / К →</th><th>S1</th><th>S2</th><th>S3</th><th>S3*</th><th>S4</th><th>S5</th><th>human</th></tr></thead>
+          <tbody>
+            <tr><th style="text-align:left">S1</th><td>—</td><td style="color:var(--green)">✅ only</td><td>—</td><td>—</td><td>—</td><td style="color:var(--red)">⚡</td><td>—</td></tr>
+            <tr><th style="text-align:left">S2</th><td style="color:var(--green)">✅</td><td>—</td><td style="color:var(--green)">✅</td><td style="color:var(--green)">✅</td><td style="color:var(--green)">✅</td><td style="color:var(--green)">✅</td><td>—</td></tr>
+            <tr><th style="text-align:left">S3</th><td style="color:var(--green)">✅</td><td style="color:var(--green)">✅</td><td>—</td><td>—</td><td>—</td><td>—</td><td>digest</td></tr>
+            <tr><th style="text-align:left">S3*</th><td style="color:var(--amber)">ro</td><td>—</td><td>—</td><td>—</td><td>—</td><td>—</td><td style="color:var(--red)">⚡</td></tr>
+            <tr><th style="text-align:left">S4</th><td>—</td><td style="color:var(--green)">✅</td><td>—</td><td>—</td><td>—</td><td style="color:var(--green)">✅</td><td>brief</td></tr>
+            <tr><th style="text-align:left">S5</th><td>—</td><td style="color:var(--green)">✅</td><td style="color:var(--green)">✅</td><td>—</td><td style="color:var(--green)">✅</td><td>—</td><td style="color:var(--red)">⚡</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="muted" style="font-size:11px;margin-top:6px">
+        <span style="color:var(--green)">✅</span> говорит · <span style="color:var(--amber)">ro</span> только чтение · <span style="color:var(--red)">⚡</span> алгедонический байпас (severity S0/S1)
+      </div>
+    </section>
+
+    <section>
+      <h2>Карта цикла vsmlite</h2>
+      <div class="card" style="padding:0;overflow-x:auto">
+        <table>
+          <thead><tr><th>Система</th><th>Что делает за <code>/vsmlite-cycle</code></th><th>Пишет</th></tr></thead>
+          <tbody>
+            <tr><td><b>S2</b></td><td>статус child, конфликты, изоляция</td><td><code>state/status.json</code></td></tr>
+            <tr><td><b>S3</b></td><td>A(t) / бюджет, готовность к фазе</td><td><code>state/metrics.json</code></td></tr>
+            <tr><td><b>S3*</b></td><td>независимый аудит (ДРУГАЯ модель)</td><td><code>state/audit.json</code></td></tr>
+            <tr><td><b>S4</b></td><td>среда домена: weak signals, дрейф</td><td><code>state/intel.json</code></td></tr>
+            <tr><td><b>S5</b></td><td>дайджест → REPL-вопрос</td><td><code>issues/VSM-NNN.yaml</code></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+
+  <section>
+    <h2>Ключевой инвариант (сохранён в обеих)</h2>
+    <div class="note">
+      Контрольная плоскость <b>никогда не трогает операции напрямую</b> — только через boundary-агента
+      (<code>child-dispatcher</code>). S2–S5 и <code>synthesis-operator</code> (как планировщик) только читают
+      <code>state/</code>, пишут <code>issues/</code> и <code>monitor/data.js</code>, спавнят субагентов.
+      Проверяется <code>scripts/validate.sh</code>. Это сердце архитектуры VSM и vsmlite.
+    </div>
+  </section>
+
+  <section>
+    <div class="note">
+      <b>Источники в репозитории:</b>
+      <a href="../ref/vsm-theory.md">ref/vsm-theory.md</a> ·
+      <a href="../meta/reference-mapping.md">meta/reference-mapping.md</a> ·
+      <a href="../systems/README.md">systems/README.md</a> ·
+      <a href="../CLAUDE.md">CLAUDE.md</a> ·
+      <a href="../vsmlite.yaml">vsmlite.yaml</a> ·
+      <a href="../synthesis/phases.yaml">synthesis/phases.yaml</a> ·
+      <a href="../note.md">note.md</a>
+      <br><br>
+      Эта страница — статичный HTML (как весь <code>monitor/</code>). Живые данные (имена агентов, health)
+      берутся из <code>monitor/data.js</code> → <code>window.VSM_DATA.systems</code>. Регенерация:
+      <code>python3 scripts/render_data.py</code>.
+    </div>
+  </section>
+  `;
 }
