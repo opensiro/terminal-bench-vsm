@@ -9,6 +9,7 @@ The absence of the tool IS the membrane — not a filter.
 """
 from __future__ import annotations
 import json
+import signal
 import sys
 import traceback
 from dataclasses import dataclass, field
@@ -170,6 +171,15 @@ def serve_stdio(workspace: str = ".", trace_file: str | None = None):
                 )
             except Exception:
                 traceback.print_exc(file=sys.stderr)
+
+    # Register signal handler so trace is written when harness sends SIGTERM.
+    # Without this, the `finally` block is skipped on signal-based termination
+    # and trace_file is never written.
+    def _signal_handler(signum, frame):
+        _write_trace()
+        sys.exit(0)
+
+    signal.signal(signal.SIGTERM, _signal_handler)
 
     try:
         for line in sys.stdin:

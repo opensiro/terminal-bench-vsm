@@ -51,6 +51,7 @@ class HarnessConfig:
     mcp_server_module: str = "mcp_server.server"  # our MCP server python module
     python_bin: str = sys.executable   # python to run MCP server
     env: dict[str, str] = field(default_factory=dict)  # extra env vars for harness
+    max_turns: int = 20                # maps to goose --max-turns (budget.actions-derived)
 
     def resolve_binary(self) -> str:
         """Resolve harness binary path (auto-detect if not set)."""
@@ -67,35 +68,97 @@ class HarnessConfig:
         self,
         task_prompt: str,
         workspace: str,
-        mcp_config_path: str,
+        trace_file: str,
+        mcp_config_path: str | None = None,
+        mcp_wrapper_path: str | None = None,
     ) -> list[str]:
         """Build command-line args for the harness.
 
         Override in subclasses or extend extra_args for custom harnesses.
+
+        Args:
+            task_prompt: the task text passed to the harness.
+            workspace: absolute path to the task-scoped workspace.
+            trace_file: absolute path to the MCP server trace output.
+            mcp_config_path: path to mcp_config.json (used by claude-code).
+            mcp_wrapper_path: path to a bash wrapper script (used by goose via
+                --with-extension, since Goose parses --with-extension by whitespace
+                and cannot handle paths containing spaces).
         """
         binary = self.resolve_binary()
         if self.harness_type == "claude-code":
             # Claude Code: --mcp-config + --print (non-interactive) + prompt
             return [
                 binary,
-                "--mcp-config", mcp_config_path,
+                "--mcp-config", mcp_config_path or "",
                 "--print",
                 "--dangerously-skip-permissions",  # no prompts in automated mode
                 *self.extra_args,
                 task_prompt,
             ]
         elif self.harness_type == "goose":
-            # Goose: --config + session + prompt
-            return [
-                binary,
-                "session",
-                "--config", mcp_config_path,
-                *self.extra_args,
-                task_prompt,
+            # Goose CLI: stateless run, no profile (restricted tool surface only,
+            # VSM-005 membrane), MCP attached via --with-extension wrapper script.
+            # --no-session keeps each invoke independent (CONTRACT §5).
+            args = [
+                binary, "run",
+                "--text", task_prompt,
+                "--no-session",
+                "--no-profile",
+                "--max-turns", str(self.max_turns),
+                "--output-format", "text",
             ]
+            if mcp_wrapper_path:
+                args.extend(["--with-extension", mcp_wrapper_path])
+            args.extend(self.extra_args)
+            return args
         else:
             # Custom: binary + extra_args + prompt
             return [binary, *self.extra_args, task_prompt]
+
+    def build_mcp_wrapper(
+        self,
+        tmpdir: str,
+        workspace: str,
+        trace_file: str,
+    ) -> str:
+        """Generate a bash wrapper script that launches our MCP server.
+
+        Goose's --with-extension parses `ENV=val cmd args` by whitespace, so it
+        cannot represent a workspace/src path that contains spaces (e.g. our
+        repo under "Opensiro Collections/"). We work around this by writing a
+        bash wrapper with PYTHONPATH and the server command baked in directly,
+        then passing only the wrapper's own path (single token) to
+        --with-extension.
+
+        PYTHONPATH is derived from this module's location (src/ directory), so
+        `python3 -m mcp_server.server` resolves regardless of the caller's cwd.
+
+        Args:
+            tmpdir: temp directory to host the wrapper script.
+            workspace: absolute path to the task-scoped workspace.
+            trace_file: absolute path the MCP server writes its trace to.
+
+        Returns:
+            Absolute path to the generated (and chmod 0o755) wrapper script.
+        """
+        # src/ is the parent of the runtime/ package this module lives in.
+        src_dir = str(Path(__file__).resolve().parent.parent)
+        wrapper_path = Path(tmpdir) / "mcp_server_wrapper.sh"
+
+        # Quote paths to be safe against spaces (the wrapper itself is invoked
+        # as a single token by goose, but its contents must handle spaces).
+        wrapper_lines = [
+            "#!/usr/bin/env bash",
+            f'export PYTHONPATH="{src_dir}"',
+            f'export WORKSPACE_ROOT="{workspace}"',
+            f'exec {self.python_bin} -m {self.mcp_server_module} '
+            f'--workspace "{workspace}" --trace-file "{trace_file}" "$@"',
+            "",
+        ]
+        wrapper_path.write_text("\n".join(wrapper_lines), encoding="utf-8")
+        wrapper_path.chmod(0o755)
+        return str(wrapper_path)
 
     def build_mcp_config(self, workspace: str, trace_file: str) -> dict:
         """Build MCP server config (mcp.json-style) for the harness."""
@@ -152,12 +215,21 @@ class HarnessRunner:
             mcp_config_path = Path(tmpdir) / "mcp_config.json"
             trace_file = Path(tmpdir) / "trace.json"
 
-            # Write MCP config
-            mcp_config = self.config.build_mcp_config(workspace, str(trace_file))
-            mcp_config_path.write_text(
-                json.dumps(mcp_config, ensure_ascii=False, indent=2) + "\n",
-                encoding="utf-8",
-            )
+            # Goose attaches the MCP server via a wrapper script (workaround
+            # for --with-extension whitespace parsing); claude-code/custom use
+            # a JSON mcp_config. Build whichever is relevant for this harness.
+            mcp_wrapper_path: str | None = None
+            if self.config.harness_type == "goose":
+                mcp_wrapper_path = self.config.build_mcp_wrapper(
+                    tmpdir, workspace, str(trace_file)
+                )
+            else:
+                # claude-code / custom: write JSON mcp_config as before.
+                mcp_config = self.config.build_mcp_config(workspace, str(trace_file))
+                mcp_config_path.write_text(
+                    json.dumps(mcp_config, ensure_ascii=False, indent=2) + "\n",
+                    encoding="utf-8",
+                )
 
             # Build task prompt (include recovery directive if present)
             task_prompt = input.task_prompt
@@ -169,7 +241,9 @@ class HarnessRunner:
             harness_args = self.config.build_harness_args(
                 task_prompt=task_prompt,
                 workspace=workspace,
+                trace_file=str(trace_file),
                 mcp_config_path=str(mcp_config_path),
+                mcp_wrapper_path=mcp_wrapper_path,
             )
 
             env = os.environ.copy()
