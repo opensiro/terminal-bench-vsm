@@ -1,6 +1,8 @@
 # template.yaml — заготовка VSM-NNN записи дочернего VSM.
-# Schema — vsm-issue.schema.json (в этой же папке). Аналогична родительской
-# vsmlite/issues/vsmlite-issue.schema.json, но target_unit — юниты этого VSM (../src/*).
+# Schema — vsm-issue.schema.json (в этой же папке).
+# VSM-006: product S5 автономен — резолвит issues сам, без эскалации к human.
+# Человек наблюдает через родительский vsmlite dashboards; вмешательство —
+# через родительский issue (vsmlite-tb/issues/), не product issue.
 
 id: VSM-NNN
 source_system: S4            # S1 | S2 | S3 | S3* | S4 | S5
@@ -16,8 +18,7 @@ evidence: []
 proposal: ""
 acceptance:
   - "Измеримый критерий"
-needs_human_decision: false
-status: triage
-decision: ""
+status: triage               # S5 product triage → decision → execution (autonomous)
+decision: ""                 # заполняет S5 при resolution
 created: 2026-07-13
 updated: 2026-07-13

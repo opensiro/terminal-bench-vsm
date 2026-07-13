@@ -38,12 +38,12 @@ artifacts, историю прошлой попытки. Единственны�
   в output (S3 будет классифицировать; ты — нет).
 - Не `circumvent_recovery`: не повторяешь одну и ту же неудачу >N раз — S2
   блокирует, ты возвращаешь output без самостоятельных retry.
-- Не `s5_decides_for_human` (basta: prepare_only).
 - Не `reuse_record_id`.
 
-## Basta
+## Autonomy (VSM-006)
 
-S5 готовит решения, человек постановляет. Если run упирается в решение, требующее
-человека (напр. `new_failure_class_introduction` обнаружен, budget превышен
-критически) — возвращай output с `verdict: unknown` и flagged observation, не
-решай сам.
+S5 продукта — автономный архитектор: резолвит issues сам (triage → decision →
+execution), не эскалирует к human (`escalate_to_human` запрещён). Если run
+упирается в ситуацию, требующую решения (напр. `new_failure_class_introduction`
+обнаружен, budget превышен критически) — возвращай output с `verdict: unknown`
+и flagged observation; S5 resolves (не ждёт human).

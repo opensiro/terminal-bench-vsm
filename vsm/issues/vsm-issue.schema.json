@@ -2,10 +2,10 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://vsmlite/seed/child/issues/vsm-issue.schema.json",
   "title": "child VSM correction-request record (VSM-NNN)",
-  "description": "Алгедонический канал дочернего VSM. Аналог vsmlite/issues/vsmlite-issue.schema.json, target_unit — юниты этого VSM.",
+  "description": "Алгедонический канал дочернего VSM. Автономный: S5 резолвит сам, без эскалации к human (VSM-006).",
   "type": "object",
   "additionalProperties": false,
-  "required": ["id", "source_system", "signal_type", "severity", "target_unit", "title", "summary", "evidence", "acceptance", "needs_human_decision", "status", "created", "updated"],
+  "required": ["id", "source_system", "signal_type", "severity", "target_unit", "title", "summary", "evidence", "acceptance", "status", "created", "updated"],
   "properties": {
     "id": { "type": "string", "pattern": "^VSM-\\d{3,}$" },
     "source_system": { "type": "string", "enum": ["S1", "S2", "S3", "S3*", "S4", "S5"] },
@@ -17,24 +17,12 @@
     "evidence": { "type": "array", "minItems": 1, "items": { "type": "string" } },
     "proposal": { "type": "string" },
     "acceptance": { "type": "array", "minItems": 1, "items": { "type": "string", "minLength": 5 } },
-    "needs_human_decision": { "type": "boolean" },
-    "policy_question": { "type": "string" },
-    "options": { "type": "array", "maxItems": 6, "items": { "oneOf": [
-      { "type": "string" },
-      { "type": "object", "required": ["id", "label"], "additionalProperties": false,
-        "properties": { "id": {"type":"string"}, "label": {"type":"string"}, "hint": {"type":"string"} } }
-    ] } },
     "status": { "type": "string", "enum": ["triage", "accepted", "in-progress", "review", "done", "blocked", "wontfix"] },
-    "decision": { "type": "string" },
-    "selected_options": { "type": "array", "items": { "type": "string" } },
+    "decision": { "type": "string", "description": "S5 product резолвит сам (autonomous, VSM-006). Пусто до resolution." },
     "created": { "type": "string", "format": "date" },
     "updated": { "type": "string", "format": "date" }
   },
   "allOf": [
-    { "if": { "properties": { "severity": { "enum": ["S0", "S1"] } }, "required": ["severity"] },
-      "then": { "properties": { "needs_human_decision": { "const": true } } } },
-    { "if": { "properties": { "signal_type": { "const": "algedonic" } }, "required": ["signal_type"] },
-      "then": { "properties": { "needs_human_decision": { "const": true } } } },
     { "if": { "properties": { "status": { "enum": ["wontfix", "blocked"] } }, "required": ["status"] },
       "then": { "properties": { "decision": { "minLength": 3 } }, "required": ["decision"] } }
   ]

@@ -1,0 +1,124 @@
+id: VSM-006
+source_system: S5            # human-initiated autonomy shift for child VSM
+signal_type: policy          # product S5 = autonomous, not prepare_only
+severity: S1                 # structural — меняет basta_constraint продукта
+target_unit: child           # дочерний VSM (продукт)
+
+title: "Autonomous S5 продукта: issues self-resolved, no human escalation (наблюдение через vsmlite dashboards)"
+summary: |
+  Концептуальный поворот identity продукта (сессия 2026-07-13). Строим автономный
+  VSM — значит S5 продукта сам резолвит issues. Требование `needs_human_decision`
+  у product issues убирается. Человек наблюдает за всеми product issues через
+  dev-проходы (vsmlite dashboards) и поднимает issues уже на уровне родителя
+  (`vsmlite-tb/issues/`), если хочет вмешаться.
+
+  Раньше (VSM-002, seed): product S5 = `basta_constraint: prepare_only` — готовит
+  решения, не принимает. Это унаследовано от родительского vsmlite (где basta
+  уместен: vsmlite — оператор, человек его направляет). Для продукта basta
+  противоречит цели автономии: если S5 продукта всегда эскалирует к human,
+  продукт никогда не станет автономным.
+
+  Теперь (VSM-006):
+  - Product S5 = **автономный архитектор** (развивает VSM-005). Резолвит issues
+    продукта сам: triage → decision → execution (через s1-dispatcher для ../src/,
+    через self-reconfigure для vsm/). Не эскалирует к human.
+  - Product issues НЕ имеют `needs_human_decision`. Поле убирается из schema и
+    template продукта. S0/S1/algedonic в продукке → S5 реагирует сам (структурное
+    изменение), не ждёт human.
+  - Человек наблюдает: vsmlite-tb dashboards (monitor/data.js, intervention metric
+    из VSM-005) показывают product issues, их resolution, S5 interventions. Человек
+    видит всё, но НЕ в цикле product issue-resolution.
+  - Если человек хочет вмешаться → поднимает issue на уровне РОДИТЕЛЯ
+    (`vsmlite-tb/issues/VSM-NNN`), не продукта. Родительский vsmlite через
+    child-dispatcher может применить изменения к `../vsm/`. Это intervention
+    (S5 родителя, +1 к metric), не product issue.
+
+  Контраст product S5 vs parent S5:
+  - Product S5: autonomous architect, self-resolves, no human escalation.
+  - Parent S5 (vsmlite-tb): architect, intervenes on algedonic (VSM-005), bastas
+    остаются (submit_or_publish_results, change_target_tb_version, ...) — родитель
+    управляется человеком, продукт — нет.
+
+evidence:
+  - "сессия 2026-07-13: человек — «убери у issues в vsm требование human decision. Так как мы строим автономную, мы хотим чтобы S5 сам резолвил»"
+  - "сессия 2026-07-13: человек — «мы наблюдаем за всеми ними при dev проходе и делаем issues уже на уровне vsmlite»"
+  - "VSM-002 → product basta_constraint: prepare_only (унаследован от родителя) — VSM-006 снимает для продукта"
+  - "VSM-005 → S5 = архитектор (вмешивается при алгедонике) — VSM-006 уточняет: product S5 автономен, не эскалирует"
+  - "vsm/issues/vsm-issue.schema.json → allOf: severity S0/S1 ⇒ needs_human_decision: true — противоречит автономии"
+  - "vsm/issues/template.yaml → needs_human_decision: false (default) — поле убирается"
+
+proposal: |
+  Убрать `needs_human_decision` и связанные конструкции из продукта:
+
+  (1) PRODUCT ISSUE SCHEMA + TEMPLATE:
+      - vsm/issues/vsm-issue.schema.json → убрать `needs_human_decision` из
+        required + properties; убрать allOf rules (S0/S1 ⇒ true, algedonic ⇒ true).
+      - vsm/issues/template.yaml → убрать `needs_human_decision: false` строку.
+      - seed/child/issues/ — те же правки (seed = template для будущих VSM).
+
+  (2) PRODUCT IDENTITY (vsm/vsm.yaml):
+      - identity.basta_constraint → убрать (продукт автономен, не prepare_only).
+      - identity.decisions_requiring_human → убрать (продукт не эскалирует).
+      - identity.never_do → убрать `s5_decides_for_human` (S5 продукта МОЖЕТ
+        решать — это его роль теперь).
+      - + identity.never_do: `escalate_to_human` (новый — продукт не эскалирует).
+
+  (3) PRODUCT CLAUDE.md (vsm/CLAUDE.md + seed/child/CLAUDE.md):
+      - S5 = autonomous architect, не prepare_only.
+      - NEVER DO: убрать «не давать S5 принимать решения за человека»; добавить
+        `escalate_to_human`.
+      - Basta: убрать (продукт не имеет basta_constraint).
+      - + примечание: «человек наблюдает через родительский vsmlite dashboards;
+        вмешательство — через родительский issue, не product issue».
+
+  (4) PRODUCT S5-GUARDIAN (vsm/systems/s5-guardian/ + seed):
+      - SOUL.md: S5 = autonomous architect (резолвит сам, не готовит для human).
+      - SKILL.md: triage → decision → execution (через s1-dispatcher); убрать
+        «needs_human_decision → policy_question + options».
+      - + ссылка: S5-вмешательство логируется для родительского intervention metric.
+
+  (5) PRODUCT .intent.yaml (vsm/.intent.yaml):
+      - authority.basta_constraint → переформулировать: product S5 автономен;
+        basta остаются только для identity/values change (S5 не меняет own
+        identity без родительского решения — но это родительский basta, не product).
+      - + autonomy.autonomous_means: S5-sign = «доля issues, резолвленных без
+        эскалации к human» (было «доля issues без needs_human_decision»).
+
+  (6) РОДИТЕЛЬ (vsmlite-tb/) — БЕЗ ИЗМЕНЕНИЙ:
+      - Родительский S5 остаётся prepare_only (basta_constraint: prepare_only).
+      - Родительские issues сохраняют needs_human_decision (человек управляет
+        родителем, родитель управляет продуктом).
+      - validate.sh: проверить что product schema не требует needs_human_decision.
+
+acceptance:
+  - "vsm/issues/vsm-issue.schema.json: нет needs_human_decision в required/properties; нет allOf S0/S1⇒true"
+  - "vsm/issues/template.yaml: нет needs_human_decision"
+  - "seed/child/issues/{schema,template}: те же правки"
+  - "vsm/vsm.yaml → identity: нет basta_constraint; нет decisions_requiring_human; never_do нет s5_decides_for_human; never_do есть escalate_to_human"
+  - "vsm/CLAUDE.md + seed/child/CLAUDE.md: S5 = autonomous architect; нет basta prepare_only; never_do есть escalate_to_human"
+  - "vsm/systems/s5-guardian/{SOUL,SKILL}.md + seed: S5 резолвит сам, не готовит для human"
+  - "vsm/.intent.yaml: basta переформулирован (product S5 автономен); autonomy S5-sign updated"
+  - "vsmlite-tb/ (родитель) — БЕЗ ИЗМЕНЕНИЙ (basta сохранён на родителе)"
+  - "ни одного упоминания Terminal Bench/benchmark/eval/harbor в vsm/ и src/"
+  - "validate.sh GREEN"
+
+needs_human_decision: true   # identity shift продукта — человек подтверждает
+
+policy_question: >
+  Убрать needs_human_decision из product issues, сделать product S5 автономным
+  архитектором (self-resolves, не эскалирует к human)? Человек наблюдает через
+  vsmlite dashboards; вмешательство — через родительский issue.
+
+options:
+  - { id: accept,  label: "Принять VSM-006",  hint: "Product S5 autonomous; needs_human_decision убран; родитель без изменений (Recommended)" }
+  - { id: partial, label: "Только schema/template", hint: "Убрать поле из issues, но bastа в identity оставить (гибрид)" }
+  - { id: defer,   label: "Отложить",          hint: "Вернуться позже; сейчас продолжить VSM-005/Sync 1" }
+
+notes:
+  - "Это prepare_only (basta_constraint РОДИТЕЛЯ: prepare_only) — человек постановляет."
+  - "VSM-005 (S5 = архитектор) совместим: VSM-005 описывает родительский S5; VSM-006 — product S5."
+  - "Правки vsm/ + seed/child/ — через child-dispatcher (главный инвариант)."
+  - "Родительский vsmlite-tb/issues/ сохраняет needs_human_decision — человек управляет родителем."
+
+created: 2026-07-13
+updated: 2026-07-13

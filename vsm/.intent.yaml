@@ -32,24 +32,24 @@ mission:
     (2) S3-sign: ≥2 operational units (напр. solver + recovery runtime) с низким pressure;
     (3) S4-sign: S4 самостоятельно закрывает сигналы о coding patterns и recovery-policy
         expansions (без эскалации каждой мелочи);
-    (4) S5-sign: низкая доля issues с needs_human_decision — большинство решений
-        принимается внутри VSM, человек — только для basta-областей.
+    (4) S5-sign: S5 резолвит issues сам (autonomous, VSM-006); доля issues
+        без эскалации к human → 1.0. Человек — только для identity/values change.
 
 authority:
-  basta_constraint: |
-    Только человек принимает решения в следующих областях (дочерний VSM
-    готовит, не постановляет):
-    - Введение нового класса сбоя в failure taxonomy (new_failure_class_introduction).
-    - Ручное override recovery policy для класса (recovery_policy_override).
-    - Удаление прогонов / данных / логов / кеша (деструктивные операции).
-    - Изменения identity/values/never-do этого VSM (S5).
+  autonomy_constraint: |
+    (VSM-006) Product S5 — автономный архитектор. Резолвит issues сам: triage →
+    decision → execution. Не эскалирует к human (never_do: escalate_to_human).
+    Человек наблюдает через родительский vsmlite dashboards; вмешательство —
+    через родительский issue (vsmlite-tb/issues/), не product issue.
+    Единственное исключение: identity/values/never-do change — S5 не меняет own
+    identity без родительского решения (но это родительский basta, не product).
   never_do:
     - "optimize_for_specific_evaluator: не оптимизироваться под конкретный оценочный набор — оставаться general-purpose coding harness"
     - "skip_failure_classification: никогда не retry без классификации сбоя (blind retry запрещён)"
     - "circumvent_recovery: не обходить recovery policies (не повторять одну и ту же неудачу >N раз)"
     - "modify_parent_directly: родительский vsmlite трогает этот VSM только через child-dispatcher"
     - "same_provider_for_s3star: S3* всегда на другом модель-провайдере, read-only"
-    - "s5_decides_for_human: basta_constraint prepare_only"
+    - "escalate_to_human: product S5 автономен; не эскалировать issues к human (VSM-006)"
     - "disable_algedonic_channel"
     - "reuse_record_id: VSM-NNN monotonic"
 
@@ -57,8 +57,8 @@ autonomy:
   target: 1.0
   autonomous_means: |
     Доменная конкретизация 4 знаков A(t):
-    - S5-sign (issues[]): почти все решения о recovery/taxonomy/policy
-      принимаются внутри VSM; человек — только basta-области.
+    - S5-sign (issues[]): доля issues, резолвленных S5 без эскалации к human
+      (VSM-006: product S5 автономен; цель → 1.0).
     - S4-sign (intel[]): S4 сам находит и закрывает сигналы о:
         coding patterns (обнаружение, интеграция, релевантность);
         recovery-policy expansions (кандидаты в новый класс/политику);

@@ -98,6 +98,20 @@ options:
   - { id: partial,  label: "Только Dev Set role", hint: "Зафиксировать Dev Set как индикатор, self-modification оставить как есть (общий OSM)" }
   - { id: defer,    label: "Отложить",           hint: "Вернуться к концепции позже; сейчас продолжить workstream T1-T5 как есть" }
 
+status: superseded            # объединён в VSM-005
+decision: "superseded — Dev Set pass-rate вошёл в VSM-005 как ВХОДНОЙ индикатор автономности (в паре с S5 intervention count как ОБРАТНЫЙ). VSM-005 переформулирует: S5 = архитектор (не divine will), intervention metric = публичный индикатор в dashboard. VSM-004 остаётся в истории (monotonic id)."
+selected_options: []           # superseded — отозвано в пользу VSM-005
+
+superseded_by: "VSM-005 — S5 архитектор + intervention metric (объединяет Dev Set pass-rate как входной индикатор + S5 intervention как обратный)"
+superseded_reason: |
+  Человек переформулировал в той же сессии. VSM-004 ставил Dev Set pass-rate
+  как индикатор автономности + self-modification = OSM-синтез. VSM-005
+  сохраняет обе идеи, но переформулирует: S5 = архитектор (вмешивается при
+  алгедонике), intervention metric = обратный индикатор (чем меньше S5
+  вмешивается, тем автономнее). Dev Set pass-rate = входной индикатор.
+  Вместе (pass-rate ↑ + interventions ↓) = автономность растёт. VSM-004
+  superseded, его содержание вошло в VSM-005.
+
 notes:
   - "Это prepare_only (basta_constraint: prepare_only) — человек постановляет."
   - "VSM-003 (R0/R1/R2) superseded в той же сессии; VSM-004 — следующее концептуальное решение (monotonic id)."

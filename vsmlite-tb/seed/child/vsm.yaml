@@ -27,15 +27,11 @@ identity:
   never_do:
     - modify_parent_directly   # родительский vsmlite трогает этот VSM только через child-dispatcher
     - same_provider_for_s3star
-    - s5_decides_for_human     # basta_constraint: prepare_only
+    - escalate_to_human        # VSM-006: product S5 автономен; не эскалирует issues к human
     - disable_algedonic_channel
     - reuse_record_id
-  decisions_requiring_human:
-    - any_severity_S0
-    - any_signal_type_algedonic
-    - identity_or_values_change
-  basta_constraint:
-    agent_role: prepare_only
+  # (VSM-006) product S5 = autonomous architect. Не имеет basta_constraint
+  # (в отличие от родительского vsmlite). Резолвит issues сам.
 
 # ───────────────────────────── S1 — Operations ─────────────────────────────
 # Прикладной домен: ../src/ (подключается materialize_child на init).

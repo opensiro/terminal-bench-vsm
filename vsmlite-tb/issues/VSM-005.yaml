@@ -1,0 +1,252 @@
+id: VSM-005
+source_system: S5            # human-initiated conceptual reframing of S5 role + autonomy metric
+signal_type: policy          # S5 = architect (not divine will) + intervention metric + env-type awareness
+severity: S1                 # structural — меняет роль S5 и метрику автономности
+target_unit: meta            # vsmlite (родитель) + child (продукт S4)
+
+title: "S5 = architect (intervenes on algedonic only) + intervention metric + parent isolation + env-type awareness + MCP restriction + uncertainty handling (S2/S3/S3*/S4)"
+summary: |
+  Концептуальный поворот (сессия 2026-07-13), развивающий VSM-001/VSM-002.
+  Заменяет ранее предложенный в этой же сессии «divine will» framing (откатан,
+  не применялся к файлам) и объединяет VSM-004 (Dev Set pass-rate как индикатор
+  автономности) — VSM-004 superseded, вошёл сюда. Дополнения от человека:
+  parent isolation (vsm/ не знает про vsmlite-tb) + S3* в uncertainty handling.
+
+  ─────────────────────────────────────────────────────────────────────────
+  (1) S5 = АРХИТЕКТОР (не divine will, не routine director)
+  ─────────────────────────────────────────────────────────────────────────
+  S5 родительского vsmlite — структурный архитектор VSM, не «направляющая воля».
+  Рутинно НЕ вмешивается: S1-S4 работают автономно в своих горизонтах. S5
+  вмешивается ТОЛЬКО когда алгедонический канал сигнализирует, что S3 (control),
+  S3* (audit) или S4 (intelligence) не справляются самостоятельно.
+
+  Вмешательство S5 = структурное изменение VSM на ходу (OSM-примитивы:
+  Split/Merge/Reconfigure; изменение system definitions; перераспределение
+  budget). НЕ микроуправление операциями S1, НЕ указание «какую recovery policy
+  выбрать» — это S3. S5 меняет СТРУКТУРУ, когда routine control/audit/
+  intelligence не могут погасить проблему.
+
+  Каждое вмешательство S5 = +1 к intervention metric (см. §2) = сигнал что VSM
+  ещё недостаточно автономен. Цель VSM = минимизировать вмешательства S5.
+  Рост A(t) = уменьшение частоты S5-вмешательств.
+
+  Алгедонический канал — триггер S5:
+  - S3 → не справляется с отклонением (deviation beyond threshold, не погасилось).
+  - S3* → нашёл структурный брак (viability breach).
+  - S4 → стратегический gap, не закрытый разведкой.
+  Любой → S5 как архитектор оценивает и применяет структурное изменение.
+
+  ─────────────────────────────────────────────────────────────────────────
+  (2) INTERVENTION METRIC + PARENT ISOLATION
+  ─────────────────────────────────────────────────────────────────────────
+  «Вмешательство» = случаи когда автономии VSM не хватило и потребовалось
+  вмешательство S5 (архитектора). Чем больше вмешательств — тем менее
+  жизнеспособен VSM в автономии.
+
+  Scope metric (решение человека): только S5-вмешательства. Человек (basta-
+  решения) — отдельная категория, НЕ intervention metric (человек по определению
+  вне автономии VSM; basta = области где VSM не должен решать сам).
+
+  Metric показывается на публику через vsmlite dashboards (monitor/data.js,
+  telemetry для vsmforge) — НЕ через S5. S5 не «владеет» метрикой, он источник
+  одного из потоков. Публика видит: A(t), pass-rate (Dev Set), intervention
+  count — вместе дают картину автономности.
+
+  Объединение с VSM-004: pass-rate Dev Set растёт + S5 interventions падают =
+  автономность растёт. Две стороны одной медали:
+  - pass-rate (Dev Set) — ВХОДНОЙ индикатор (продукт справляется с задачами).
+  - intervention count — ОБРАТНЫЙ индикатор (продукт не нуждается во внешнем).
+
+  PARENT ISOLATION (дополнение от человека):
+  Цепочка взаимодействия: human → vsmlite → vsm. VSM НЕ знает, что vsmlite
+  с ним работает — параллель с eval-blindness (продукт не знает, что его
+  оценивают; продукт не знает, что его растит родитель). S5 (в vsmlite)
+  вмешивается в vsm, но vsm переживает это как внутреннее изменение, не как
+  «родитель вмешался».
+
+  Структурная изоляция (folder-level, design-time):
+  - `vsm/` и `src/` НЕ ссылаются на `../../vsmlite-tb/` (родитель) — ни в путях,
+    ни в конфигах, ни в README. VSM не имеет структурного пути к родителю.
+  - Intervention metric живёт в `vsmlite-tb/state/` (родитель), НЕ в
+    `vsm/state/` (продукт). VSM не видит intervention count — не знает про
+    вмешательства в себя.
+  - Параллель с MCP restriction (§4): мембрана = отсутствие пути, не фильтр.
+    Как S1 не имеет eval-access tool, так vsm/ не имеет пути к родителю.
+  - S5 вмешивается через child-dispatcher (единственный boundary), который
+    пишет в `vsm/` — но для vsm это выглядит как локальная мутация, не как
+    внешний акт. VSM не различает «своё изменение» и «вмешательство S5».
+
+  Проверяется (validate.sh expansion): grep по `vsm/` и `src/` на упоминания
+  `../../vsmlite` или `vsmlite-tb` (кроме README продукта, где есть одна
+  структурная ссылка на родителя как на директорию — она легитимна для
+  навигации, но не раскрывает роль vsmlite как оператора).
+
+  ─────────────────────────────────────────────────────────────────────────
+  (3) ENVIRONMENT-TYPE AWARENESS (S5 знает уровень, не конкретику)
+  ─────────────────────────────────────────────────────────────────────────
+  S5 (архитектор) знает о существовании типов сред, в которых работает VSM:
+    Environment types:
+      - Production     — реальная эксплуатация
+      - Simulation     — симуляция
+      - Benchmark      — оценочная среда
+      - Sandbox        — изолированная пробная среда
+      - Training       — среда развития/обучения (не ML; OSM-синтез)
+
+  S5 знает, что этот VSM используется в т.ч. для Benchmark environment. Но S5
+  НЕ знает конкретики: не «Terminal Bench 2.1», не «harbor-framework», не
+  «SWE-bench». S5 знает только: «есть специальный тип среды — Benchmark —
+  продукт в ней оценивается». Это структурное знание архитектора (нужно для
+  проектирования: продукт не должен optimise под Benchmark), не eval-context
+  (конкретный бенчмарк, задачи, разметка).
+
+  Системы ниже S5 (S1-S4 родителя + дочерний VSM) — НЕ знают даже про
+  environment types. Для них есть только generic coding tasks (мембрана снимает
+  framing). S5 — единственный, кто знает про env-type categorisation.
+
+  Практическое следствие:
+  - S5 при проектировании гарантирует: product never_do `optimize_for_specific
+    _evaluator` структурно обеспечен (продукт не знает про Benchmark env-type).
+  - Конкретный бенчмарк (TB 2.1) — знание ТОЛЬКО человека + vsmlite.yaml
+    identity (не S5-агент, а модель). S5-агент знает «Benchmark env-type
+    существует», не «Terminal Bench».
+
+  ─────────────────────────────────────────────────────────────────────────
+  (4) MCP ACCESS RESTRICTION (structural, для T4) — сохранено из draft
+  ─────────────────────────────────────────────────────────────────────────
+  MCP tools-server (T4) продукта структурно НЕ предоставляет доступ к eval-
+  resources. Продукт не знает о restriction: tool surface просто не включает
+  eval-access. Это не runtime-policy (которую можно обойти), а design-time
+  структурное ограничение tool surface. S1 не может обратиться к eval-данным,
+  потому что такого tool нет в MCP-сервере. Мембрана = отсутствие инструмента,
+  не фильтр.
+
+  ─────────────────────────────────────────────────────────────────────────
+  (5) UNCERTAINTY HANDLING — S2/S3/S3*/S4 (продукт) — сохранено из draft
+  ─────────────────────────────────────────────────────────────────────────
+  S4 продукта расширяет knowledge (coding patterns, recovery techniques) когда
+  есть НЕУВЕРЕННОСТЬ в решаемости поданной задачи. Не по расписанию, а по
+  триггеру: «задача выглядит непривычно / нет готового pattern / high failure-
+  risk». S4 ищет расширения именно для этого случая. Уточняет role S4: не
+  только ambient scan, но и demand-driven knowledge expansion при неуверенности.
+
+  S2 (продукт): при неуверенности проводит эксперименты (probing) — маленькие
+  изолированные пробы, чтобы уточнить характер задачи. Не полноценный solve,
+  а reconnaissance.
+  S3 (продукт): на основе S2-experiments + S4-findings проводит оптимизации
+  (перераспределение ресурсов, выбор policy, структурные сигналы через OSM).
+
+  S3* (продукт, независимый аудит) — НЕ rubber-stamp S2/S3/S4 response на
+  неуверенность. S3* независимо проверяет:
+  - жизнеспособность выбранной реакции (достаточен ли S2-probing? не избыточен
+    ли? S3-optimization обоснован или premature? S4-expansion релевантен?);
+  - не является ли «неуверенность» симптомом структурного брака (напр.
+    classifier даёт Unknown слишком часто — это не «неуверенность», это
+    taxonomy gap, structurally → new_failure_class_introduction);
+  - cross-provider независимость: S3* на другом провайдере, ловит коррелированные
+    галлюцинации S3 в оценке неуверенности.
+  Если S3* находит что reaction на неуверенность нежизнеспособна → алгедоник
+  → S5 (архитектор) вмешательство (см. §1, intervention metric +1).
+
+evidence:
+  - "сессия 2026-07-13: человек — «метрика вмешательства будет показывать насколько VSM нежизнеспособен в состоянии автономности. Чем меньше вмешательства, тем лучше»"
+  - "сессия 2026-07-13: человек — «передать при прохождении terminal bench на публику через vsmlite дашборды, а не S5»"
+  - "сессия 2026-07-13: человек — «S5 это архитектор VSM, который может на ходу изменять что-то если по алгедоническому каналу S3 S3* и S4 не справляются»"
+  - "сессия 2026-07-13: человек — intervention = только S5; «Архитектору доступны доп. знания вроде того, что этот VSM используется в т.ч. для Eval Env, но не говорится что Terminal Bench»"
+  - "сессия 2026-07-13: человек — environment types: Production/Simulation/Benchmark/Sandbox/Training"
+  - "сессия 2026-07-13: человек — VSM-004 объединить; MCP restriction + S4 uncertainty сохранить"
+  - "VSM-001 → runtime membrane; VSM-005: S5 = архитектор (не divine will), intervention metric"
+  - "VSM-002 → product_evaluation; VSM-005: env-type awareness S5, MCP structural restriction"
+  - "VSM-004 → superseded (объединён в VSM-005: pass-rate + intervention = автономность)"
+
+proposal: |
+  Зафиксировать концептуальный поворот (VSM-005, объединяет VSM-004):
+
+  (1) S5 = АРХИТЕКТОР:
+      - vsmlite-tb/CLAUDE.md → S5 role: архитектор, вмешивается при алгедонике
+        от S3/S3*/S4; рутинно бездействует; вмешательство = структурное изменение
+        (OSM-примитивы), не микроуправление.
+      - vsmlite-tb/systems/s5-guardian/{SOUL,SKILL}.md → role = architect.
+      - vsmlite-tb/vsmlite.yaml → identity: S5 role уточнена.
+
+  (2) INTERVENTION METRIC:
+      - vsmlite-tb/vsmlite.yaml → system_3.kpi_list: + s5_intervention_count
+        (count S5-вмешательств за цикл; lower = better).
+      - vsmlite-tb/vsmlite.yaml → autonomy.signs: S5-sign уточнён: «доля
+        циклов без S5-вмешательств» (не «доля открытых issues с needs_human»).
+      - vsmlite-tb/monitor/ + scripts/render_data.py → intervention metric в
+        dashboard (публичная трассировка автономности).
+      - scripts/autonomy.py → A(t) учитывает intervention frequency.
+
+  (3) ENVIRONMENT-TYPE AWARENESS:
+      - vsmlite-tb/vsmlite.yaml → identity.product_evaluation: env_type_known_to_s5
+        = [Production, Simulation, Benchmark, Sandbox, Training] (S5 знает
+        типы); concrete_benchmark_known_to = [human, model] (конкретика — только
+        человек + модель identity, не S5-агент).
+      - S5-агент (SOUL/SKILL) знает «Benchmark env-type существует», не «TB 2.1».
+
+  (4) MCP ACCESS RESTRICTION (для T4):
+      - WORKSTREAM.md → T4 spec: + MCP structural restriction (tool surface не
+        включает eval-access; мембрана = отсутствие инструмента).
+
+  (5) UNCERTAINTY HANDLING (продукт, S2/S3/S3*/S4):
+      - vsm/vsm.yaml (через child-dispatcher) → system_4: + uncertainty_driven
+        _expansion trigger.
+      - vsm/vsm.yaml → system_2.coordination_rules: + uncertainty probing.
+      - vsm/vsm.yaml → system_3: + uncertainty optimization on S2+S4 data.
+      - vsm/vsm.yaml → system_3_star: + audit of uncertainty-reaction viability
+        (S3* не rubber-stamp; independently checks S2/S3/S4 response; structural
+        defect detection; cross-provider).
+
+  (6) PARENT ISOLATION (structural, vsm/ не знает про vsmlite-tb):
+      - vsm/ и src/ НЕ ссылаются на ../../vsmlite-tb/ (ни в путях, ни в конфигах).
+      - intervention metric живёт в vsmlite-tb/state/ (родитель), НЕ в vsm/state/.
+      - validate.sh expansion: grep по vsm/ и src/ на упоминания vsmlite-tb/
+        (кроме одной структурной ссылки в vsm/CLAUDE.md для навигации — не
+        раскрывает роль vsmlite как оператора, только директорию).
+      - VSM переживает S5-вмешательство (через child-dispatcher) как локальную
+        мутацию, не как внешний акт.
+
+  (7) VSM-004 → SUPERSEDED: Dev Set pass-rate вошёл в VSM-005 как входной
+      индикатор автономности (в паре с intervention count как обратный).
+
+acceptance:
+  - "vsmlite-tb/CLAUDE.md → S5 role = архитектор (вмешивается при алгедонике, рутинно бездействует)"
+  - "vsmlite-tb/systems/s5-guardian/{SOUL,SKILL}.md → role = architect"
+  - "vsmlite-tb/vsmlite.yaml → system_3.kpi_list: + s5_intervention_count"
+  - "vsmlite-tb/vsmlite.yaml → autonomy.signs.s5_sign: доля циклов без S5-вмешательств"
+  - "vsmlite-tb/vsmlite.yaml → identity.product_evaluation.env_type_known_to_s5 (5 типов)"
+  - "vsmlite-tb/vsmlite.yaml → identity.product_evaluation.concrete_benchmark_known_to = [human, model]"
+  - "vsmlite-tb/monitor/ + render_data.py → intervention metric в dashboard"
+  - "scripts/autonomy.py → A(t) учитывает intervention frequency"
+  - "vsm/vsm.yaml → system_2 +uncertainty probing; system_3 +uncertainty optimization; system_3_star +uncertainty-reaction audit; system_4 +uncertainty_driven_expansion (через child-dispatcher)"
+  - "vsm/ и src/ не ссылаются на ../../vsmlite-tb/ (parent isolation; grep проверка)"
+  - "WORKSTREAM.md → T4: + MCP structural access restriction"
+  - "VSM-004 → status: superseded (объединён в VSM-005)"
+  - "ни одного упоминания Terminal Bench/benchmark/eval/harbor в vsm/ и src/ (продукт не знает)"
+  - "S5-агент файлы (SOUL/SKILL) не содержат 'Terminal Bench' — только env-type 'Benchmark'"
+  - "validate.sh GREEN (с expansion: parent-isolation grep)"
+
+needs_human_decision: true   # conceptual reframing of S5 role + autonomy metric — человек подтверждает
+
+policy_question: >
+  Зафиксировать: S5 = архитектор (вмешивается при алгедонике от S3/S3*/S4,
+  рутинно бездействует) + intervention metric (публичный индикатор в dashboard,
+  только S5) + parent isolation (vsm/ не знает про vsmlite-tb) + env-type
+  awareness (S5 знает 5 типов сред включая Benchmark, не знает конкретику TB)
+  + MCP structural restriction (T4) + uncertainty handling S2/S3/S3*/S4
+  (продукт)? VSM-004 объединить (superseded).
+
+options:
+  - { id: accept,    label: "Принять VSM-005",         hint: "S5 архитектор + intervention + isolation + env-type + MCP + uncertainty (S2/S3/S3*/S4); VSM-004 superseded (Recommended)" }
+  - { id: partial,   label: "Только S5 + intervention", hint: "S5 архитектор + intervention metric; isolation/env-type/MCP/uncertainty отложить" }
+  - { id: defer,     label: "Отложить",                 hint: "Вернуться позже; сейчас Sync 1 / T3 / T4" }
+
+notes:
+  - "Это prepare_only (basta_constraint: prepare_only) — человек постановляет."
+  - "VSM-001 НЕ закрывается — VSM-005 уточняет S5 role (divine will framing откатан в этой же сессии)."
+  - "VSM-004 → superseded: Dev Set pass-rate вошёл как входной индикатор; intervention = обратный."
+  - "S5-агент знает env-type 'Benchmark', не 'Terminal Bench' — конкретика только в vsmlite.yaml identity (модель) + human."
+  - "Правки vsm/vsm.yaml (продукт) — через child-dispatcher; S4 uncertainty-driven не раскрывает eval-context."
+
+created: 2026-07-13
+updated: 2026-07-13
