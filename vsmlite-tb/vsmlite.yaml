@@ -17,17 +17,28 @@ identity:
     Вырастить продукт — failure-aware coding harness (дочерний VSM в ../vsm/) — до
     автономного состояния (A(t) → 1) по принципам OSM, и ОЦЕНИТЬ его через Terminal
     Bench 2.1 как калибровочный стенд. vsmlite-tb = evaluation/growing layer: S3
-    трекает pass_rate/coverage по категориям TB, S4 сканит эволюцию TB, S5 хранит
-    identity оценщика. Продукт (../vsm/ + ../src/) полностью agnostic и не знает,
-    что его оценивают; граница product↔evaluation — на стороне родителя (мембрана
-    VSM-002: при трансляции TB-задачи в продукт TB-фрейминг снимается).
+    трекает pass_rate/coverage по категориям TB, S4 сканит эволюцию TB, S5 —
+    архитектор (VSM-005): вмешивается в продукт при алгедонике от S3/S3*/S4,
+    рутинно бездействует. Продукт (../vsm/ + ../src/) полностью agnostic и не
+    знает, что его оценивают; граница product↔evaluation — на стороне родителя
+    (мембрана VSM-002: при трансляции TB-задачи в продукт TB-фрейминг снимается).
   product_evaluation:
     product: "failure-aware coding harness для long-horizon агентов (дочерний VSM, ../vsm/)"
     evaluation_stand: "Terminal Bench 2.1"
     evaluator_knows: true       # vsmlite-tb знает про TB (это его роль)
     product_knows: false        # ../vsm/ + ../src/ — полностью agnostic
     membrane: "product↔evaluation; живёт на стороне родителя (трансляция TB-задачи → generic coding task)"
-    could_be: ["Terminal Bench 2.1", "SWE-bench", "real ticket stream"]   # стенд взаимозаменяем
+    could_be: ["Terminal Bench 2.1", "SWE-bench", "real ticket stream"]   # стенд взаимозаменяем (future)
+    membrane_enforcement:         # VSM-005: структурные механизмы мембраны
+      mcp_access_restriction: "MCP tools-server (T4) продукта структурно не предоставляет eval-access; tool surface не включает eval-доступ (отсутствие инструмента, не фильтр)"
+      parent_isolation: "vsm/ и src/ не ссылаются на ../../vsmlite-tb/; intervention metric в vsmlite-tb/state/ (не vsm/state/); vsm переживает S5-вмешательство как локальную мутацию"
+    env_type_known_to_s5:         # VSM-005: S5 знает типы сред, не конкретику бенчмарка
+      - Production
+      - Simulation
+      - Benchmark            # S5 знает что есть Benchmark env-type; НЕ знает "Terminal Bench"
+      - Sandbox
+      - Training
+    concrete_benchmark_known_to: [human, model]   # конкретика TB — только человек + vsmlite.yaml identity; S5-агент не знает
   values:
     - synthesis_not_ex_nihilo    # OSM §4: синтез из уже жизнеспособного (Create только в Initial)
     - progressive_autonomy       # A(t) растёт по фазам; функции передаются по готовности
@@ -101,7 +112,7 @@ child:
     current: 0.0
     target: 1.0                # Autonomous
     signs:                     # forward-совместимо с дизайном vsmforge
-      s5_sign: { from: issues,          metric: "доля открытых с needs_human_decision" }
+      s5_sign: { from: interventions,  metric: "доля циклов без S5-вмешательств (VSM-005); lower intervention = more autonomous" }
       s4_sign: { from: intel,           metric: "самозакрытые сигналы" }
       s3_sign: { from: units,           metric: "≥2 юнитов, низкое pressure" }
       s1_sign: { from: activity,        metric: "≥3 активных git-дней в ../vsm/" }
@@ -170,6 +181,7 @@ system_3:
     - validate_pass_rate        # /vsmlite-check проходит
     - drift_score               # расхождение child vs seed/child/
     - token_spend_estimate
+    - s5_intervention_count     # VSM-005: count S5-вмешательств за цикл; lower = more autonomous (публичный индикатор)
   triple_index:                 # Beer's triple index
     actuality: "что сделано сейчас (state/maturation.json + state/metrics.json)"
     capability: "что дочерний VSM способен сделать (по фазе)"

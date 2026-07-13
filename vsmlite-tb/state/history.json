@@ -16,6 +16,9 @@
       "ratio": null,
       "status": "unknown",
       "alert": false
-    }
+    },
+    "s5_intervention_count": 0,
+    "s5_intervention_cycles": 0,
+    "intervention_share": 0.0
   }
 ]

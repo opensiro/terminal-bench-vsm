@@ -226,7 +226,10 @@ acceptance:
   - "S5-агент файлы (SOUL/SKILL) не содержат 'Terminal Bench' — только env-type 'Benchmark'"
   - "validate.sh GREEN (с expansion: parent-isolation grep)"
 
-needs_human_decision: true   # conceptual reframing of S5 role + autonomy metric — человек подтверждает
+needs_human_decision: false   # принято человеком в сессии 2026-07-13
+status: accepted              # человек постановал: accept (все 5 пунктов)
+decision: "accept — S5 = архитектор + intervention metric + parent isolation + env-type awareness + MCP restriction + uncertainty handling (S2/S3/S3*/S4). VSM-004 superseded (объединён). Применено к vsmlite-tb/ + vsm/vsm.yaml (через child-dispatcher)."
+selected_options: [accept]
 
 policy_question: >
   Зафиксировать: S5 = архитектор (вмешивается при алгедонике от S3/S3*/S4,

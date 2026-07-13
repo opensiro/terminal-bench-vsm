@@ -68,11 +68,25 @@ else
   fail "system_3_star.provider_constraint.must_differ_from НЕ равно s1 (критичный инвариант)"
 fi
 
-# basta_constraint
+# basta_constraint (РОДИТЕЛЬСКИЙ — prepare_only; product S5 автономен по VSM-006)
 if grep -q 'prepare_only' vsmlite.yaml 2>/dev/null; then
-  ok "identity.basta_constraint.agent_role: prepare_only"
+  ok "identity.basta_constraint.agent_role: prepare_only (родительский S5)"
 else
-  fail "basta_constraint не prepare_only (S5 решает за человека — нарушение)"
+  fail "basta_constraint не prepare_only (родительский S5 решает за человека — нарушение)"
+fi
+
+# ── 2b. Parent isolation (VSM-005) ──
+echo "2b. parent isolation (VSM-005): vsm/ и src/ не ссылаются на родителя"
+# Дочерний VSM не должен ссылаться на ../../vsmlite-tb/ (parent isolation).
+# Исключение: одно структурное упоминание в README/CLAUDE как директория-сосед
+# (не раскрывает роль vsmlite как оператора). Считаем упоминания роли vsmlite
+# как оператора/родителя (не просто пути).
+parent_leak=$(grep -rnE 'vsmlite[^/]*\s+(как|это|—)\s+(оператор|родитель|parent|operator)|vsmlite.*выращив|vsmlite.*синтез' ../vsm/ ../src/ 2>/dev/null | grep -vE '^\s*#' || true)
+if [ -n "$parent_leak" ]; then
+  fail "vsm/ или src/ раскрывают роль vsmlite как родителя (parent isolation нарушен):"
+  echo "$parent_leak" | sed 's/^/      /'
+else
+  ok "vsm/ и src/ не раскрывают роль vsmlite как оператора (parent isolation)"
 fi
 
 # ── 3. Структура каталогов ──

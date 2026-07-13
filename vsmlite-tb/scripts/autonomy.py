@@ -2,7 +2,7 @@
 """autonomy.py — A(t) ∈ [0,1] из 4 поведенческих знаков, forward-совместимо с дизайном vsmforge.
 
 Знаки (см. ref/vsmforge-target.md):
-  S5-sign ← issues[]    : низкая доля открытых с needs_human_decision
+  S5-sign ← interventions[] : доля циклов без S5-вмешательств (VSM-005); lower intervention = more autonomous
   S4-sign ← intel[]     : есть self-closed сигналы
   S3-sign ← units[]     : ≥2 юнитов, низкое pressure
   S1-sign ← activity[]  : ≥3 активных git-дней в ../vsm/
@@ -24,7 +24,7 @@ STATE = ROOT / "state"
 CHILD = ROOT / "../vsm"
 
 # Пороги (по дизайну vsmforge; см. ref/vsmforge-target.md)
-ESCALATION_HIGH_SHARE = 0.5   # S5-sign: доля эскалаций выше этой → не autonomous
+INTERVENTION_HIGH_SHARE = 0.5  # VSM-005 S5-sign: доля циклов с S5-вмешательствами выше этой → не autonomous
 ACTIVITY_MIN_DAYS = 3         # S1-sign: минимум активных дней
 UNITS_MIN = 2                 # S3-sign: минимум юнитов
 
@@ -36,35 +36,31 @@ def _read_json(path: Path, default):
         return default
 
 
-def _read_issues():
-    """Считает все issues/VSM-*.yaml поверхностно (только ключевые поля)."""
-    import re
-    issues = []
-    for f in sorted((ROOT / "issues").glob("VSM-*.yaml")):
-        text = f.read_text(encoding="utf-8", errors="replace")
-        def field(name, default=None):
-            m = re.search(rf'^{name}:\s*(.+?)\s*$', text, re.M)
-            return m.group(1) if m else default
-        def bool_field(name):
-            m = re.search(rf'^{name}:\s*(\w+)', text, re.M)
-            return m and m.group(1).lower() == "true"
-        issues.append({
-            "id": field("id"),
-            "status": field("status", "triage"),
-            "needs_human_decision": bool_field("needs_human_decision"),
-        })
-    return issues
+def _read_interventions():
+    """Считает S5-вмешательства из state/interventions.json (VSM-005).
+
+    Формат: [{cycle, timestamp, trigger, action, ...}].
+    Вмешательство = случай когда автономии VSM не хватило и S5 (архитектор)
+    применил структурное изменение. Чем меньше — тем автономнее.
+    """
+    data = _read_json(STATE / "interventions.json", {})
+    return data.get("interventions", []) if isinstance(data, dict) else []
 
 
-def s5_sign(issues):
-    """Доля открытых issues с needs_human_decision. Низкая → autonomous."""
-    open_issues = [i for i in issues if i["status"] not in ("done", "wontfix")]
-    if not open_issues:
-        return {"value": 0.0, "meets": True, "detail": "no open issues"}
-    escalated = [i for i in open_issues if i["needs_human_decision"]]
-    share = len(escalated) / len(open_issues)
-    return {"value": round(share, 3), "meets": share < ESCALATION_HIGH_SHARE,
-            "detail": f"{len(escalated)}/{len(open_issues)} open escalated"}
+def s5_sign(interventions, cycle_count):
+    """Доля циклов без S5-вмешательств (VSM-005). Высокая → autonomous.
+
+    interventions: list of S5 intervention records.
+    cycle_count: общее число циклов (из maturation.json).
+    """
+    if cycle_count == 0:
+        return {"value": 0.0, "meets": True, "detail": "no cycles yet"}
+    intervened_cycles = {i.get("cycle") for i in interventions if i.get("cycle") is not None}
+    # Доля циклов БЕЗ вмешательств (high = autonomous)
+    non_intervention_share = 1.0 - (len(intervened_cycles) / cycle_count)
+    return {"value": round(non_intervention_share, 3),
+            "meets": non_intervention_share >= (1.0 - INTERVENTION_HIGH_SHARE),
+            "detail": f"{len(intervened_cycles)}/{cycle_count} cycles had S5 intervention"}
 
 
 def s4_sign(intel):
@@ -72,8 +68,7 @@ def s4_sign(intel):
     signals = intel.get("signals", []) if intel else []
     if not signals:
         return {"value": 0, "meets": False, "detail": "no signals"}
-    self_closed = [s for s in signals if s.get("status") in ("done", "review")
-                   and not s.get("needs_human_decision")]
+    self_closed = [s for s in signals if s.get("status") in ("done", "review")]
     return {"value": len(self_closed), "meets": len(self_closed) >= 1,
             "detail": f"{len(self_closed)} self-closed"}
 
@@ -108,16 +103,18 @@ def verdict(signs):
 
 
 def compute():
-    issues = _read_issues()
+    interventions = _read_interventions()
     intel = _read_json(STATE / "intel.json", {})
-    units = _read_json(STATE / "maturation.json", {}).get("units", [])
+    mat = _read_json(STATE / "maturation.json", {})
+    units = mat.get("units", [])
+    cycle_count = mat.get("cycle_count", 0)
     # units обычно в live_metrics; пробуем
     live = _read_json(STATE / "live_metrics.json", {})
     units = units or live.get("units", [])
     activity = live.get("activity", [])
 
     signs = {
-        "s5_sign": s5_sign(issues),
+        "s5_sign": s5_sign(interventions, cycle_count),
         "s4_sign": s4_sign(intel),
         "s3_sign": s3_sign(units),
         "s1_sign": s1_sign(activity),
@@ -146,7 +143,7 @@ def main():
     mat["autonomy"].update({
         "current": score,
         "verdict": v,
-        "signs": {k: {"value": s["value"], "from": {"s5_sign": "issues", "s4_sign": "intel",
+        "signs": {k: {"value": s["value"], "from": {"s5_sign": "interventions", "s4_sign": "intel",
                       "s3_sign": "units", "s1_sign": "activity"}[k], "meets": s["meets"]}
                   for k, s in signs.items()},
     })

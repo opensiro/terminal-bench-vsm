@@ -1,13 +1,13 @@
-# vsm.yaml — модель дочернего VSM (выращиваемого vsmlite)
+# vsm.yaml — модель дочернего VSM
 #
-# Скелет seed/child/. Копируется в ../vsm/ на /vsmlite-init.
+# Скелет seed/child/. Копируется в ../vsm/ на init.
 # Поля помечены `# tailored` — заполняются шагом tailor_child (init или cycle).
-# maturation_state обновляется synthesis-operator (родительский vsmlite) по фазам OSM.
+# maturation_state обновляется родителем по фазам OSM.
 
 name: "Failure-Aware Coding Harness VSM"   # materialize: из .intent.yaml → domain
 runtime: claude-code
 version: 0.1.0
-parent: vsmlite               # родительский оператор синтеза
+parent: external              # VSM-005 parent isolation: продукт не знает про родителя; поле нейтральное
 
 meta:
   initialized: true           # true после validate_init (green)
@@ -31,8 +31,8 @@ identity:
     - minimal_intervention
     - general_purpose_discipline
   never_do:
-    # generic (vsmlite core)
-    - modify_parent_directly   # родительский vsmlite трогает этот VSM только через child-dispatcher
+    # generic (parent core)
+    - modify_parent_directly   # родитель трогает этот VSM только через child-dispatcher
     - same_provider_for_s3star
     - escalate_to_human        # VSM-006: product S5 автономен; не эскалирует issues к human
     - disable_algedonic_channel
@@ -42,15 +42,14 @@ identity:
     - skip_failure_classification       # никогда не retry без классификации сбоя (blind retry запрещён); всегда failure→classifier→policy→retry
     - circumvent_recovery               # не обходить recovery policies (напр. не повторять одну и ту же неудачу >N раз; это задача S2)
   # (VSM-006) product S5 = autonomous architect. Не имеет basta_constraint
-  # (в отличие от родительского vsmlite). Резолвит issues сам: triage →
+  # (в отличие от родителя). Резолвит issues сам: triage →
   # decision → execution. Не эскалирует к human. Человек наблюдает через
-  # родительский vsmlite dashboards; вмешательство — через родительский issue.
+  # родительские dashboards; вмешательство — через родительский issue.
   # Identity/values/never-do change — единственное исключение: S5 не меняет
   # own identity без родительского решения (но это родительский basta, не product).
 
   # (VSM-002) продукт полностью не привязан к конкретному оценочному набору по
-  # построению; мембрана product↔evaluation — на стороне родителя. См.
-  # ../../vsmlite-tb/CLAUDE.md.
+  # построению; мембрана product↔evaluation — на стороне родителя. См. CLAUDE.md.
 
 # ───────────────────────────── S1 — Operations ─────────────────────────────
 # Прикладной домен: ../src/ (подключается materialize_child на init). intent-level.
@@ -80,6 +79,9 @@ system_2:
       action: "стоп, лог, эскалация"
     - trigger: "попытка создать файлы вне workspace"
       action: "блок"
+    # VSM-005 §5: uncertainty probing — S2 experiments при неуверенности в решаемости
+    - trigger: "солвер колеблется (low-confidence): нет готового pattern, задача выглядит непривычно, high failure-risk"
+      action: "провести probing — маленькие изолированные пробы для уточнения характера задачи (reconnaissance, не полноценный solve); результаты → S3/S4"
   conflict_detection:
     resource_overlaps: true
     output_contradictions: true
@@ -108,6 +110,13 @@ system_3:
   deviation_logic:
     report_only_deviations: true
     threshold_percent: 15
+  # VSM-005 §5: uncertainty optimization — S3 оптимизирует на основе S2-probing + S4-findings
+  uncertainty_optimization:
+    trigger: "S2 probing или S4 expansion signal указывают на low-confidence в решаемости"
+    actions:
+      - "перераспределение ресурсов (budget weights) в пользу S1/S4 при low-confidence"
+      - "выбор альтернативной recovery policy если текущая показывает low effectiveness на uncertain tasks"
+      - "структурные сигналы через OSM (Split/Merge) если uncertainty — симптом структурного gap"
 
 # ───────────────────────────── S3* — Audit ─────────────────────────────
 # (проявляется на Phase 4)
@@ -121,6 +130,15 @@ system_3_star:
   independence_rules:
     - read_only_access
     - never_trust_self_reports
+  # VSM-005 §5: S3* independently audits uncertainty-reaction (не rubber-stamp S2/S3/S4)
+  uncertainty_reaction_audit:
+    scope: "проверка жизнеспособности реакции S2/S3/S4 на неуверенность в решаемости"
+    checks:
+      - "достаточен ли S2-probing? не избыточен ли? обоснован ли scope?"
+      - "S3-optimization обоснован или premature? не micro-management ли?"
+      - "S4-expansion релевантен задаче или noise?"
+      - "не является ли 'неуверенность' симптомом структурного брака (напр. classifier даёт Unknown слишком часто — это taxonomy gap, structurally → new_failure_class_introduction)?"
+    escalation: "если S3* находит reaction нежизнеспособной → алгедоник → S5 (архитектор) вмешательство"
 
 # ───────────────────────────── S4 — Intelligence ─────────────────────────────
 # (проявляется на Phase 5)
@@ -144,6 +162,12 @@ system_4:
     regulation:               # tailored (VSM-002) — product-level
       - dependency_licensing
       - tool_safety
+  # VSM-005 §5: S4 uncertainty-driven expansion — расширяет knowledge при low-confidence
+  uncertainty_driven_expansion:
+    trigger: "задача выглядит непривычно / нет готового pattern / high failure-risk (low-confidence в решаемости)"
+    action: "S4 ищет coding patterns и recovery techniques именно для этого случая (demand-driven, не ambient scan)"
+    scope: "general-purpose (coding patterns, recovery techniques — не tied к конкретному оценочному набору)"
+    feedback_to: "S3 (для optimization) + S2 (для уточнения probing)"
   weak_signals:
     enabled: true
     sources:                  # tailored (VSM-002) — product-level recovery signals

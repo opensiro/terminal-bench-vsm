@@ -1,13 +1,13 @@
-# vsm.yaml — модель дочернего VSM (выращиваемого vsmlite)
+# vsm.yaml — модель дочернего VSM
 #
-# Скелет seed/child/. Копируется в ../vsm/ на /vsmlite-init.
+# Скелет seed/child/. Копируется в ../vsm/ на init.
 # Поля помечены `# tailored` — заполняются шагом tailor_child (init или cycle).
-# maturation_state обновляется synthesis-operator (родительский vsmlite) по фазам OSM.
+# maturation_state обновляется родителем по фазам OSM.
 
 name: "<domain> VSM"          # tailored на init (из .intent.yaml)
 runtime: claude-code
 version: 0.1.0
-parent: vsmlite               # родительский оператор синтеза
+parent: external              # VSM-005 parent isolation: продукт не знает про родителя; поле нейтральное
 
 meta:
   initialized: false          # flip в true последним в validate_init
@@ -25,13 +25,13 @@ identity:
     - transparency
     - minimal_intervention
   never_do:
-    - modify_parent_directly   # родительский vsmlite трогает этот VSM только через child-dispatcher
+    - modify_parent_directly   # родитель трогает этот VSM только через child-dispatcher
     - same_provider_for_s3star
     - escalate_to_human        # VSM-006: product S5 автономен; не эскалирует issues к human
     - disable_algedonic_channel
     - reuse_record_id
   # (VSM-006) product S5 = autonomous architect. Не имеет basta_constraint
-  # (в отличие от родительского vsmlite). Резолвит issues сам.
+  # (в отличие от родителя). Резолвит issues сам.
 
 # ───────────────────────────── S1 — Operations ─────────────────────────────
 # Прикладной домен: ../src/ (подключается materialize_child на init).

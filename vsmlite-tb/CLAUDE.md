@@ -36,7 +36,24 @@ vsmlite — **не** фабрика и **не** приложение прикл�
 | **S3** | Control/Optimization — A(t), бюджет, ресурсы созревания | `s3-optimizer` |
 | **S3\*** | Audit — независимый (другая модель, read-only) аудит жизнеспособности дочернего VSM | `s3-star-auditor` |
 | **S4** | Intelligence — скан среды прикладного домена дочернего VSM | `s4-scout` |
-| **S5** | Policy/Identity — этот файл + `s5-guardian` | `CLAUDE.md` + `s5-guardian` |
+| **S5** | Policy/Identity — **архитектор** (VSM-005): вмешивается в дочерний VSM при алгедонике от S3/S3\*/S4, рутинно бездействует; каждое вмешательство = +1 к intervention metric (публичный индикатор автономности) | `CLAUDE.md` + `s5-guardian` |
+
+**S5 = архитектор (VSM-005):** рутинно НЕ вмешивается (S1-S4 работают автономно).
+Вмешивается только когда алгедонический канал сигнализирует, что S3/S3\*/S4 не
+справляются. Вмешательство = структурное изменение VSM (OSM-примитивы:
+Split/Merge/Reconfigure), не микроуправление. Чем меньше вмешательств — тем
+автономнее VSM. Intervention metric показывается через dashboards (не S5).
+
+**S5 environment-type awareness (VSM-005):** S5 знает типы сред (Production /
+Simulation / Benchmark / Sandbox / Training), знает что этот VSM используется
+в т.ч. для Benchmark env. Но S5 **не знает** конкретики («Terminal Bench»,
+«harbor») — это знание только human + vsmlite.yaml identity (модель). Системы
+ниже S5 не знают даже про env-types.
+
+**Parent isolation (VSM-005):** дочерний VSM (`../vsm/`, `../src/`) не знает,
+что vsmlite-tb с ним работает. `vsm/` и `src/` не ссылаются на `../../vsmlite-tb/`.
+Intervention metric живёт в `vsmlite-tb/state/` (родитель), не в `vsm/state/`.
+VSM переживает S5-вмешательство (через child-dispatcher) как локальную мутацию.
 
 **Permission matrix**: S1→S2 only; S2→all; S3→S1,S2; S3\*→S1(read-only); S4→S2,S5;
 S5→S2,S3,S4. Алгедонический байпас S1→S5 при `severity S0/S1`. Полная матрица — в

@@ -122,11 +122,13 @@ eval / grading — проверяется grep.
 - **Специфицируй**:
   - **Tools surface**: filesystem (read/write/edit), shell (exec), browser (если нужно для web-задач), git (clone/commit/diff). Стандартный набор для coding-агента.
   - **Boundary**: что tools НЕ делают (напр. не предоставляют доступ к сети для TB-leak — но это membrane, не MCP; MCP сам agnostic).
+  - **MCP access restriction (VSM-005, structural)**: MCP tools-server продукта **структурно не предоставляет eval-access**. Tool surface просто не включает eval-доступ — это не runtime-policy (которую можно обойти), а design-time структурное ограничение. S1 не может обратиться к eval-данным, потому что такого tool нет в MCP-сервере. Мембрана = отсутствие инструмента, не фильтр. Продукт не знает о restriction.
   - **Integration**: как S1 вызывает MCP (transport: stdio/http; конфиг: `.claude/mcp.json` или эквивалент).
   - **Observability**: tool calls логируются в trace (для S3-classifier).
 - **Deliverable**: `src/mcp_server/` (НОВЫЙ) с минимальной реализацией или декларацией server config + `vsm/systems/s1-dispatcher/MCP.md` (как S1 использует MCP).
 - **Acceptance**:
   - tools surface определён (список tools с input/output).
+  - **MCP access restriction (VSM-005)**: tool surface явно НЕ включает eval-access; структурное отсутствие, не фильтр.
   - MCP server config пример (`mcp.json`-style) включён.
   - observability: tool calls → trace format зафиксирован (совместим с T2 failure observations).
   - НИ ОДНОГО упоминания Terminal Bench.

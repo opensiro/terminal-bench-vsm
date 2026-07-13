@@ -96,9 +96,12 @@ def main():
     heartbeat = _read(STATE / "heartbeat.json", {})
     live = _read(STATE / "live_metrics.json", {})
     history = _read(STATE / "history.json", [])
+    interventions = _read(STATE / "interventions.json", {})
 
     autonomy = maturation.get("autonomy", {}) if maturation else {}
     kpi = metrics.get("kpi", {}) if metrics else {}
+    intervention_list = interventions.get("interventions", []) if isinstance(interventions, dict) else []
+    cycle_count = maturation.get("cycle_count", 0) if maturation else 0
 
     data = {
         "generated": datetime.now().isoformat(timespec="seconds"),
@@ -115,6 +118,9 @@ def main():
             "token_spend_estimate": kpi.get("token_spend_estimate", 0),
             "triple_index": (metrics or {}).get("triple_index", {}) if metrics else {},
             "balance_s3_s4": (metrics or {}).get("balance_s3_s4", {}) if metrics else {},
+            "s5_intervention_count": len(intervention_list),   # VSM-005: lower = more autonomous
+            "s5_intervention_cycles": len({i.get("cycle") for i in intervention_list if i.get("cycle") is not None}),
+            "intervention_share": round(len({i.get("cycle") for i in intervention_list if i.get("cycle") is not None}) / cycle_count, 3) if cycle_count else 0.0,
         },
         "maturation": {
             "state": maturation.get("maturation_state", "Initial State"),
@@ -137,6 +143,7 @@ def main():
         "issues": _read_issues(),
         "history": history,
         "activity": live.get("activity", []),
+        "interventions": intervention_list,   # VSM-005: S5 intervention log (публичный индикатор автономности)
     }
 
     MONITOR.mkdir(exist_ok=True)
