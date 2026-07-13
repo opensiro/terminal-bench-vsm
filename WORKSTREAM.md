@@ -125,11 +125,13 @@ eval / grading — проверяется grep.
 - **How-to-start**: после Sync 1, спавни `child-dispatcher` с task `implement: mcp_tools_server`. Зависит преимущественно от T2, слабо от T1.
 
 ### Sync 2 — точка синхронизации (после T3 + T4)
+- **Status**: ✅ done (сессия 2026-07-14)
 - **Что**: end-to-end dry-run дизайн-проверки. S1 (T2) + MCP (T4) + retry (T3) + taxonomy (T1) → могут ли они вместе обработать один synthetic failure end-to-end (на бумаге).
 - **Критерий pass**: trace сценария «солвер упал с ModuleNotFound → classifier → InstallTool → retry → успех» проходит через все компоненты без gaps.
+- **Результат**: ✅ PASS — no gaps. 16 шагов: first attempt (S1 launch → shell.exec → ModuleNotFoundError → task_failed) → classification (parse observations → match ImportError signals → select InstallDependency → anti-repeat OK → form recovery_directive) → recovery execution (executor applies policy → S2 coordinates retry) → retry (S1 launch #2 with directive → shell.exec → pytest passes → task_resolved) → post-retry (KPI tracking → S3\* audit passes). Все компоненты (T1/T2/T3/T4 + VSM-005 §5 + VSM-006) связаны без gaps. → T5 разблокирован.
 
 ### T5 — S2-пайплайны (волна 3)
-- **Status**: blocked on Sync 2
+- **Status**: **ready** (Sync 2✅)
 - **Зависимости**: T1 (taxonomy → что конфликт), T3 (retry → что координировать)
 - **Задача**: S2 coordination pipelines. Anti-oscillation, recovery coordination, multi-agent session sync.
 - **Компоненты**:
@@ -168,8 +170,8 @@ eval / grading — проверяется grep.
 | Sync 1 | **✅ done** | T1✅, T2✅ | — |
 | T3: retry-механизм | **✅ done** | Sync 1✅ | 2 |
 | T4: MCP tools-server | **✅ done** | Sync 1✅ (T2) | 2 |
-| Sync 2 | **ready** | T3✅, T4✅ | — |
-| T5: S2-пайплайны | blocked | Sync 2 | 3 |
+| Sync 2 | **✅ done** | T3✅, T4✅ | — |
+| T5: S2-пайплайны | **ready** | Sync 2✅ | 3 |
 
 **Глобальные acceptance (для всех workstream'ов):**
 - `vsmlite-tb/scripts/validate.sh` GREEN после каждого.
