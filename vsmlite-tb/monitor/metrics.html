@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>vsmlite-tb · Метрики по датам — Terminal Bench 2.1</title>
+  <link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+  <header class="top"></header>
+
+  <section>
+    <h2>Сводка — последний снэпшот</h2>
+    <div id="m-summary"></div>
+  </section>
+
+  <section>
+    <h2>Autonomy & coverage (доли)</h2>
+    <div class="chart" id="m-chart-ratios"></div>
+  </section>
+
+  <section>
+    <h2>История снэпшотов (по датам циклов)</h2>
+    <div class="card">
+      <table id="m-table"></table>
+    </div>
+  </section>
+
+  <section>
+    <div class="note">
+      Метрики копятся автоматически: каждый <code>python3 scripts/render_data.py</code>
+      записывает/обновляет в <code>state/history.json</code> строку за сегодня
+      (один снэпшот в день — серия отражает реальные даты состояния, а не часы рендера).
+      Источник: <code>state/*.json</code> → <code>monitor/data.js</code>
+      (<code>window.VSM_DATA.history</code>). Чистый статический HTML, без бэкенда и
+      <code>fetch()</code>.
+    </div>
+  </section>
+
+  <script src="data.js"></script>
+  <script src="assets/hints.js"></script>
+  <script src="assets/app.js"></script>
+  <script src="assets/charts.js"></script>
+  <script>
+    // renderMetricsHistory: сводка + линейные графики + таблица
+    (function () {
+      const D = window.VSM_DATA || {};
+      const h = D.history || [];
+      const H = window.VSM_HINTS || {};
+      const fmtPct = v => (v == null ? "—" : (Math.round(v * 1000) / 10) + "%");
+
+      // сводка последнего снэпшота
+      const last = h.length ? h[h.length - 1] : {};
+      const summaryRoot = document.getElementById("m-summary");
+      if (summaryRoot) {
+        if (!h.length) {
+          summaryRoot.innerHTML = `<div class="empty">нет истории (запусти render_data.py повторно в следующие дни)</div>`;
+        } else {
+          const tile = (v, l, hint, good) => `<div class="m-tile" title="${esc(hint || '')}"><div class="l">${l}</div><div class="v">${v == null ? "—" : v}</div></div>`;
+          summaryRoot.innerHTML =
+            tile(fmtPct(last.autonomy_score), "A(t)", H.autonomy_score) +
+            tile(esc(last.maturation_phase || "—"), "phase", H.maturation_phase) +
+            tile(fmtPct(last.coverage_ratio), "coverage", H.coverage_ratio) +
+            tile(fmtPct(last.validate_pass_rate), "validate", H.validate_pass_rate) +
+            tile(last.drift_score == null ? "—" : last.drift_score, "drift", H.drift_score) +
+            tile(esc(last.date || "—"), "last snapshot", "");
+        }
+      }
+
+      // линейный график: autonomy_score, coverage_ratio, validate_pass_rate
+      const chartRoot = document.getElementById("m-chart-ratios");
+      if (chartRoot) {
+        const labels = h.map(s => s.date || "");
+        const series = [
+          { name: "A(t)",            color: "#3fb950", points: h.map((s, i) => ({ x: i, y: s.autonomy_score })) },
+          { name: "coverage_ratio",  color: "#58a6ff", points: h.map((s, i) => ({ x: i, y: s.coverage_ratio })) },
+          { name: "validate_pass_rate", color: "#bc8cff", dashed: true, points: h.map((s, i) => ({ x: i, y: s.validate_pass_rate })) },
+        ];
+        const svg = window.lineChart(series, { w: 720, h: 220, yMin: 0, yMax: 1, valueFmt: fmtPct, xLabels: labels });
+        chartRoot.innerHTML = svg +
+          `<div class="chart-legend">${series.map(s => `<span><i style="background:${s.color}"></i>${esc(s.name)}</span>`).join("")}</div>`;
+      }
+
+      // таблица истории
+      const tbl = document.getElementById("m-table");
+      if (tbl) {
+        if (!h.length) {
+          tbl.innerHTML = `<div class="empty">нет истории</div>`;
+        } else {
+          const head = `<thead><tr><th>date</th><th class="num">A(t)</th><th>phase</th><th class="num">coverage</th><th class="num">validate</th><th class="num">drift</th></tr></thead>`;
+          const rows = h.slice().reverse().map(s => `<tr><td>${esc(s.date || "—")}</td><td class="num">${fmtPct(s.autonomy_score)}</td><td>${esc(s.maturation_phase || "—")}</td><td class="num">${fmtPct(s.coverage_ratio)}</td><td class="num">${fmtPct(s.validate_pass_rate)}</td><td class="num">${s.drift_score == null ? "—" : s.drift_score}</td></tr>`).join("");
+          tbl.innerHTML = head + `<tbody>${rows}</tbody>`;
+        }
+      }
+
+      function esc(s) { return String(s == null ? "" : s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c])); }
+    })();
+  </script>
+  <script>renderMetricsPage();</script>
+</body>
+</html>

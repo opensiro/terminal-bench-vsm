@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>vsmlite-tb · Запросы корректировки — Terminal Bench 2.1</title>
+  <link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+  <header class="top"></header>
+
+  <section>
+    <h2>Алгедонический канал — запросы корректировки (VSM-NNN)</h2>
+    <div class="note" style="margin-bottom:16px;">
+      Каждая карточка — сигнал VSM. Отметьте <b>один или несколько</b> вариантов
+      (мультивыбор) или напишите <b>manual</b>. Решения сразу отображаются в
+      <code>decisions.json</code> ниже — обновляется мгновенно. Скопируйте команду и
+      примените в сессии vsmlite-tb (обновите <code>issues/VSM-NNN.yaml</code>:
+      <code>status</code>, <code>decision</code>, <code>selected_options</code>).
+      <b>S0/S1</b> и <code>algedonic</code> — экстренный байпас к человеку.
+      <br><br>
+      <b>Сейчас активен: <a href="#" onclick="return false">VSM-001</a></b> — runtime membrane
+      (полная изоляция рантайма) + S4 интернет с трансдукцией. Статус в файле:
+      <code>accepted</code> (человек постановал в init-сессии); карточка показывает
+      full proposal/evidence/acceptance и позволяет зафиксировать/скачать решение.
+    </div>
+    <div id="dec-toolbar" class="dec-toolbar"></div>
+    <h3 class="dec-file-head">📄 decisions.json <span class="muted">(живой файл — рядом, обновляется сразу; хранится локально в браузере)</span></h3>
+    <pre id="dec-file" class="dec-file"></pre>
+    <div id="issues"></div>
+  </section>
+
+  <script src="data.js"></script>
+  <script src="assets/hints.js"></script>
+  <script src="assets/app.js"></script>
+  <script>renderIssuesPage();</script>
+</body>
+</html>

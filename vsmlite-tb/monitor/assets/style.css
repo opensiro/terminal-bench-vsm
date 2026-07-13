@@ -1,0 +1,215 @@
+/* monitor/assets/style.css — vsmlite-tb dashboard. Ванильный CSS, без фреймворков.
+   Перенесено из opensiro-arctic/vsm/monitor/assets/style.css (доменно-нейтральная часть). */
+:root {
+  --bg: #0d1117;
+  --panel: #161b22;
+  --panel-2: #1c2330;
+  --border: #30363d;
+  --text: #e6edf3;
+  --muted: #8b949e;
+  --accent: #58a6ff;
+  --green: #3fb950;
+  --amber: #d29922;
+  --red: #f85149;
+  --purple: #bc8cff;
+  --s0: #f85149;
+  --s1: #d29922;
+  --s2: #58a6ff;
+  --s3: #8b949e;
+  font-synthesis: none;
+}
+@media (prefers-color-scheme: light) {
+  :root { --bg:#f6f8fa; --panel:#ffffff; --panel-2:#f0f3f7; --border:#d0d7de; --text:#1f2328; --muted:#59636e; }
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; }
+body {
+  background: var(--bg); color: var(--text);
+  font: 14px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  padding: 20px;
+}
+a { color: var(--accent); text-decoration: none; }
+a:hover { text-decoration: underline; }
+header.top {
+  display: flex; align-items: baseline; gap: 16px; flex-wrap: wrap;
+  border-bottom: 1px solid var(--border); padding-bottom: 12px; margin-bottom: 20px;
+}
+header.top h1 { font-size: 18px; margin: 0; font-weight: 600; }
+header.top .sub { color: var(--muted); font-size: 13px; }
+nav.top { margin-left: auto; display: flex; gap: 14px; }
+nav.top a { color: var(--muted); }
+nav.top a.active { color: var(--text); font-weight: 600; }
+.meta-line { color: var(--muted); font-size: 12px; margin-top: 6px; }
+
+.grid { display: grid; gap: 14px; }
+.grid.sys { grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); }
+.grid.units { grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); }
+section { margin-bottom: 28px; }
+section > h2 { font-size: 13px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); margin: 0 0 12px; font-weight: 600; }
+
+.card {
+  background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 14px;
+  position: relative; overflow: hidden;
+}
+.card .stripe { position: absolute; left: 0; top: 0; bottom: 0; width: 4px; }
+.card h3 { margin: 0 0 4px; font-size: 14px; }
+.card .role { color: var(--muted); font-size: 12px; margin-bottom: 8px; }
+.card .task { font-size: 13px; color: var(--text); }
+.card .foot { margin-top: 10px; font-size: 11px; color: var(--muted); display: flex; justify-content: space-between; }
+
+.dot { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 6px; vertical-align: middle; }
+.dot.green { background: var(--green); } .dot.amber { background: var(--amber); } .dot.red { background: var(--red); }
+
+.badge { display: inline-block; font-size: 11px; padding: 1px 7px; border-radius: 10px; border: 1px solid var(--border); color: var(--muted); margin-right: 4px; }
+.badge.sev-S0 { color:#fff; background: var(--s0); border-color: var(--s0); }
+.badge.sev-S1 { color:#20180a; background: var(--s1); border-color: var(--s1); }
+.badge.sev-S2 { color:#fff; background: var(--s2); border-color: var(--s2); }
+.badge.sev-S3 { color: var(--text); background: var(--panel-2); }
+.badge.sys { color: var(--purple); border-color: var(--purple); }
+.badge.signal { color: var(--accent); border-color: var(--accent); }
+.badge.warn { color: #20180a; background: var(--amber); border-color: var(--amber); }
+.badge.phase { color: var(--green); border-color: var(--green); }
+
+/* issue cards */
+.issue {
+  background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 16px; margin-bottom: 14px;
+}
+.issue h3 { margin: 0 0 8px; font-size: 15px; }
+.issue .ids { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 10px; }
+.issue .summary { color: var(--text); margin: 0 0 10px; white-space: pre-wrap; }
+.issue .block { margin-top: 10px; }
+.issue .block h4 { margin: 0 0 4px; font-size: 11px; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); }
+.issue ul { margin: 0; padding-left: 18px; }
+.issue ul li { font-size: 13px; margin-bottom: 3px; }
+.issue .actions { margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--border); color: var(--muted); font-size: 12px; }
+
+.kpis { display: flex; gap: 18px; flex-wrap: wrap; }
+.kpi { background: var(--panel); border: 1px solid var(--border); border-radius: 8px; padding: 10px 14px; min-width: 130px; }
+.kpi .v { font-size: 20px; font-weight: 600; }
+.kpi .l { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; }
+.kpi { cursor: help; }
+.kpi .hint { color: var(--muted); font-size: 11px; }
+
+table { width: 100%; border-collapse: collapse; font-size: 13px; }
+th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--border); }
+th { color: var(--muted); font-weight: 600; font-size: 11px; text-transform: uppercase; letter-spacing: .04em; }
+td.num { text-align: right; font-variant-numeric: tabular-nums; }
+
+.note { background: var(--panel-2); border: 1px dashed var(--border); border-radius: 8px; padding: 12px 14px; color: var(--muted); font-size: 13px; }
+.empty { color: var(--muted); font-style: italic; font-size: 13px; padding: 8px 0; }
+.muted { color: var(--muted); }
+
+/* блок решения человека */
+.dec-toolbar { display: flex; align-items: center; gap: 14px; justify-content: space-between; flex-wrap: wrap; margin-bottom: 14px; }
+.dec-toolbar .dec-tools { display: flex; gap: 8px; }
+.dec-toolbar button:disabled { opacity: .45; cursor: not-allowed; }
+
+.decision { margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--border); }
+.decision h4 { margin: 0 0 8px; font-size: 11px; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); }
+.opts { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 10px; }
+.opt {
+  display: inline-flex; align-items: center; gap: 7px; background: var(--panel-2);
+  border: 1px solid var(--border); border-radius: 8px; padding: 7px 12px; font-size: 13px;
+  cursor: pointer; margin: 0; transition: border-color .12s, background .12s;
+}
+.opt:hover { border-color: var(--accent); }
+.opt input { margin: 0; accent-color: var(--accent); width: 15px; height: 15px; }
+.opt:has(input:checked) { border-color: var(--green); background: var(--panel); }
+
+.dec-file-head { margin: 18px 0 6px; font-size: 13px; color: var(--muted); }
+.dec-file-head .muted { color: var(--muted); font-weight: 400; }
+.dec-file {
+  background: var(--panel-2); border: 1px solid var(--border); border-radius: 8px;
+  padding: 12px 14px; margin: 0 0 18px;
+  font: 12px/1.5 ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  color: var(--text); white-space: pre-wrap; word-break: break-word; max-height: 320px; overflow: auto;
+}
+.manual textarea {
+  width: 100%; background: var(--panel-2); border: 1px solid var(--border); color: var(--text);
+  border-radius: 8px; padding: 8px 10px; font: inherit; resize: vertical;
+}
+.dec-actions { margin-top: 8px; }
+.dec-state { margin-top: 10px; }
+.dec-done { color: var(--green); font-size: 13px; margin-bottom: 6px; }
+.dec-cmd { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.dec-cmd code {
+  background: var(--panel-2); border: 1px solid var(--border); border-radius: 6px;
+  padding: 4px 8px; font-size: 12px; flex: 1 1 auto; word-break: break-all;
+}
+
+button {
+  background: var(--panel-2); border: 1px solid var(--border); color: var(--text);
+  border-radius: 7px; padding: 6px 12px; font-size: 12px; cursor: pointer;
+}
+button:hover:not(:disabled) { border-color: var(--accent); }
+button[data-act="copy"] { background: var(--accent); color: #0d1117; border-color: var(--accent); font-weight: 600; }
+button[data-act="manual"] { background: var(--panel); }
+
+/* SVG-чарты (metrics.html) */
+.chart {
+  background: var(--panel); border: 1px solid var(--border); border-radius: 10px;
+  padding: 14px; overflow-x: auto;
+}
+.chart svg { display: block; max-width: 100%; height: auto; }
+.chart-legend { display: flex; gap: 16px; flex-wrap: wrap; margin-top: 12px; font-size: 12px; color: var(--muted); }
+.chart-legend span { display: inline-flex; align-items: center; gap: 6px; }
+.chart-legend i { display: inline-block; width: 14px; height: 3px; border-radius: 2px; }
+.m-summary { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 12px; }
+.m-tile { background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px; }
+.m-tile .l { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; }
+.m-tile .v { font-size: 22px; font-weight: 600; margin-top: 4px; font-variant-numeric: tabular-nums; }
+.m-tile .d { font-size: 12px; margin-top: 4px; }
+.m-tile .d.good { color: var(--green); }
+.m-tile .d.bad  { color: var(--red); }
+.m-tile .d.flat { color: var(--muted); }
+
+/* A(t) знаки автономности (4 знака) */
+.signs-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; }
+.sign-card { background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px; position: relative; }
+.sign-card .sign-stripe { position: absolute; left: 0; top: 0; bottom: 0; width: 4px; background: var(--muted); }
+.sign-card.meets .sign-stripe { background: var(--green); }
+.sign-card h4 { margin: 0 0 4px; font-size: 13px; }
+.sign-card .sign-val { font-size: 18px; font-weight: 600; }
+.sign-card .sign-detail { font-size: 11px; color: var(--muted); margin-top: 4px; }
+
+/* maturation track (OSM phases) */
+.phase-track { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+.phase-pill {
+  font-size: 11px; padding: 4px 10px; border-radius: 12px;
+  border: 1px solid var(--border); color: var(--muted); background: var(--panel-2);
+}
+.phase-pill.done { color: var(--green); border-color: var(--green); }
+.phase-pill.current { color: #0d1117; background: var(--accent); border-color: var(--accent); font-weight: 600; }
+
+/* task-block: краткое + раскрывающийся полный текст */
+.task-wrap .task.summary { font-size: 13px; color: var(--text); }
+.task-appendix { margin-top: 8px; }
+.task-appendix > summary { cursor: pointer; font-size: 11px; color: var(--accent); list-style: none; user-select: none; }
+.task-appendix > summary::-webkit-details-marker { display: none; }
+.task-appendix > summary:hover { text-decoration: underline; }
+.task-appendix .task-full { margin-top: 8px; padding: 10px; background: var(--panel-2); border-radius: 6px;
+  font-size: 12px; color: var(--muted); white-space: pre-wrap; max-height: 340px; overflow: auto; line-height: 1.45; }
+
+/* Triple index (S3) — свёрнутый блок */
+details.ti { margin-top: 10px; }
+details.ti > summary { cursor: pointer; list-style: none; user-select: none; font-size: 13px; color: var(--text); }
+details.ti > summary::-webkit-details-marker { display: none; }
+details.ti > summary:hover { text-decoration: underline; }
+details.ti > summary .ti-preview { color: var(--muted); font-size: 12px; font-style: italic; }
+details.ti .ti-body { margin-top: 8px; display: flex; flex-direction: column; gap: 6px; }
+details.ti .ti-row { display: flex; gap: 8px; font-size: 12px; line-height: 1.45; }
+details.ti .ti-k { color: var(--muted); min-width: 92px; font-style: normal; }
+details.ti .ti-v { color: var(--text); white-space: pre-wrap; }
+
+/* issue-карточки: свёрнутые детали (proposal/evidence/acceptance/policy) */
+.issue-details { margin: 10px 0; border-top: 1px dashed var(--border); padding-top: 8px; }
+.issue-details > summary { cursor: pointer; list-style: none; user-select: none; font-size: 12px; color: var(--accent); margin-bottom: 6px; }
+.issue-details > summary::-webkit-details-marker { display: none; }
+.issue-details > summary:hover { text-decoration: underline; }
+.issue-details[open] > summary { margin-bottom: 10px; }
+
+abbr[title] { cursor: help; text-decoration: underline dotted var(--muted); text-underline-offset: 2px; }
+abbr.k { color: var(--muted); text-decoration: underline dotted var(--border); font-size: 13px; }
+.k { color: var(--muted); }
+
+@media (max-width: 760px) { #two-col, #m-two-col { grid-template-columns: 1fr !important; } }

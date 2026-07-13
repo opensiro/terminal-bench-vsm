@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>vsmlite-tb · Maturation & Systems — Terminal Bench 2.1</title>
+  <link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+  <header class="top"></header>
+
+  <section>
+    <h2>Maturation — путь дочернего VSM по OSM</h2>
+    <div id="maturation"></div>
+  </section>
+
+  <section>
+    <h2>4 знака автономности A(t)</h2>
+    <div id="signs"></div>
+  </section>
+
+  <section>
+    <h2>Системы VSM родительского vsmlite (S1–S5 + S3*)</h2>
+    <div id="systems"></div>
+  </section>
+
+  <section>
+    <h2>S3 — метрики созревания (сводка)</h2>
+    <div id="metrics"></div>
+  </section>
+
+  <div style="display:grid; grid-template-columns:1fr 1fr; gap:28px;" id="two-col">
+    <section>
+      <h2>S3* — аудит</h2>
+      <div id="audit"></div>
+    </section>
+    <section>
+      <h2>S4 — разведка (сигналы)</h2>
+      <div id="signals"></div>
+    </section>
+  </div>
+
+  <section>
+    <div class="note">
+      Монитор — статический HTML (без бэкенда). Данные: <code>monitor/data.js</code>
+      (регенерируется <code>python3 scripts/render_data.py</code>).
+      Метрики по датам — <a href="metrics.html">metrics.html</a>.
+      Запросы корректировки (VSM-NNN, в т.ч. <b>VSM-001 — runtime membrane + S4 internet</b>) —
+      <a href="issues.html">issues.html</a>. Применение решений — в сессии vsmlite-tb
+      (обновить <code>issues/VSM-NNN.yaml</code> → <code>status/decision/selected_options</code>).
+    </div>
+  </section>
+
+  <script src="data.js"></script>
+  <script src="assets/hints.js"></script>
+  <script src="assets/app.js"></script>
+  <script>renderHome();</script>
+</body>
+</html>
