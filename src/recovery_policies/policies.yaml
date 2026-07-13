@@ -1,0 +1,141 @@
+# src/recovery_policies/policies.yaml — реестр recovery policy executors (T3).
+# Каждая policy из failure_taxonomy.yaml имеет executor здесь (или stub).
+# S3-classifier выбирает policy; recovery executor применяет к environment.
+# General-purpose по построению (не привязан к конкретному оценочному набору).
+version: 0.1.0
+generated: 2026-07-13
+
+policies:
+  - id: InstallTool
+    failure_class: ToolNotFound
+    executor: install_tool
+    status: stub                 # stub | implemented; runtime-фаза реализует
+    description: "установить требуемый tool/CLI в окружение"
+    inputs: [tool_name, package_manager]
+    env_changes_template: ["installed: <tool_name>"]
+
+  - id: InstallDependency
+    failure_class: ImportError
+    executor: install_dependency
+    status: stub
+    description: "установить модуль через менеджер пакетов языка"
+    inputs: [module_name, package_name, package_manager]
+    env_changes_template: ["installed: <package_name>"]
+
+  - id: CreateFreshVenv
+    failure_class: DependencyConflict
+    executor: create_fresh_venv
+    status: stub
+    description: "создать свежее venv, установить deps заново"
+    inputs: [deps_declaration, venv_path]
+    env_changes_template: ["created venv: <venv_path>", "reinstalled deps"]
+
+  - id: FixBuildConfig
+    failure_class: CompilationError
+    executor: fix_build_config
+    status: stub
+    description: "минимальный фикс сборки/компиляции"
+    inputs: [error_file, error_line, build_system]
+    env_changes_template: ["patched: <error_file>:<error_line>"]
+
+  - id: FixSyntax
+    failure_class: SyntaxError
+    executor: fix_syntax
+    status: stub
+    description: "минимальная синтаксическая правка"
+    inputs: [file_path, line, error_type]
+    env_changes_template: ["edited: <file_path>:<line>"]
+
+  - id: DiagnoseAndPatch
+    failure_class: TestFailure
+    executor: diagnose_and_patch
+    status: stub
+    description: "диагностика assertion, минимальная правка в реализации"
+    inputs: [test_name, expected, actual, source_file]
+    env_changes_template: ["patched: <source_file>"]
+
+  - id: RelocalizeAndReplay
+    failure_class: FileLocalizationError
+    executor: relocalize
+    status: stub
+    description: "переискать целевой файл/символ, повторить с корректным путём"
+    inputs: [search_pattern, repo_root]
+    env_changes_template: ["relocalized: <correct_path>"]
+
+  - id: ResetAndReplay
+    failure_class: GitConflict
+    executor: reset_and_replay
+    status: stub
+    description: "abort конфликт, reset на чистое состояние задачи"
+    inputs: [workspace, clean_ref]
+    env_changes_template: ["git reset to <clean_ref>"]
+
+  - id: UseAlternateAuth
+    failure_class: GitAuthFailure
+    executor: use_alternate_auth
+    status: stub
+    description: "настроить alternate auth method (SSH/token/credential-helper)"
+    inputs: [remote_url, auth_method]
+    env_changes_template: ["auth configured: <auth_method>"]
+
+  - id: RetryWithSmallerScope
+    failure_class: TimeoutExpired
+    executor: retry_smaller_scope
+    status: stub
+    description: "декомпозировать действие, повторить с меньшим scope"
+    inputs: [original_action, budget]
+    env_changes_template: ["decomposed action, reduced scope"]
+
+  - id: KillAndRestart
+    failure_class: HangDetected
+    executor: kill_and_restart
+    status: stub
+    description: "убить зависший процесс, очистить ресурсы, перезапустить"
+    inputs: [pid, workspace, checkpoint]
+    env_changes_template: ["killed <pid>", "cleaned resources"]
+
+  - id: ReduceFootprint
+    failure_class: ResourceLimit
+    executor: reduce_footprint
+    status: stub
+    description: "уменьшить потребление ресурсов (batch/fd/streaming)"
+    inputs: [limiting_resource, current_usage]
+    env_changes_template: ["reduced <limiting_resource> footprint"]
+
+  - id: FixPermissions
+    failure_class: PermissionDenied
+    executor: fix_permissions
+    status: stub
+    description: "минимальная правка прав (chmod/chown)"
+    inputs: [path, required_access]
+    env_changes_template: ["chmod <path>"]
+
+  - id: RetryWithBackoff
+    failure_class: NetworkError
+    executor: retry_with_backoff
+    status: stub
+    description: "повторить с экспоненциальным backoff"
+    inputs: [target_url, max_retries]
+    env_changes_template: ["retry with backoff (<n> attempts)"]
+
+  - id: ClarifySpec
+    failure_class: AmbiguousSpec
+    executor: clarify_spec
+    status: stub
+    description: "зафиксировать интерпретацию, отметить предположение"
+    inputs: [task_prompt, interpretation]
+    env_changes_template: ["recorded interpretation: <interpretation>"]
+
+  - id: EscalateToS3
+    failure_class: Unknown
+    executor: escalate_to_s3
+    status: n/a                  # не executor; эскалация
+    description: "S3 анализирует trace; если Unknown share > threshold → S4"
+    inputs: [failure_observations, trace]
+    env_changes_template: []
+
+notes:
+  - "Все executors — stub на design-фазе. Реализация (python modules) — runtime-фаза."
+  - "Каждый executor изолирован: получает policy_id + context, возвращает env_changes."
+  - "Anti-repeat: executor НЕ применяется если policy_attempt > limit (из taxonomy s2_anti_repeat)."
+  - "General-purpose: policies не привязаны к конкретному оценочному набору."

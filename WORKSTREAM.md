@@ -99,39 +99,28 @@ eval / grading — проверяется grep.
 - **Результат**: ✅ PASS — no gaps. 4 observation kinds (error_string/exit_code/timeout/signal) ↔ 16 классов. 15 классов детектятся через error_string (signals — substring-matchable); 7 через exit_code (auxiliary); 3 через timeout (TimeoutExpired/HangDetected); 1 через signal (ResourceLimit — OOM/SIGKILL). AmbiguousSpec — diagnostic (no observation kind), покрыт через S4 uncertainty_driven_expansion (VSM-005 §5). Unknown — escape hatch (любое unmatched observation). T3 (retry) и T4 (MCP) разблокированы.
 
 ### T3 — Retry-механизм (волна 2)
-- **Status**: blocked on Sync 1
+- **Status**: ✅ done (сессия 2026-07-13)
 - **Зависимости**: T1 (taxonomy → recovery policies), T2 (S1 CONTRACT → retry interface)
 - **Задача**: реализовать failure → classifier → recovery policy → retry pipeline.
-- **Компоненты**:
-  - **Failure classifier** (часть S3): парсит failure observations из S1 trace → определяет failure class (по signals из taxonomy) → выбирает recovery policy. Если ни один class не matches → `Unknown` → эскалация S3/human.
-  - **Recovery policy executor**: применяет policy (InstallTool/CreateFreshVenv/ResetAndReplay/...) — меняет environment/state перед retry.
-  - **Retry director**: формирует recovery directive для S1 (какой failure ожидается, какую policy применили, что changed).
-  - **Anti-repeat (S2)**: трекает attempts, блокирует circumvent_recovery (повтор одной неудачи >N раз).
-- **Deliverable**: `vsm/systems/s3-optimizer/CLASSIFIER.md` + `src/recovery_policies/` (НОВЫЙ каталог с per-policy реализацией или декларацией). Обновить `vsm/systems/s3-optimizer/SKILL.md` под classifier protocol.
+- **Результат**: создан `vsm/systems/s3-optimizer/CLASSIFIER.md` (end-to-end pipeline: observations → class → policy → directive, match_order, multi_match_resolution, bypass detection, recovery directive format). Создан `src/recovery_policies/` (README + policies.yaml — 16 policies, все stub). Обновлён `s3-optimizer/SKILL.md` (classifier protocol, uncertainty optimization VSM-005 §5).
 - **Acceptance**:
-  - classifier protocol описан end-to-end (trace → class → policy → retry).
-  - каждая recovery policy из T1 taxonomy имеет executor (или явно помечена «stub, реализуется на Phase 3+»).
-  - anti-repeat интегрирован (ссылка на S2).
-  - bypass detection: если policy применяется но failure рецидивирует → эскалация.
-  - НИ ОДНОГО упоминания Terminal Bench.
+  - [x] classifier protocol описан end-to-end (trace → class → policy → retry). — CLASSIFIER.md §2
+  - [x] каждая recovery policy из T1 taxonomy имеет executor (или явно помечена «stub, реализуется на Phase 3+»). — policies.yaml: 15 stub + 1 n/a (EscalateToS3)
+  - [x] anti-repeat интегрирован (ссылка на S2). — CLASSIFIER.md §4 (policy_attempt, s2_anti_repeat)
+  - [x] bypass detection: если policy применяется но failure рецидивирует → эскалация. — CLASSIFIER.md §6
+  - [x] НИ ОДНОГО упоминания Terminal Bench.
 - **How-to-start**: после Sync 1, спавни `child-dispatcher` с task `implement: retry_mechanism`.
 
 ### T4 — MCP tools-server (волна 2)
-- **Status**: blocked on Sync 1 (точнее на T2 CONTRACT)
+- **Status**: ✅ done (сессия 2026-07-13)
 - **Зависимости**: T2 (S1 CONTRACT → какие tools нужны)
 - **Задача**: MCP-сервер как tools-server для S1-солвера. Benchmark-agnostic по построению.
-- **Специфицируй**:
-  - **Tools surface**: filesystem (read/write/edit), shell (exec), browser (если нужно для web-задач), git (clone/commit/diff). Стандартный набор для coding-агента.
-  - **Boundary**: что tools НЕ делают (напр. не предоставляют доступ к сети для TB-leak — но это membrane, не MCP; MCP сам agnostic).
-  - **MCP access restriction (VSM-005, structural)**: MCP tools-server продукта **структурно не предоставляет eval-access**. Tool surface просто не включает eval-доступ — это не runtime-policy (которую можно обойти), а design-time структурное ограничение. S1 не может обратиться к eval-данным, потому что такого tool нет в MCP-сервере. Мембрана = отсутствие инструмента, не фильтр. Продукт не знает о restriction.
-  - **Integration**: как S1 вызывает MCP (transport: stdio/http; конфиг: `.claude/mcp.json` или эквивалент).
-  - **Observability**: tool calls логируются в trace (для S3-classifier).
-- **Deliverable**: `src/mcp_server/` (НОВЫЙ) с минимальной реализацией или декларацией server config + `vsm/systems/s1-dispatcher/MCP.md` (как S1 использует MCP).
+- **Результат**: создан `src/mcp_server/README.md` (tools surface: filesystem/shell/git/browser + MCP access restriction VSM-005 + config example + observability). Создан `vsm/systems/s1-dispatcher/MCP.md` (integration, tool surface summary, restriction, observability → failure_observations).
 - **Acceptance**:
-  - tools surface определён (список tools с input/output).
-  - **MCP access restriction (VSM-005)**: tool surface явно НЕ включает eval-access; структурное отсутствие, не фильтр.
-  - MCP server config пример (`mcp.json`-style) включён.
-  - observability: tool calls → trace format зафиксирован (совместим с T2 failure observations).
+  - [x] tools surface определён (список tools с input/output). — README.md: fs/shell/git/browser
+  - [x] **MCP access restriction (VSM-005)**: tool surface явно НЕ включает eval-access; структурное отсутствие, не фильтр. — README.md + MCP.md
+  - [x] MCP server config пример (`mcp.json`-style) включён. — README.md
+  - [x] observability: tool calls → trace format зафиксирован (совместим с T2 failure observations). — README.md + MCP.md
   - НИ ОДНОГО упоминания Terminal Bench.
 - **How-to-start**: после Sync 1, спавни `child-dispatcher` с task `implement: mcp_tools_server`. Зависит преимущественно от T2, слабо от T1.
 
@@ -177,9 +166,9 @@ eval / grading — проверяется grep.
 | T1: failure taxonomy | **✅ done** | — | 1 |
 | T2: S1-агент дизайн | **✅ done** | — | 1 |
 | Sync 1 | **✅ done** | T1✅, T2✅ | — |
-| T3: retry-механизм | **ready** | Sync 1✅ | 2 |
-| T4: MCP tools-server | **ready** | Sync 1✅ (T2) | 2 |
-| Sync 2 | blocked | T3, T4 | — |
+| T3: retry-механизм | **✅ done** | Sync 1✅ | 2 |
+| T4: MCP tools-server | **✅ done** | Sync 1✅ (T2) | 2 |
+| Sync 2 | **ready** | T3✅, T4✅ | — |
 | T5: S2-пайплайны | blocked | Sync 2 | 3 |
 
 **Глобальные acceptance (для всех workstream'ов):**
