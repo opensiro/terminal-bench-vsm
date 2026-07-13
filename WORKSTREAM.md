@@ -131,7 +131,7 @@ eval / grading — проверяется grep.
 - **Результат**: ✅ PASS — no gaps. 16 шагов: first attempt (S1 launch → shell.exec → ModuleNotFoundError → task_failed) → classification (parse observations → match ImportError signals → select InstallDependency → anti-repeat OK → form recovery_directive) → recovery execution (executor applies policy → S2 coordinates retry) → retry (S1 launch #2 with directive → shell.exec → pytest passes → task_resolved) → post-retry (KPI tracking → S3\* audit passes). Все компоненты (T1/T2/T3/T4 + VSM-005 §5 + VSM-006) связаны без gaps. → T5 разблокирован.
 
 ### T5 — S2-пайплайны (волна 3)
-- **Status**: **ready** (Sync 2✅)
+- **Status**: ✅ done (сессия 2026-07-14)
 - **Зависимости**: T1 (taxonomy → что конфликт), T3 (retry → что координировать)
 - **Задача**: S2 coordination pipelines. Anti-oscillation, recovery coordination, multi-agent session sync.
 - **Компоненты**:
@@ -140,12 +140,30 @@ eval / grading — проверяется grep.
   - **Conflict detection** (уже есть в `vsm/vsm.yaml → system_2.conflict_detection.custom_triggers`): реализовать триггеры.
   - **Anti-oscillation**: паттерн «солвер повторяет одну неудачу >N раз» → стоп, эскалация.
 - **Deliverable**: `vsm/systems/s2-coordinator/PIPELINES.md` + `src/session_sync/` (если multi-agent). Обновить `vsm/systems/s2-coordinator/SKILL.md`.
+- **Результат**: создан `vsm/systems/s2-coordinator/PIPELINES.md` (9 разделов: recovery coordination pipeline, anti-oscillation, conflict detection, uncertainty probing, session sync decision, escalation ladder, KPI, dependencies). Обновлён `s2-coordinator/SKILL.md` (8-шаговый протокол со ссылками на PIPELINES.md §). Создан `src/session_sync/README.md` (placeholder: mono-agent — не нужен; future contract для Split).
 - **Acceptance**:
-  - recovery coordination protocol описан (как S2 arbiter-ит retry directives).
-  - session sync contract определён (если multi-agent; если mono-agent — явно пометить «не нужен»).
-  - conflict triggers из `vsm/vsm.yaml` реализованы или явно stub.
-  - НИ ОДНОГО упоминания Terminal Bench.
+  - [x] recovery coordination protocol описан (как S2 arbiter-ит retry directives). — PIPELINES.md §2 (4-check pipeline: anti-repeat → conflict → oscillation → authorize)
+  - [x] session sync contract определён (если multi-agent; если mono-agent — явно пометить «не нужен»). — PIPELINES.md §6 + src/session_sync/README.md: mono-agent, не нужен; future contract для Split
+  - [x] conflict triggers из `vsm/vsm.yaml` реализованы или явно stub. — PIPELINES.md §4 (resource_overlaps, output_contradictions, 3 custom_triggers)
+  - [x] anti-oscillation: паттерн A→B→A→B → стоп, эскалация. — PIPELINES.md §3 (ping-pong, flip-flop, no-progress detection)
+  - [x] НИ ОДНОГО упоминания Terminal Bench.
 - **How-to-start**: после Sync 2, спавни `child-dispatcher` с task `implement: s2_pipelines`.
+
+## 🎉 Workstream T1-T5 завершён
+
+Все 5 workstream'ов + 2 sync точки выполнены. Дочерний VSM (продукт) имеет полный
+design-phase контракт:
+
+| Компонент | Файл | Статус |
+|---|---|---|
+| T1: failure taxonomy | `src/failure_taxonomy.yaml` (16 классов, 8 категорий) | ✅ |
+| T2: S1 CONTRACT | `vsm/systems/s1-dispatcher/` (5 файлов + agent) | ✅ |
+| T3: retry CLASSIFIER | `vsm/systems/s3-optimizer/CLASSIFIER.md` + `src/recovery_policies/` | ✅ |
+| T4: MCP tools-server | `src/mcp_server/` + `vsm/systems/s1-dispatcher/MCP.md` | ✅ |
+| T5: S2 PIPELINES | `vsm/systems/s2-coordinator/PIPELINES.md` + `src/session_sync/` | ✅ |
+
+**Следующие шаги (вне workstream):** runtime-фаза — реализация python modules для
+executors, MCP server, s1-dispatcher runtime. Design-phase контракты готовы.
 
 ## Как поднять в новой сессии
 
@@ -171,7 +189,7 @@ eval / grading — проверяется grep.
 | T3: retry-механизм | **✅ done** | Sync 1✅ | 2 |
 | T4: MCP tools-server | **✅ done** | Sync 1✅ (T2) | 2 |
 | Sync 2 | **✅ done** | T3✅, T4✅ | — |
-| T5: S2-пайплайны | **ready** | Sync 2✅ | 3 |
+| T5: S2-пайплайны | **✅ done** | Sync 2✅ | 3 |
 
 **Глобальные acceptance (для всех workstream'ов):**
 - `vsmlite-tb/scripts/validate.sh` GREEN после каждого.
