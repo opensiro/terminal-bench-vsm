@@ -1,0 +1,35 @@
+# state/domain_draft.yaml — драфт описания домена (scan-first)
+generated: 2026-07-13
+scanner: scan_domain (vsmlite init)
+domain_claimed_by_user: "Решение бенчмарка Terminal Bench 2.1"
+
+meta:
+  layout: single            # ../src/ не существует; будет создан (placeholder) на materialize
+  confidence: low           # материалов в .. нет; домен заявлен устно юзером, не из артефактов
+
+observed:
+  mission: |                # из материалов — пусто; домен заявлен пользователем
+    # В .. нет README/манифестов/кода. Домен заявлен устно: «Решение бенчмарка
+    # Terminal Bench 2.1». Конкретизация миссии (организационная цель, не кодовая)
+    # — шаг discover_intent. НЕ додумываем здесь (anti-pattern scan_domain).
+  capabilities:             # runtime-independent nouns; недостаточно материала — candidate
+    - { name: "решение agentic-задач terminal-бенчмарка", tier: core, maturity: planned }
+    - { name: "воспроизводимая оценка качества решений", tier: support, maturity: planned }
+  environment:
+    providers:
+      - { name: "Terminal Bench 2.1", kind: benchmark }   # внешний оценочный фреймворк
+    integrations: []        # tailored на discover_intent (runner/harness/docker?)
+    customers: []           # tailored
+  candidate_units:          # ../src/ не существует — кандидатов нет; появятся на materialize
+    - { name: "(src — будет создан)", path: ../src, role: "прикладной домен; конкретизация на discover_intent" }
+  open_questions:           # для discover_intent (confidence: low)
+    - "Что является прикладным S1: код решений задач / код самого агента / инфраструктура оценки?"
+    - "Организационная миссия дочернего VSM (когерентность/покрытие/наблюдаемость — что уязвимо)?"
+    - "Basta-граница: какое решение только за человеком?"
+    - "Что значит «автономный» для этого домена (4 знака A(t))?"
+    - "Подтверждение снять runtime_policy.child_mutation: paused — materialize требует мутации ../vsm и ../src."
+
+notes:
+  - "Родитель ../terminal-bench-vsm/ содержит только vsmlite-tb/. Никаких прикладных артефактов."
+  - "../vsm/ и ../src/ отсутствуют → Initial State, применим OSM Create (init)."
+  - "runtime_policy.child_mutation = paused (template default) — блокирует materialize; нужно разрешение человека."

@@ -1,0 +1,117 @@
+# primitives.yaml — примитивы OSM, применяемые synthesis-operator
+#
+# Канон — synthesis/osm.md §5 (Split/Merge/Intersection/Remove/Reconfigure).
+# Расширение vsmlite: Create допущен, но ТОЛЬКО в Initial State (см. osm.md §4).
+# Каждый примитив — декларативное определение: intent, pre_condition, post_condition,
+# effect_on_autonomy, executor. synthesis-operator планирует; child-dispatcher исполняет.
+
+# ───────────────────────────── Create (расширение vsmlite) ─────────────────────────────
+# НЕ входит в канон OSM. Допущен прагматически: иначе vsmlite пришлось бы саму себя
+# превращать в фабрику, что не входит в задачу.
+Create:
+  canonical: false            # not in OSM §5; vsmlite extension
+  allowed_only_in: [Initial State]
+  intent: "Зародить дочерний VSM ../vsm/ из seed/child/ на основе Phase 0 Intent."
+  pre_condition:
+    - "child.path (../vsm/) не существует или пуст"
+    - "Phase 0 Intent записан в .intent.yaml (discover_intent выполнен)"
+    - "seed/child/ присутствует в темплейте"
+  post_condition:
+    - "../vsm/ материализован из seed/child/"
+    - "../src/ подключён как дочерний S1 (units/README.md + vsm.yaml → system_1)"
+    - "maturation_state = Phase 1 (Operational Formation)"
+    - "meta.initialized = true (после validate_init)"
+  effect_on_autonomy:
+    A_from: 0.0
+    A_to: 0.05               # зарождение; почти всё компенсирует родитель
+  executor: child-dispatcher
+  requires_human_decision: false   # часть /vsmlite-init (юзер уже дал согласие запуском)
+  playbook: ../init/materialize_child.md
+
+# ───────────────────────────── Split ─────────────────────────────
+# Один VSM → несколько рекурсивных VSM.
+Split:
+  canonical: true
+  intent: "Разделить дочерний VSM (или его unit) на несколько рекурсивно жизнеспособных VSM."
+  pre_condition:
+    - "source unit достаточно сложен, чтобы иметь собственные S1–S5-потребности"
+    - "каждая будущая часть удовлетворяет критериям жизнеспособности"
+  post_condition:
+    - "исходный VSM остаётся (родитель рекурсивных детей)"
+    - "каждая часть — рекурсивный VSM со своим system_1..5"
+    - "остаточная организация удовлетворяет жизнеспособности"
+  effect_on_autonomy:
+    note: "может повысить A(t) родителя (разгрузка) и иницировать новый A(t)=0 у детей"
+  executor: child-dispatcher
+  requires_human_decision: true    # структурное изменение организации
+  primitive_class: structural
+
+# ───────────────────────────── Merge ─────────────────────────────
+# Несколько VSM → один общий VSM.
+Merge:
+  canonical: true
+  intent: "Объединить несколько VSM в один общий жизнеспособный VSM."
+  pre_condition:
+    - "≥2 VSM с совместимой миссией/identity"
+    - "результат удовлетворяет жизнеспособности"
+  post_condition:
+    - "исходные VSM поглощены общим"
+    - "общий VSM имеет единый S1–S5"
+  effect_on_autonomy:
+    note: "A(t) общего = функция от A(t) компонентов; обычно растёт за счёт variety"
+  executor: child-dispatcher
+  requires_human_decision: true
+  primitive_class: structural
+
+# ───────────────────────────── Intersection ─────────────────────────────
+# Новый VSM из общей миссии/возможностей нескольких; родители продолжают существовать.
+Intersection:
+  canonical: true
+  intent: "Выделить новый VSM из пересечения миссий/возможностей существующих, не уничтожая их."
+  pre_condition:
+    - "≥2 VSM с нетривиальным пересечением домена"
+    - "выделяемый VSM самостоятелен"
+  post_condition:
+    - "родители продолжают существовать без изменений"
+    - "новый VSM имеет собственные S1–S5 (возможно assisted на старте)"
+  effect_on_autonomy:
+    note: "новый VSM стартует с A(t)=0 (assisted); родители не теряют автономию"
+  executor: child-dispatcher
+  requires_human_decision: true
+  primitive_class: structural
+
+# ───────────────────────────── Remove ─────────────────────────────
+# VSM открепляется от рекурсивной структуры; остаток остаётся жизнеспособным.
+Remove:
+  canonical: true
+  intent: "Открепить VSM (или unit) от родительской структуры; проверить остаточную жизнеспособность."
+  pre_condition:
+    - "целевой VSM существует"
+    - "остаток БЕЗ него удовлетворяет жизнеспособности (проверка S3*)"
+  post_condition:
+    - "VSM откреплён (становится independent или поглощён другой структурой)"
+    - "остаток проходит viability-check"
+  effect_on_autonomy:
+    note: "A(t) остатка может упасть; обязателен S3* audit до применения"
+  executor: child-dispatcher
+  requires_human_decision: true    # деструктивный
+  primitive_class: structural
+  requires_s3_star_audit: true
+
+# ───────────────────────────── Reconfigure ─────────────────────────────
+# Внутренние связи меняются без смены identity.
+Reconfigure:
+  canonical: true
+  intent: "Изменить внутренние связи (каналы, каденции, routing) дочернего VSM без смены identity."
+  pre_condition:
+    - "identity дочернего VSM неизменна (S5)"
+    - "изменение не нарушает permission matrix"
+  post_condition:
+    - "структура связей обновлена"
+    - "identity сохранена"
+  effect_on_autonomy:
+    note: "обычно нейтрально или слегка повышает A(t) (устранение трения)"
+  executor: child-dispatcher
+  requires_human_decision: false   # операционное, если не затрагивает identity
+  primitive_class: operational
+  identity_affecting_variants_require_human: true

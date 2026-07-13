@@ -1,0 +1,9 @@
+{
+  "_comment": "live_metrics.json — read-only метрики из ../vsm/ + ../src/. Пишет collect_metrics.py.",
+  "generated": "2026-07-13",
+  "child_vsm": {
+    "exists": false
+  },
+  "units": [],
+  "activity": []
+}

@@ -1,0 +1,164 @@
+# phases.yaml — состояния созревания дочернего VSM по OSM
+#
+# Канон — synthesis/osm.md §6 (фазы синтеза) + §7 (Assisted Viability).
+# Расширение vsmlite: состояние Initial State (до Phase 0) — здесь применим Create.
+# Текущее состояние — в state/maturation.json. Переходы требуют emergence-критерий.
+
+# ───────────────────────────── Initial State ─────────────────────────────
+# До Phase 0. Дочернего VSM нет. Здесь допустим Create (зарождение ../vsm/).
+Initial State:
+  order: 0
+  description: "../vsm/ не существует. vsmlite ещё не начал синтез."
+  child_exists: false
+  allowed_primitives: [Create]
+  typical_A: 0.0
+  emergence_criteria_to_next:
+    - "Phase 0 Intent записан в ../vsm/.intent.yaml"
+    - "child-dispatcher материализовал ../vsm/ из seed/child/"
+  next: Phase 0
+  playbook: ../init/materialize_child.md
+
+# ───────────────────────────── Phase 0 — Intent ─────────────────────────────
+# Родитель (vsmlite) определяет, что нужен дополнительный жизнеспособный VSM.
+Phase 0:
+  order: 1
+  name: Intent
+  description: "Зачем нужен дочерний VSM; что он обслуживает; basta-граница; autonomous-target."
+  child_exists: true            # ../vsm/ уже зарождён (или зарождается здесь)
+  files_revealed_in_child:
+    - ".intent.yaml"            # OSM Phase 0 артефакт
+  typical_A: 0.0
+  emergence_criteria_to_next:
+    - "intent зафиксирован и согласован с человеком"
+    - "появился хотя бы один operational unit (../src/ подключён)"
+  next: Phase 1
+  playbook: ../init/discover_intent.md
+
+# ───────────────────────────── Phase 1 — Operational Formation (S1) ─────────────────────────────
+Phase 1:
+  order: 2
+  name: S1 — Operational Formation
+  description: "Operational units установлены; с точки зрения родителя — candidate S1."
+  files_revealed_in_child:
+    - "units/README.md"         # реестр S1 (../src/)
+    - "vsm.yaml → system_1"     # machine-projection
+  typical_A: 0.1
+  compensation_by_parent: "почти всё (координация, контроль, аудит, разведка, identity)"
+  emergence_criteria_to_next:
+    - "≥2 operational unit'а или явная потребность в координации между ними"
+    - "наблюдается конфликт/содержание за общий ресурс (../src/)"
+  next: Phase 2
+  vsm_system: S1
+
+# ───────────────────────────── Phase 2 — Coordination (S2) ─────────────────────────────
+Phase 2:
+  order: 3
+  name: S2 — Coordination
+  description: "Взаимодействия между operational units требуют координации. S2 emerge."
+  files_revealed_in_child:
+    - "systems/s2-coordinator/SOUL.md"
+    - "systems/s2-coordinator/SKILL.md"
+    - "systems/s2-coordinator/HEARTBEAT.md"
+    - "systems/s2-coordinator/TASK.md"
+    - ".claude/agents/s2-coordinator.md"
+  typical_A: 0.2
+  compensation_by_parent: "контроль, аудит, разведка, identity"
+  emergence_criteria_to_next:
+    - "S2 работает ≥2 цикла без эскалаций"
+    - "появилась потребность в KPI/бюджете/ресурсах (S3)"
+  next: Phase 3
+  vsm_system: S2
+
+# ───────────────────────────── Phase 3 — Executive Regulation (S3) ─────────────────────────────
+Phase 3:
+  order: 4
+  name: S3 — Executive Regulation
+  description: "Распределение ресурсов и оптимизация. S3 emerge."
+  files_revealed_in_child:
+    - "systems/s3-optimizer/SOUL.md"
+    - "systems/s3-optimizer/SKILL.md"
+    - "systems/s3-optimizer/HEARTBEAT.md"
+    - "systems/s3-optimizer/TASK.md"
+    - ".claude/agents/s3-optimizer.md"
+    - "state/metrics.json"      # KPI
+  typical_A: 0.4
+  compensation_by_parent: "аудит, разведка, identity"
+  emergence_criteria_to_next:
+    - "S3 контролирует ресурсы ≥2 цикла"
+    - "появилась асимметрия информации → нужен независимый аудит (S3*)"
+  next: Phase 4
+  vsm_system: S3
+
+# ───────────────────────────── Phase 4 — Verification (S3*) ─────────────────────────────
+Phase 4:
+  order: 5
+  name: S3* — Verification
+  description: "Независимый канал наблюдения. S3* emerge (ДРУГОЙ провайдер, read-only)."
+  files_revealed_in_child:
+    - "systems/s3-star-auditor/SOUL.md"
+    - "systems/s3-star-auditor/SKILL.md"
+    - "systems/s3-star-auditor/HEARTBEAT.md"
+    - "systems/s3-star-auditor/TASK.md"
+    - ".claude/agents/s3-star-auditor.md"
+    - "state/audit.json"
+  typical_A: 0.6
+  compensation_by_parent: "разведка, identity"
+  emergence_criteria_to_next:
+    - "S3* работает ≥2 цикла, structural audit green"
+    - "появилась потребность в скане внешней среды домена (S4)"
+  next: Phase 5
+  vsm_system: S3*
+  hard_constraint: "provider_constraint.must_differ_from: s1"
+
+# ───────────────────────────── Phase 5 — Adaptation (S4) ─────────────────────────────
+Phase 5:
+  order: 6
+  name: S4 — Adaptation
+  description: "Взаимодействие с меняющейся средой. S4 emerge."
+  files_revealed_in_child:
+    - "systems/s4-scout/SOUL.md"
+    - "systems/s4-scout/SKILL.md"
+    - "systems/s4-scout/HEARTBEAT.md"
+    - "systems/s4-scout/TASK.md"
+    - ".claude/agents/s4-scout.md"
+    - "state/intel.json"
+  typical_A: 0.8
+  compensation_by_parent: "identity"
+  emergence_criteria_to_next:
+    - "S4 скан среды работает ≥2 цикла"
+    - "появились конфликты, не разрешимые S3+S4 → нужна identity/policy (S5)"
+  next: Phase 6
+  vsm_system: S4
+
+# ───────────────────────────── Phase 6 — Identity (S5) ─────────────────────────────
+Phase 6:
+  order: 7
+  name: S5 — Identity
+  description: "Policy, identity, autonomy boundaries. S5 emerge. Организация — полностью жизнеспособный VSM."
+  files_revealed_in_child:
+    - "CLAUDE.md"               # S5-конституция дочернего VSM
+    - "systems/s5-guardian/SOUL.md"
+    - "systems/s5-guardian/SKILL.md"
+    - "systems/s5-guardian/HEARTBEAT.md"
+    - "systems/s5-guardian/TASK.md"
+    - ".claude/agents/s5-guardian.md"
+  typical_A: 0.9
+  compensation_by_parent: "минимальная (только эскалации)"
+  emergence_criteria_to_next:
+    - "дочерний VSM self-contained: S1–S5 + S3* работают"
+    - "A(t) стабильно ≥ 0.9"
+    - "needs_human_decision доля < порога (S5-sign autonomous)"
+  next: Autonomous
+  vsm_system: S5
+
+# ───────────────────────────── Autonomous ─────────────────────────────
+# A(t) = 1. Дочерний VSM живёт сам. vsmlite отходит в сторону (наблюдение/telemetry).
+Autonomous:
+  order: 8
+  description: "Дочерний VSM полностью автономен. vsmlite переходит в режим наблюдения/telemetry."
+  child_exists: true
+  allowed_primitives: [Split, Merge, Intersection, Remove, Reconfigure]   # дальнейшая эволюция
+  typical_A: 1.0
+  parent_role: observe_and_telemetry
+  emergence_criteria_to_next: []   # терминальное (до внешнего примитива)
+  next: null

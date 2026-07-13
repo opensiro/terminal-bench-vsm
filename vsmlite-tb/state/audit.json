@@ -1,0 +1,9 @@
+{
+  "_comment": "audit.json — findings независимого S3* аудита жизнеспособности дочернего VSM. Пишет s3-star-auditor (ДРУГАЯ модель); читает render_data.py → audit[].",
+  "generated": null,
+  "auditor": "s3-star-auditor",
+  "provider": null,
+  "schedule": "случайный сэмпл 3-5 аспектов child viability",
+  "findings": [],
+  "caveats": []
+}

@@ -1,0 +1,27 @@
+{
+  "_comment": "metrics.json — KPI созревания. Пишет S3 (через scripts/autonomy.py + collect_metrics.py); читает render_data.py.",
+  "generated": null,
+  "kpi": {
+    "autonomy_score": 0.0,
+    "maturation_phase": "Initial State",
+    "coverage_ratio": 0.0,
+    "validate_pass_rate": null,
+    "drift_score": 0.0,
+    "token_spend_estimate": 0
+  },
+  "triple_index": {
+    "actuality": "",
+    "capability": "",
+    "potentiality": "",
+    "measurement": ""
+  },
+  "balance_s3_s4": {
+    "ratio": null,
+    "status": "unknown",
+    "alert": false
+  },
+  "budget": {
+    "monthly_usd_estimate": null,
+    "system_weights_used": false
+  }
+}

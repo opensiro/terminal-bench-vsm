@@ -1,0 +1,21 @@
+[
+  {
+    "date": "2026-07-13",
+    "autonomy_score": 0.1,
+    "maturation_phase": "Phase 1",
+    "coverage_ratio": 0.0,
+    "validate_pass_rate": null,
+    "drift_score": 0.0,
+    "triple_index": {
+      "actuality": "",
+      "capability": "",
+      "potentiality": "",
+      "measurement": ""
+    },
+    "balance_s3_s4": {
+      "ratio": null,
+      "status": "unknown",
+      "alert": false
+    }
+  }
+]

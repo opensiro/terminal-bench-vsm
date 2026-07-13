@@ -1,0 +1,59 @@
+id: VSM-001
+source_system: S5            # human-initiated identity/values change
+signal_type: policy          # identity/values change → policy-level
+severity: S2                 # архитектурный инвариант; impact высокий, но не viability breach
+target_unit: child           # дочерний VSM
+
+title: "Runtime membrane: solver/S2-S4 blind to benchmark identity; S4 internet + transduction"
+summary: |
+  Два архитектурных решения от человека (сессия init Terminal Bench 2.1):
+  (1) Полная изоляция рантайма — знание «это Terminal Bench» остаётся только в
+  design-time/S5-слое (.intent.yaml, vsm.yaml identity, CLAUDE.md, VSM-NNN).
+  Решающий агент (S1-solver) и runtime-функции S2–S4 работают benchmark-agnostic:
+  солвер получает задачи как generic agentic tasks, TB-фрейминг снимается на
+  транедукционной границе VSM. Это blinded-eval инвариант: мера качества честна,
+  пока решающий агент не знает, что его оценивают.
+  (2) S4-scout получает открытый доступ в интернет в runtime для поиска
+  benchmark-agnostic Skill DB (scope unchanged, never_do unchanged). Всё, что S4
+  находит, проходит через мембрану — очистка от любых TB-следов — перед
+  сохранением в Skill DB и передачей в рантайм.
+
+evidence:
+  - "../vsm/.intent.yaml → runtime_membrane (design-time truth)"
+  - "../vsm/vsm.yaml → identity.never_do: runtime_aware_of_benchmark"
+  - "../vsm/vsm.yaml → identity.runtime_membrane"
+  - "../vsm/vsm.yaml → system_4.runtime_internet_access"
+  - "../vsm/systems/s4-scout/{SOUL,SKILL}.md"
+  - "../vsm/CLAUDE.md → Identity + NEVER DO"
+
+proposal: |
+  Зафиксировать runtime membrane как архитектурный инвариант дочернего VSM и
+  расширить capability S4 интернет-доступом с обязательной трансдукцией.
+  Design-time/S5 сохраняет знание о TB для coverage/pass_rate/grading; runtime
+  (S1-solver + S2–S4 в их runtime-функциях) — benchmark-agnostic.
+
+acceptance:
+  - "../vsm/vsm.yaml → identity.never_do содержит runtime_aware_of_benchmark"
+  - "../vsm/vsm.yaml → identity.runtime_membrane секция описывает границу design-time/runtime"
+  - "../vsm/vsm.yaml → system_4.runtime_internet_access: open + transduction_via_membrane"
+  - "../vsm/.intent.yaml → runtime_membrane секция зафиксирована"
+  - "../vsm/systems/s4-scout/{SOUL,SKILL}.md описывают интернет + мембрану"
+  - "../vsm/CLAUDE.md NEVER DO включает runtime_aware_of_benchmark"
+
+needs_human_decision: true   # identity/values change — но уже решено человеком в сессии
+
+policy_question: >
+  Зафиксировать runtime membrane (полная изоляция рантайма) + открытый интернет S4
+  с трансдукцией через мембрану как архитектурные инварианты дочернего VSM?
+
+options:
+  - { id: accept, label: "Принять оба решения", hint: "Полная изоляция рантайма + S4 интернет с трансдукцией (Recommended)" }
+  - { id: relax, label: "Ослабить: контроль-плейн знает", hint: "S2-S4 runtime знают, но солвер нет — менее строго" }
+  - { id: defer, label: "Отложить", hint: "Оставить как есть, вернуться позже" }
+
+status: accepted              # человек постановал в сессии
+decision: "accept — оба решения утверждены человеком в init-сессии (полная изоляция рантайма + S4 открытый интернет с трансдукцией через мембрану)"
+selected_options: [accept]
+
+created: 2026-07-13
+updated: 2026-07-13

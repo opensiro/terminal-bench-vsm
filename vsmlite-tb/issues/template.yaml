@@ -1,0 +1,44 @@
+# template.yaml — заготовка VSM-NNN записи (алгедонический канал vsmlite)
+#
+# Скопируй в VSM-NNN.yaml, заполни. Schema — vsmlite-issue.schema.json.
+# id: monotonic (VSM-001, VSM-002, ...), никогда не переиспользуется (даже после wontfix).
+
+id: VSM-NNN
+source_system: S4            # S1 | S2 | S3 | S3* | S4 | S5
+signal_type: gap             # algedonic | quality | gap | drift | budget | risk | policy
+severity: S2                 # S0=critical viability breach | S1 | S2 | S3   (impact, не effort)
+target_unit: child           # 'child' (дочерний VSM) | 'meta' (сам vsmlite) | <domain-unit name>
+
+title: Imperative one-liner ≤80 chars without trailing period
+summary: |
+  1–4 предложения, человекочитаемо. Что обнаружено, на какой аспект дочернего
+  VSM (или самого vsmlite) влияет.
+
+evidence:
+  - "state/intel.json#signals[2]"           # ссылки на файлы/state/коммиты
+  - "../vsm/vsm.yaml → system_4.monitoring"
+
+proposal: |
+  Non-binding рекомендация. S5 готовит, не постановляет.
+
+acceptance:
+  - "Измеримый критерий закрытия (минимум 5 символов)"
+  - "'работает' — НЕ критерий; нужна измеримость"
+
+needs_human_decision: false  # true → s5-guardian выносит в REPL-дайджест
+
+# —– Опц., для S5 triage —–
+policy_question: ""          # формулировка решения для человека
+options: []                  # [{id, label, hint}, ...] ≤6; нет → accept/defer/wontfix
+
+# —– Опц., для OSM-сигналов —–
+# primitive: Reconfigure      # Create|Split|Merge|Intersection|Remove|Reconfigure|phase-transition
+# phase_from: Phase 3
+# phase_to: Phase 4
+
+status: triage               # triage | accepted | in-progress | review | done | blocked | wontfix
+decision: ""                 # ЗАПОЛНЯЕТ ЧЕЛОВЕК (accept/defer/reject + причина)
+selected_options: []
+
+created: 2026-07-13
+updated: 2026-07-13

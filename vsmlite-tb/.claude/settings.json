@@ -1,0 +1,56 @@
+{
+  "_comment": "settings.json — permissions для Claude Code. Главный инвариант: core vsmlite не мутирует ../vsm/ и ../src/ — только child-dispatcher + read-only collect_metrics.py. local.json (gitignored) перекрывает.",
+  "permissions": {
+    "allow": [
+      "Read(state/**)",
+      "Read(issues/**)",
+      "Read(monitor/**)",
+      "Read(scripts/**)",
+      "Read(synthesis/**)",
+      "Read(init/**)",
+      "Read(systems/**)",
+      "Read(ref/**)",
+      "Read(meta/**)",
+      "Read(seed/**)",
+      "Read(.claude/**)",
+      "Read(CLAUDE.md)",
+      "Read(README.md)",
+      "Read(vsmlite.yaml)",
+      "Read(../vsm/.intent.yaml)",
+      "Read(../vsm/vsm.yaml)",
+      "Read(../vsm/CLAUDE.md)",
+      "Read(../vsm/units/README.md)",
+      "Read(../src/**)",
+      "Edit(state/**)",
+      "Edit(issues/**)",
+      "Edit(monitor/data.js)",
+      "Write(state/**)",
+      "Write(issues/**)",
+      "Write(monitor/data.js)",
+      "Bash(python3 scripts/autonomy.py*)",
+      "Bash(python3 scripts/render_data.py*)",
+      "Bash(python3 scripts/collect_metrics.py*)",
+      "Bash(python3 scripts/cycle_digest.py*)",
+      "Bash(scripts/validate.sh*)",
+      "Bash(scripts/prompt.sh*)",
+      "Bash(make *)"
+    ],
+    "deny": [
+      "Edit(../vsm/**)",
+      "Edit(../src/**)",
+      "Write(../vsm/**)",
+      "Write(../src/**)",
+      "Bash(git commit:../vsm/*)",
+      "Bash(git commit:../src/*)",
+      "Bash(git push:../vsm/*)",
+      "Bash(git push:../src/*)",
+      "Bash(git checkout:../vsm/*)",
+      "Bash(git branch:../vsm/*)"
+    ],
+    "_deny_note": "deny перекрывает allow. Мутации ../vsm/ и ../src/ запрещены всем, КРОМЕ child-dispatcher (ему allow выдаётся отдельной scope через subagent invocation, не здесь)."
+  },
+  "env": {
+    "VSMFORGE_FORWARD_CONTRACT": "true"
+  },
+  "heartbeat_mode": "optional"
+}

@@ -1,0 +1,140 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://vsmlite/issues/vsmlite-issue.schema.json",
+  "title": "vsmlite correction-request record (VSM-NNN)",
+  "description": "Алгедонический канал vsmlite. Обобщение ISSUE-NNN: target_unit — свободная строка + 'child'/'meta', без привязки к конкретным доменным репо.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["id", "source_system", "signal_type", "severity", "target_unit", "title", "summary", "evidence", "acceptance", "needs_human_decision", "status", "created", "updated"],
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^VSM-\\d{3,}$",
+      "description": "Monotonic, никогда не переиспользуется (даже после wontfix)."
+    },
+    "source_system": {
+      "type": "string",
+      "enum": ["S1", "S2", "S3", "S3*", "S4", "S5"],
+      "description": "Какая система vsmlite подняла сигнал."
+    },
+    "signal_type": {
+      "type": "string",
+      "enum": ["algedonic", "quality", "gap", "drift", "budget", "risk", "policy"],
+      "description": "Природа сигнала. algedonic — экстренный байпас S1→S5."
+    },
+    "severity": {
+      "type": "string",
+      "enum": ["S0", "S1", "S2", "S3"],
+      "description": "Impact, не effort. S0=critical (viability breach / безопасность)."
+    },
+    "target_unit": {
+      "description": "Кого касается. Свободная строка (доменный юнит дочернего VSM) ИЛИ 'child' (дочерний VSM целиком) ИЛИ 'meta' (сам vsmlite).",
+      "oneOf": [
+        { "const": "child" },
+        { "const": "meta" },
+        { "type": "string", "minLength": 1 }
+      ]
+    },
+    "title": {
+      "type": "string",
+      "maxLength": 80,
+      "pattern": "[^.]$|^.{0,79}$",
+      "description": "Imperative one-liner, ≤80 символов, без точки в конце."
+    },
+    "summary": {
+      "type": "string",
+      "minLength": 10,
+      "description": "1–4 предложения; называет затронутый аспект. Человекочитаемо."
+    },
+    "evidence": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "type": "string" },
+      "description": "Ссылки на файлы/коммиты/метрики/state."
+    },
+    "proposal": {
+      "type": "string",
+      "description": "Рекомендация (non-binding). S5 готовит, не постановляет."
+    },
+    "acceptance": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "type": "string", "minLength": 5 },
+      "description": "Измеримые критерии закрытия. 'работает' — НЕ критерий."
+    },
+    "needs_human_decision": {
+      "type": "boolean",
+      "description": "true → s5-guardian выносит в REPL-дайджест как вопрос с вариантами."
+    },
+    "policy_question": {
+      "type": "string",
+      "description": "Если source_system=S5 (или triage) — формулировка решения для человека."
+    },
+    "options": {
+      "type": "array",
+      "maxItems": 6,
+      "items": {
+        "oneOf": [
+          { "type": "string" },
+          { "type": "object", "required": ["id", "label"], "additionalProperties": false,
+            "properties": { "id": {"type":"string"}, "label": {"type":"string"}, "hint": {"type":"string"} } }
+        ]
+      },
+      "description": "Варианты выбора для REPL-дайджеста. Нет → default accept/defer/wontfix."
+    },
+    "status": {
+      "type": "string",
+      "enum": ["triage", "accepted", "in-progress", "review", "done", "blocked", "wontfix"],
+      "description": "Lifecycle. blocked → описать блокер. wontfix → записать причину."
+    },
+    "decision": {
+      "type": "string",
+      "description": "Ответ человека (accept/defer/reject + причина). Заполняет ТОЛЬКО человек."
+    },
+    "selected_options": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Выбранные option-id после решения человека."
+    },
+    "primitive": {
+      "type": "string",
+      "enum": ["Create", "Split", "Merge", "Intersection", "Remove", "Reconfigure", "phase-transition"],
+      "description": "Опц.: если сигнал запрашивает OSM-примитив или переход фазы."
+    },
+    "phase_from": { "type": "string", "description": "Опц.: при phase-transition — исходная фаза." },
+    "phase_to": { "type": "string", "description": "Опц.: при phase-transition — целевая фаза." },
+    "created": { "type": "string", "format": "date" },
+    "updated": { "type": "string", "format": "date" }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": { "severity": { "enum": ["S0", "S1"] } },
+        "required": ["severity"]
+      },
+      "then": {
+        "properties": { "needs_human_decision": { "const": true } },
+        "description": "severity S0/S1 всегда требует решения человека (алгедоник)."
+      }
+    },
+    {
+      "if": {
+        "properties": { "signal_type": { "const": "algedonic" } },
+        "required": ["signal_type"]
+      },
+      "then": {
+        "properties": { "needs_human_decision": { "const": true } }
+      }
+    },
+    {
+      "if": {
+        "properties": { "status": { "enum": ["wontfix", "blocked"] } },
+        "required": ["status"]
+      },
+      "then": {
+        "properties": { "decision": { "minLength": 3 } },
+        "required": ["decision"]
+      }
+    }
+  ]
+}

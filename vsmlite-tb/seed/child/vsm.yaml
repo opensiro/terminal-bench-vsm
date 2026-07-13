@@ -1,0 +1,135 @@
+# vsm.yaml — модель дочернего VSM (выращиваемого vsmlite)
+#
+# Скелет seed/child/. Копируется в ../vsm/ на /vsmlite-init.
+# Поля помечены `# tailored` — заполняются шагом tailor_child (init или cycle).
+# maturation_state обновляется synthesis-operator (родительский vsmlite) по фазам OSM.
+
+name: "<domain> VSM"          # tailored на init (из .intent.yaml)
+runtime: claude-code
+version: 0.1.0
+parent: vsmlite               # родительский оператор синтеза
+
+meta:
+  initialized: false          # flip в true последним в validate_init
+  maturation_state: Initial State   # Initial State | Phase 0..6 | Autonomous
+  phase_activated: []         # растёт по фазам: [S1] → [S1,S2] → ...
+
+# ───────────────────────────── S5 — Identity ─────────────────────────────
+# Полный текст — в CLAUDE.md (этот файл ссылается). tailored из .intent.yaml.
+identity:
+  purpose: ""                 # tailored (из .intent.yaml → mission.statement)
+  values:
+    - recursion_and_autonomy
+    - variety_discipline
+    - independent_audit
+    - transparency
+    - minimal_intervention
+  never_do:
+    - modify_parent_directly   # родительский vsmlite трогает этот VSM только через child-dispatcher
+    - same_provider_for_s3star
+    - s5_decides_for_human     # basta_constraint: prepare_only
+    - disable_algedonic_channel
+    - reuse_record_id
+  decisions_requiring_human:
+    - any_severity_S0
+    - any_signal_type_algedonic
+    - identity_or_values_change
+  basta_constraint:
+    agent_role: prepare_only
+
+# ───────────────────────────── S1 — Operations ─────────────────────────────
+# Прикладной домен: ../src/ (подключается materialize_child на init).
+system_1:
+  - name: src                 # tailored (имя домена/проекта)
+    path: ../src              # прикладной домен (дочерний S1 этого VSM)
+    purpose: ""               # tailored
+    weight: 10
+    owner_agent: s1-dispatcher
+    recursion_note: "прикладной домен; может рекурсивно стать VSM при достаточной сложности"
+
+# ───────────────────────────── S2 — Coordination ─────────────────────────────
+# (проявляется на Phase 2)
+system_2:
+  agent: s2-coordinator
+  cadence: on_demand
+  coordination_rules:
+    - trigger: "агент повторяет действие 3+ раза"
+      action: "стоп, лог, эскалация"
+    - trigger: "попытка создать файлы вне workspace"
+      action: "блок"
+  conflict_detection:
+    resource_overlaps: true
+    output_contradictions: true
+    custom_triggers: []       # tailored
+
+# ───────────────────────────── S3 — Control ─────────────────────────────
+# (проявляется на Phase 3)
+system_3:
+  agent: s3-optimizer
+  cadence: on_demand
+  reporting_rhythm: deviation-only
+  kpi_list: []                # tailored — ДОМЕННЫЕ KPI (НЕ копия примера!)
+  triple_index:
+    actuality: ""
+    capability: ""
+    potentiality: ""
+  deviation_logic:
+    report_only_deviations: true
+    threshold_percent: 15
+
+# ───────────────────────────── S3* — Audit ─────────────────────────────
+# (проявляется на Phase 4)
+system_3_star:
+  agent: s3-star-auditor
+  cadence: on_demand
+  provider_constraint:
+    must_differ_from: s1      # КРИТИЧНО: другой модель-провайдер
+    reason: "независимый аудит жизнеспособности"
+  reporting_target: s3_and_human
+  independence_rules:
+    - read_only_access
+    - never_trust_self_reports
+
+# ───────────────────────────── S4 — Intelligence ─────────────────────────────
+# (проявляется на Phase 5)
+system_4:
+  agent: s4-scout
+  cadence: on_demand
+  monitoring:
+    competitors: []           # tailored
+    technology: []            # tailored
+    regulation: []            # tailored
+  weak_signals:
+    enabled: true
+    sources: []               # tailored
+  premises_register: []       # tailored — [{premise, check_frequency, invalidation_signal, consequence_if_invalid}]
+
+# ───────────────────────────── Budget ─────────────────────────────
+budget:
+  strategy: balanced
+  system_weights:
+    S1: 0.65
+    S2: 0.05
+    S3: 0.12
+    S3_star: 0.05
+    S4: 0.10
+    S5: 0.03
+
+# ───────────────────────────── Heartbeats ─────────────────────────────
+heartbeats:
+  mode: optional              # дочерний VSM также преимущественно on-demand
+  s2_coordinator: { every: 30m }
+  s3_optimizer: { every: 2h }
+  s3_star_audit: { every: 8h }
+  s4_scout: { every: 1d }
+  s5_guardian: { every: 1d }
+
+# ───────────────────────────── Persistence ─────────────────────────────
+persistence:
+  state_dir: state/
+  issues_dir: issues/
+  gitignored:
+    - state/*.tmp
+  tracked:
+    - state/*.json
+    - issues/*.yaml

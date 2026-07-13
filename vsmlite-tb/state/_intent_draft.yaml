@@ -1,0 +1,80 @@
+# state/_intent_draft.yaml — ВРЕМЕННОЕ размещение OSM Phase 0 Intent.
+# materialize_child перенесёт это в ../vsm/.intent.yaml после зарождения ../vsm/.
+# Форма — из init/discover_intent.md.
+phase: 0
+generated: 2026-07-13
+parent: vsmlite
+domain: "Решение бенчмарка Terminal Bench 2.1"
+benchmark_version_target: "Terminal Bench 2.1"
+license_intent: open_source
+
+mission:
+  statement: |
+    Держать домен «решение agentic-задач Terminal Bench 2.1» жизнеспособным:
+    обеспечивать полноту покрытия категорий задач TB и наблюдаемость хода
+    решений (трассы, затраты, тайминги), адаптируясь к эволюции бенчмарка
+    строго в рамках его правил — и формируя reusable benchmark-agnostic
+    Skill DB, накапливаемую по ходу решения.
+  serves:
+    - "человек-оператор (автор проекта): видеть coverage, наблюдаемость, адаптацию"
+    - "будущие прогоны TB: переиспользуемые skills вместо каждого-раза-с-нуля"
+    - "опенсорс-сообщество: воспроизводимые методы решения TB-задач"
+  out_of_scope:
+    - "тренировка/обучение на eval-разметке TB (нарушает правила бенчмарка — NEVER)"
+    - "использование harbor-framework/terminal-bench-2 в любой форме (NEVER, см. authority)"
+    - "автоматическая публикация/сабмит результатов во внешние системы (basta)"
+    - "кодогенерация под конкретные фреймворки/runtime — это layer S1, не VSM-миссия"
+    - "формирование самого бенчмарка или его датасета — мы решаем TB, не модифицируем его"
+  success_looks_like: |
+    Дочерний VSM автономен, когда все 4 знака A(t) выполняются устойчиво:
+    (1) S1-sign: ≥3 активных git-дней в ../vsm/ + стабильные прогоны решений;
+    (2) S3-sign: ≥2 operational units (напр. agent-solver, harness-runner,
+        grader-wrapper) с низким pressure;
+    (3) S4-sign: S4 самостоятельно закрывает сигналы о Skill DB и эволюции TB
+        (без эскалации каждой мелочи);
+    (4) S5-sign: низкая доля issues с needs_human_decision — большинство
+        решений принимается внутри VSM, человек — только для basta-областей.
+
+authority:
+  basta_constraint: |
+    Только человек принимает решения в следующих областях (дочерний VSM
+    готовит, не постановляет):
+    - Публикация / сабмит результатов (leaderboard, внешние репо, доклады).
+    - Смена целевой версии TB (2.1 → другая) или scope бенчмарка.
+    - Удаление прогонов / данных / логов / кеша (деструктивные операции).
+    - Изменения identity/values/never-do этого VSM (S5).
+  never_do:
+    - "train_on_eval: любая тренировка/обучение на eval-разметке TB — запрещена правилами бенчмарка"
+    - "use_harbor_tb2: не использовать github.com/harbor-framework/terminal-bench-2 ни в каком виде (явное требование человека)"
+    - "auto_submit: автоматическая отправка результатов во внешние системы"
+    - "modify_parent_directly: ../../vsmlite/ трогает этот VSM только через child-dispatcher"
+    - "same_provider_for_s3star: S3* всегда на другом модель-провайдере, read-only"
+    - "s5_decides_for_human: basta_constraint prepare_only"
+    - "disable_algedonic_channel"
+    - "reuse_record_id: VSM-NNN monotonic"
+
+autonomy:
+  target: 1.0
+  autonomous_means: |
+    Доменная конкретизация 4 знаков A(t):
+    - S5-sign (issues[]): почти все решения о покрытии/наблюдаемости/
+      адаптации принимаются внутри VSM; человек — только basta-области.
+    - S4-sign (intel[]): S4 сам находит и закрывает сигналы о:
+        benchmark-agnostic Skill DB (обнаружение, интеграция, релевантность);
+        эволюции TB (смены версий, новые категории задач) — кроме смены
+        целевой версии (это basta);
+        Ни S4, ни любой иной агент НИКОГДА не обращается к
+        harbor-framework/terminal-bench-2.
+    - S3-sign (units[]): ≥2 operational units работают с низким pressure
+        (напр. agent-solver + harness-runner + grader-wrapper).
+    - S1-sign (activity[]): ≥3 активных git-дней в ../vsm/ + стабильные прогоны.
+
+s4_scope_constraint:
+  description: |
+    S4 дочернего VSM работает ИСКЛЮЧИТЕЛЬНО для обнаружения benchmark-agnostic
+    Skill DB. Это единственный объект разведки среды. Любые иные источники
+    (включая связанные с бенчмарком как таковым) — вне scope S4.
+  explicit_never:
+    - "github.com/harbor-framework/terminal-bench-2 — запрет абсолютный, без исключений"
+  allowed_sources:
+    - "benchmark-agnostic источники skills/patterns для agentic-задач (общие, не TB-специфичные)"

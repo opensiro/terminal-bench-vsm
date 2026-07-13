@@ -1,0 +1,27 @@
+# ── runtime state (лёгкие артефакты) ──
+state/*.tmp
+.venv/
+__pycache__/
+*.pyc
+
+# ── первичные материалы Beer VSM (binary, не входят в темплейт) ──
+# Оставлены в рабочей папке как референс; см. ref/bibliography.md.
+*.pdf
+
+# ── генерируемые run-промпты ──
+runs/
+
+# ── локальные данные домена (не темплейт) ──
+state/domain_draft.local.yaml
+
+# ── ZCode session artifacts (не часть темплейта) ──
+.zcode/
+
+# ── OS / editor ──
+.DS_Store
+*.swp
+.idea/
+.vscode/
+
+# ── Claude Code local overrides ──
+.claude/settings.local.json

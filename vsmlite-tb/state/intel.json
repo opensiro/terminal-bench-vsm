@@ -1,0 +1,11 @@
+{
+  "_comment": "intel.json — S4 signals (скан среды домена дочернего VSM). Пишет s4-scout; читает render_data.py → intel[].",
+  "generated": null,
+  "scanner": "s4-scout",
+  "signals": [],
+  "coverage": {
+    "domain_environment": [],
+    "vsmforge_roadmap": [],
+    "osm_evolution": []
+  }
+}

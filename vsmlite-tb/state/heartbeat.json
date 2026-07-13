@@ -1,0 +1,12 @@
+{
+  "_comment": "heartbeat.json — каденции + last_run систем. Пишут сами системы (или cycle); читает render_data.py → heartbeat{} + s5 для balance S3↔S4.",
+  "generated": null,
+  "mode": "optional",
+  "systems": {
+    "S2":  { "cadence": "on_demand", "last_run": null },
+    "S3":  { "cadence": "on_demand", "last_run": null },
+    "S3*": { "cadence": "on_demand", "last_run": null },
+    "S4":  { "cadence": "on_demand", "last_run": null },
+    "S5":  { "cadence": "on_demand", "last_run": null }
+  }
+}

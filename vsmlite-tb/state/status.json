@@ -1,0 +1,13 @@
+{
+  "_comment": "status.json — health систем vsmlite (S1-S5+S3*). Пишет S2 (status sweep), читает render_data.py. summary — человекочитаемо (1-2 предложения); current_task — технически.",
+  "generated": null,
+  "operational_mode": "normal",
+  "systems": {
+    "S1":  { "name": "synthesis-operator", "summary": "", "current_task": "", "health": "unknown" },
+    "S2":  { "name": "s2-coordinator",     "summary": "", "current_task": "", "health": "unknown" },
+    "S3":  { "name": "s3-optimizer",       "summary": "", "current_task": "", "health": "unknown" },
+    "S3*": { "name": "s3-star-auditor",    "summary": "", "current_task": "", "health": "unknown" },
+    "S4":  { "name": "s4-scout",           "summary": "", "current_task": "", "health": "unknown" },
+    "S5":  { "name": "s5-guardian",        "summary": "", "current_task": "", "health": "unknown" }
+  }
+}

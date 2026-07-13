@@ -1,0 +1,271 @@
+# vsmlite.yaml — модель VSM родительского оператора синтеза
+#
+# vsmlite = (lite) VSM, чей S1 = «вырастить ../vsm/ до автономии по OSM».
+# Адаптация схемы ViableOS (philipp-lm/ViableOS) + opensiro-arctic/vsm под
+# оркестрацию созревания через Claude-субагентов. Проверяется /vsmlite-check.
+# S5-идентичность — в CLAUDE.md (этот файл ссылается на неё).
+
+name: vsmlite-template
+runtime: claude-code          # оркестрация через Claude Code subagents + slash commands
+version: 0.1.0
+role: parent_synthesis_operator   # vsmlite — родитель, синтезирующий дочерний VSM
+
+# ───────────────────────────── S5 — Identity / Policy ─────────────────────────────
+# Полный текст — в CLAUDE.md. Здесь — машиночитаемая проекция для /vsmlite-check.
+identity:
+  purpose: >
+    Вырастить дочерний VSM (../vsm/) до автономного состояния (A(t) → 1) по
+    принципам OSM, передавая функции дочерней системе по фазам, и экспортировать
+    телеметрию для будущей агрегации в vsmforge.
+  values:
+    - synthesis_not_ex_nihilo    # OSM §4: синтез из уже жизнеспособного (Create только в Initial)
+    - progressive_autonomy       # A(t) растёт по фазам; функции передаются по готовности
+    - variety_discipline         # attenuate шум, amplify через субагентов, transduce на границах
+    - independent_audit          # S3* на другой модели/провайдере, read-only
+    - transparency               # состояние в state/ + телеметрия monitor/data.js; корректировки через VSM-NNN
+    - minimal_intervention       # S3 вмешивается с документацией; S5 готовит, не решает за человека
+  never_do:
+    - modify_child_directly      # ../vsm/ и ../src/ — только через child-dispatcher
+    - create_outside_initial     # OSM: Create допустим только в Initial State
+    - same_provider_for_s3star   # S3* ≠ провайдер S1
+    - s5_decides_for_human       # basta_constraint: prepare_only
+    - branch_without_vsm_id      # ветка/PR — только под VSM-NNN
+    - disable_algedonic_channel
+    - reuse_record_id            # VSM-NNN monotonic, даже после wontfix
+    - reverse_phase_without_human  # откат фазы дочернего VSM — только по решению человека
+  decisions_requiring_human:   # → VSM-NNN needs_human_decision:true → REPL-дайджест
+    - any_severity_S0
+    - any_signal_type_algedonic
+    - phase_transition          # Phase N → N+1: подтверждение готовности
+    - destructive_primitive     # Remove / identity-affecting Reconfigure
+    - strategic_shift_from_s4   # смена доменного фокуса, новый канал vsmforge
+    - identity_or_values_change # S5
+    - large_fanout              # >= fanout_confirmation_threshold юнитов дочернего VSM
+  fanout_confirmation_threshold: 5
+  balance_monitoring:          # гомеостаз S3↔S4
+    s3_vs_s4_target: "сбалансировано — ни чистый inside-now, ни чистый outside-then"
+    measurement: "ratio active S3-tasks vs S4-signals за окно; pulse state/heartbeat.json"
+    alert_if_exceeds: "одна сторона >75% активности 2 цикла подряд"
+  algedonic_channel:           # экстренный байпас S1 → S5
+    enabled: true
+    who_can_send: any_agent
+    triggers:
+      - severity_S0
+      - severity_S1
+      - budget_exhaustion_imminent
+      - out_of_distribution_input
+      - child_viability_breach   # S3* нашёл структурный брак в дочернем VSM
+      - exceptional_success_worth_scaling
+    bypasses_hierarchy: true   # минует S2/S3/S4, идёт напрямую к S5/human
+  basta_constraint:
+    agent_role: prepare_only   # S5 готовит решения, не принимает за человека
+
+# ───────────────────────────── Runtime policy (temporary, set by human) ─────────────────────────────
+# Временная политика от человека. Перекрывает дефолтные правила ниже ДО ОТКАТА.
+# child-dispatcher ОБЯЗАН читать эти флаги в начале работы.
+runtime_policy:
+  child_mutation: allowed      # init-режим: разрешено мутировать ../vsm/ и ../src/ в пределах /vsmlite-init
+                               #   Вернуть: child_mutation: paused (после init по умолчанию).
+  child_mutation_reason: "/vsmlite-init для домена Terminal Bench 2.1 (явно разрешено человеком)"
+  child_mutation_scope: init_only   # только materialize/tailor/flip из /vsmlite-init
+  telemetry_emit: allowed      # экспорт monitor/data.js (read-only) — разрешён по умолчанию
+
+# ───────────────────────────── Child (дочерний VSM) ─────────────────────────────
+# Дочерний VSM прикладной области, выращиваемый до автономии.
+child:
+  path: ../vsm                 # где живёт дочерний VSM (создаётся на init/materialize_child)
+  src_path: ../src             # прикладной домен (дочерний S1: реальная работа)
+  maturation_state: Initial State   # Initial State | Phase 0..6 | Autonomous; синхрон с state/maturation.json
+  autonomy:                    # A(t) ∈ [0,1]; считается scripts/autonomy.py из 4 знаков
+    current: 0.0
+    target: 1.0                # Autonomous
+    signs:                     # forward-совместимо с дизайном vsmforge
+      s5_sign: { from: issues,          metric: "доля открытых с needs_human_decision" }
+      s4_sign: { from: intel,           metric: "самозакрытые сигналы" }
+      s3_sign: { from: units,           metric: "≥2 юнитов, низкое pressure" }
+      s1_sign: { from: activity,        metric: "≥3 активных git-дней в ../vsm/" }
+    verdicts: [DEPENDENT, SEMI-AUTONOMOUS, AUTONOMOUS]
+  intent_doc: ../vsm/.intent.yaml   # OSM Phase 0: зачем нужен дочерний VSM
+
+# ───────────────────────────── Synthesis (OSM) ─────────────────────────────
+# OSM — первоклассно. Применяется synthesis-operator (S1 vsmlite).
+synthesis:
+  model: synthesis/osm.md      # RFC Organizational Synthesis Model
+  phases: synthesis/phases.yaml   # Initial→Ph0–6→Autonomous + emergence-критерии
+  primitives: synthesis/primitives.yaml   # Create(Initial)/Split/Merge/Intersection/Remove/Reconfigure
+  create_allowed_only_in: [Initial State]
+  operator_agent: synthesis-operator   # S1 vsmlite: планирует primitive/phase
+  executor_agent: child-dispatcher     # единственный, кто исполняет в ../vsm/ и ../src/
+  autonomy_engine: scripts/autonomy.py
+
+# ───────────────────────────── S1 — Operations (vsmlite's own) ─────────────────────────────
+# S1 vsmlite = синтез. Реальные прикладные операции живут в ../src/ (дочерний S1).
+system_1:
+  agent: synthesis-operator
+  purpose: планирует и применяет примитивы/фазы OSM для созревания дочернего VSM
+  executor: child-dispatcher  # единственный агент с доступом к ../vsm/ и ../src/
+  read_only_metrics: scripts/collect_metrics.py   # исключение из инварианта
+
+# ───────────────────────────── S2 — Coordination ─────────────────────────────
+system_2:
+  agent: s2-coordinator
+  cadence: on_demand          # vsmlite преимущественно on-demand (юзер запускает цикл)
+  coordination_rules:
+    - trigger: "агент повторяет вывод/действие 3+ раза"
+      action: "стоп, лог, эскалация s2-coordinator"
+    - trigger: "попытка создать файлы вне своего workspace"
+      action: "блок + лог filesystem violation"
+    - trigger: "нужен обмен между агентами"
+      action: "только через s2-coordinator, структурированный JSON"
+    - trigger: "сессия >7 ходов без результата"
+      action: "суммаризация, refresh identity, новая сессия"
+    - trigger: "история >10k токенов"
+      action: "компактизация"
+    - trigger: "изменение в дочернем VSM влияет на телеметрию vsmforge"
+      action: "s2-coordinator уведомляет S3 ДО применения"
+  conflict_detection:
+    resource_overlaps: true        # напр. конкуренция за ../src/ между фазами
+    output_contradictions: true    # расходящиеся решения о фазе дочернего VSM
+    custom_triggers:
+      - "S3 и S4 расходятся в оценке готовности к переходу фазы"
+  transduction_mappings:
+    - from_unit: "../vsm/"
+      to_unit: "state/maturation.json"
+      translation: "git log + README дочернего VSM → maturation state (read-only)"
+    - from_unit: "issues/"
+      to_unit: "monitor/data.js"
+      translation: "VSM-NNN.yaml → window.VSM_DATA.issues[] (через render_data.py)"
+  escalation_to_s3_after: "1 цикл неразрешённого конфликта"
+
+# ───────────────────────────── S3 — Control / Optimization ─────────────────────────────
+system_3:
+  agent: s3-optimizer
+  cadence: on_demand
+  reporting_rhythm: deviation-only  # только отклонения (attenuation)
+  kpi_list:
+    - autonomy_score            # A(t) — главный KPI созревания
+    - maturation_phase          # текущая фаза OSM
+    - coverage_ratio            # доля систем дочернего VSM, проявленных по фазе
+    - validate_pass_rate        # /vsmlite-check проходит
+    - drift_score               # расхождение child vs seed/child/
+    - token_spend_estimate
+  triple_index:                 # Beer's triple index
+    actuality: "что сделано сейчас (state/maturation.json + state/metrics.json)"
+    capability: "что дочерний VSM способен сделать (по фазе)"
+    potentiality: "что могло бы быть (из S4 signals)"
+    measurement: "сверка в каждом цикле"
+  deviation_logic:
+    report_only_deviations: true
+    threshold_percent: 15
+    trend_detection: true
+  intervention_authority:       # анти-микроменеджмент
+    can_throttle_cycle: true
+    requires_documentation: true
+    requires_human_approval: true   # крупное — человеку
+    max_duration: "1 cycle"
+    allowed_actions: [request_phase_transition, request_primitive, throttle_cadence]
+
+# ───────────────────────────── S3* — Audit (независимый) ─────────────────────────────
+system_3_star:
+  agent: s3-star-auditor
+  cadence: on_demand
+  schedule: "случайный сэмпл аспектов жизнеспособности дочернего VSM"
+  provider_constraint:
+    must_differ_from: s1       # КРИТИЧНО: другой модель-провайдер
+    reason: "ловить коррелированные галлюцинации/ошибки в оценке жизнеспособности"
+  reporting_target: s3_and_human   # критика — сразу человеку (алгедоник)
+  audit_focus: child_viability   # OSM «брак = нежизнособная организация»; структурный аудит, не QA
+  independence_rules:
+    - read_only_access_to_child
+    - never_trust_agent_self_reports
+    - verify_child_structure_vs_stated_intent
+    - flag_any_attempt_to_influence_audit
+
+# ───────────────────────────── S4 — Intelligence ─────────────────────────────
+system_4:
+  agent: s4-scout
+  cadence: on_demand
+  monitoring:
+    domain_environment: []     # внешние факторы прикладного домена (tailor на init)
+    vsmforge_roadmap: [forward_contract_status, telemetry_contract_changes]
+    osm_evolution: [new_primitives, phase_criteria_refinements]
+  premises_register:           # допущения, которые надо перепроверять
+    - premise: "A(t) → 1 достижимо за разумное число циклов"
+      check_frequency: per_cycle
+      invalidation_signal: "A(t) стагнирует или падает 3+ цикла"
+      consequence_if_invalid: "пересмотр стратегии созревания (S5)"
+    - premise: "форма window.VSM_DATA стабильна (vsmforge не разработан)"
+      check_frequency: monthly
+      invalidation_signal: "vsmforge опубликовал новый контракт телеметрии"
+      consequence_if_invalid: "обновить scripts/render_data.py + ref/vsmforge-target.md"
+  weak_signals:
+    enabled: true
+    sources: [child_git_commits, domain_artifacts, osm_discussions]
+    detection_method: "пробелы фаз, дрейф conformance child-vs-seed, новые доменные требования"
+  strategy_bridge:
+    injection_point: s5_guardian
+    format: "VSM-NNN signal_type:gap|drift"
+    recipient: human
+
+# ───────────────────────────── Telemetry (vsmforge forward-контракт) ─────────────────────────────
+# vsmforge НЕ разработан. Держим форму window.VSM_DATA как forward-контракт.
+telemetry:
+  status: forward_contract      # не runtime-зависимость
+  target: vsmforge              # будущая фабрика VSM
+  contract_ref: ref/vsmforge-target.md
+  output: monitor/data.js       # window.VSM_DATA = { ... }
+  render: scripts/render_data.py
+  autonomy_scoring: scripts/autonomy.py   # 4 знака → вердикт (forward-совместимо)
+  sync_mode: local              # local | rsync (когда vsmforge зарегистрирует source)
+  autonomy_feed_for: [vsmforge_s3, vsmforge_s4]   # чем vsmlite кормит фабрику
+
+# ───────────────────────────── Budget ─────────────────────────────
+# Веса — для приоритизации систем vsmlite.
+budget:
+  strategy: balanced
+  monthly_usd_estimate: null   # заполнить при наличии данных
+  system_weights:
+    S1: 0.55                   # синтез — основная работа
+    S2: 0.05
+    S3: 0.15
+    S3_star: 0.05              # защищён от даунгрейда
+    S4: 0.15
+    S5: 0.05
+  alerts:
+    warn_at_percent: 80
+    downgrade_at_percent: 95
+
+# ───────────────────────────── Model routing ─────────────────────────────
+# Claude-агенты. S3* принудительно на другом провайдере (cross-provider audit).
+model_routing:
+  synthesis_operator: inherit        # S1 — наследует сессию
+  child_dispatcher: inherit          # boundary-агент — наследует сессию
+  s2_coordination: inherit
+  s3_optimization: inherit
+  s3_star_audit: cross_provider      # ДРУГОЙ провайдер — обязательно
+  s4_intelligence: inherit
+  s5_preparation: inherit
+  heartbeat: cheapest_available      # heartbeats — дешёвая модель
+
+# ───────────────────────────── Heartbeats (cadences) ─────────────────────────────
+# Опциональны; vsmlite преимущественно on-demand (цикл запускает юзер).
+heartbeats:
+  mode: optional
+  s2_coordinator: { every: 30m, prompt: "/vsmlite-cycle --s2" }
+  s3_optimizer:   { every: 2h,  prompt: "/vsmlite-cycle --s3" }
+  s3_star_audit:  { every: 8h,  prompt: "/vsmlite-check --audit" }
+  s4_scout:       { every: 1d,  prompt: "/vsmlite-scan" }
+  s5_guardian:    { every: 1d,  prompt: "pending-decisions sweep" }
+
+# ───────────────────────────── Persistence ─────────────────────────────
+persistence:
+  state_dir: state/
+  issues_dir: issues/
+  telemetry_dir: monitor/
+  gitignored:
+    - state/*.tmp
+    - .venv/
+  tracked:
+    - state/*.json      # история здоровья (легковесно)
+    - issues/*.yaml     # алгедонический журнал
+    - monitor/data.js   # телеметрия (снэпшот последнего цикла)
