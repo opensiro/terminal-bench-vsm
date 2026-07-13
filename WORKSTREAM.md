@@ -54,22 +54,24 @@ eval / grading — проверяется grep.
 ## Workstreams
 
 ### T1 — Failure taxonomy (фундамент)
-- **Status**: ready (волна 1)
+- **Status**: ✅ done (волна 1, завершено 2026-07-13)
 - **Зависимости**: нет (стартует сразу)
-- **Что есть**: [`src/failure_taxonomy.yaml`](src/failure_taxonomy.yaml) — skeleton с 5 классами (ToolNotFound, DependencyConflict, GitConflict, TimeoutExpired, Unknown).
+- **Что было**: [`src/failure_taxonomy.yaml`](src/failure_taxonomy.yaml) — skeleton с 5 классами (ToolNotFound, DependencyConflict, GitConflict, TimeoutExpired, Unknown).
 - **Задача**: наполнить реальными классами из опыта long-horizon coding-агентов. Не выдумывать — брать из literature/SWE-bench postmortems/observed traces. Каждый класс: id, description, signals (error strings/regex), recovery_policy, recovery_steps, s2_anti_repeat.
 - **Кандидаты классов** (добавить сверх skeleton): ImportError/ModuleNotFound, SyntaxError, AssertionError/TestFailure, OOM/ResourceLimit, PermissionDenied, NetworkError, GitAuthFailure, CompilationError, HangDetected (timeout на action level vs task level), AmbiguousSpec (задача допускает несколько интерпретаций).
 - **Deliverable**: `src/failure_taxonomy.yaml` v0.2, ≥12 классов, каждый с recovery policy. `Unknown` класс — escape hatch, помечен «если >N% за цикл → S3 расширяет taxonomy (basta: new_failure_class_introduction)».
 - **Acceptance**:
-  - YAML валиден, парсится.
-  - Каждый класс имеет непустые `signals` (минимум 1) и `recovery_policy`.
-  - `policy_effectiveness_tracking` определён (порог ниже которого policy помечается flaky).
-  - НИ ОДНОГО упоминания Terminal Bench / benchmark / eval (проверка grep).
-  - Краткое обоснование: почему именно эти классы (2-3 предложения в комментарии или NOTES-блоке).
+  - [x] YAML валиден, парсится. — v0.2.0, 16 классов, `yaml.safe_load` OK
+  - [x] Каждый класс имеет непустые `signals` (минимум 1) и `recovery_policy`. — все 16 (Unknown — escape hatch, signals пуст по design, recovery_policy: EscalateToS3)
+  - [x] `policy_effectiveness_tracking` определён (порог ниже которого policy помечается flaky). — threshold: 0.6, window: per_cycle, below_threshold_action, flaky_policies[]
+  - [x] НИ ОДНОГО упоминания Terminal Bench / benchmark / eval (проверка grep). — grep по vsm/+src/ чист
+  - [x] Краткое обоснование: почему именно эти классы (2-3 предложения в комментарии или NOTES-блоке). — 5 notes: источники (SWE postmortems, MAST, traces), группировка по category, general-purpose инвариант
+- **Доп. сверх acceptance**: `unknown_share_threshold: 0.15` (escape hatch порог), `classifier_guidance` (match_order + multi_match_resolution + evidence_required для S3-classifier — контракт для T3).
 - **How-to-start**: спавни `child-dispatcher` из `vsmlite-tb/` с task `tailor: failure_taxonomy_v0.2`. Доступ: чтение literature (через WebSearch — разрешён, не через child-dispatcher), запись `../src/failure_taxonomy.yaml` — через child-dispatcher.
+- **Результат**: 16 классов в 8 категориях (environment/dependency×3/code×3/git×2/resource×4/network/spec/fallback). Источники: SWE engineering postmortems (file localization, test failures), agent fault taxonomies (MAST — spec/verification), runtime faults (import/compilation/hang/OOM/permission/network). Главный инвариант соблюдён: обе мутации (запись v0.2 + правка опечатки) — через child-dispatcher. validate.sh GREEN.
 
 ### T2 — S1-агент дизайн (фундамент)
-- **Status**: ready (волна 1)
+- **Status**: ✅ done (волна 1, сессия 2026-07-13)
 - **Зависимости**: нет ( стартует сразу, параллельно T1)
 - **Что есть**: [`vsm/vsm.yaml → system_1`](vsm/vsm.yaml) — `solver`, purpose зафиксирован на intent-level. Конкретизации interface НЕТ.
 - **Задача**: дизайн S1-агента как interface. Что принимает, что возвращает, как трассируется. Не код — контракт.
@@ -79,15 +81,18 @@ eval / grading — проверяется grep.
   - **Lifecycle**: harness (этот VSM) запускает S1 на задаче → S1 работает до verdict/budget → в случае failure S3 классифицирует, S2 координирует retry с recovery directive → S1 запускается снова (stateful или fresh — специфицировать решение).
   - **Stateful vs stateless retry**: критичный дизайн-вопрос. Stateless = каждый retry с нуля (проще, но теряет прогресс). Stateful = retry с континуации (сложнее, но эффективнее). Решение зафиксировать с обоснованием.
 - **Deliverable**: `vsm/systems/s1-dispatcher/` (НОВЫЙ каталог) с `SOUL.md` + `SKILL.md` + `CONTRACT.md` (interface). Возможно обновить `vsm/vsm.yaml → system_1` с ссылкой на contract.
+- **Результат**: создан `vsm/systems/s1-dispatcher/` (5 файлов: CONTRACT/SOUL/SKILL/TASK/HEARTBEAT) + `vsmlite-tb/.claude/agents/s1-dispatcher.md`. CONTRACT.md — interface S1: input (task/tools/environment/budget/recovery_directive), output (trace/verdict/artifacts/failure_observations/cost), lifecycle, failure observations format (§6, что S3 парсит). Stateful-vs-stateless решён: **S1 stateless, fresh-per-invocation** (CONTRACT.md §5) — retry доносит только `recovery_directive` (какой класс ожидается, что изменилось в env). Обоснование: аудируемость, простота, general-purpose discipline.
+- **Откат R0/R1/R2 (та же сессия)**: изначально T2 включал retry feedback-channel как спектр R0/R1/R2 (VSM-003, feedback_mode/prior_attempt в input). Человек передумал — «не усложнять». R0/R1/R2 вычищены из всех 5 файлов s1-dispatcher + agent file (через child-dispatcher для `../vsm/`; напрямую для `vsmlite-tb/`). VSM-003 → superseded (monotonic id сохранён в истории). Заменено простым stateless-решением. Гrep R0/R1/R2 по продукту (`vsm/`+`src/`) — чист. validate.sh GREEN.
 - **Acceptance**:
-  - `vsm/systems/s1-dispatcher/CONTRACT.md` существует, описывает input/output/lifecycle.
-  - stateful-vs-stateless retry решение зафиксировано с обоснованием.
-  - Failure observations формат определён (что S3 будет парсить).
-  - `.claude/agents/s1-dispatcher.md` создан (placeholder agent definition, как у других систем).
-  - НИ ОДНОГО упоминания Terminal Bench / benchmark / eval.
+  - [x] `vsm/systems/s1-dispatcher/CONTRACT.md` существует, описывает input/output/lifecycle.
+  - [x] stateful-vs-stateless retry решение зафиксировано с обоснованием (CONTRACT.md §5: stateless, fresh-per-invocation).
+  - [x] Failure observations формат определён (CONTRACT.md §6; что S3 будет парсить).
+  - [x] `.claude/agents/s1-dispatcher.md` создан (placeholder agent definition, как у других систем).
+  - [x] НИ ОДНОГО упоминания Terminal Bench / benchmark / eval.
 - **How-to-start**: спавни `child-dispatcher` из `vsmlite-tb/` с task `tailor: s1_design`. Запись `../vsm/systems/s1-dispatcher/` — через child-dispatcher.
 
 ### Sync 1 — точка синхронизации (после T1 + T2)
+- **Status**: ✅ ready (оба dependency done: T1 + T2)
 - **Что**: сверка failure observations из T2 CONTRACT ↔ классы в T1 taxonomy.
 - **Критерий pass**: каждый signal-паттерн в T2 CONTRACT маппится хотя бы на один класс в T1 taxonomy (или добавляется новый). Иначе — итерация: T1 дополняет классы, или T2 уточняет observation format.
 - **Решает человек** (или сессия, выполняющая sync): есть ли расхождения, требующие доработки T1/T2.
@@ -166,9 +171,9 @@ eval / grading — проверяется grep.
 
 | Workstream | Status | Зависимости | Волна |
 |---|---|---|---|
-| T1: failure taxonomy | **ready** | — | 1 |
-| T2: S1-агент дизайн | **ready** | — | 1 |
-| Sync 1 | blocked | T1, T2 | — |
+| T1: failure taxonomy | **✅ done** | — | 1 |
+| T2: S1-агент дизайн | **✅ done** | — | 1 |
+| Sync 1 | **ready** | T1✅, T2✅ | — |
 | T3: retry-механизм | blocked | Sync 1 | 2 |
 | T4: MCP tools-server | blocked | Sync 1 (T2) | 2 |
 | Sync 2 | blocked | T3, T4 | — |
@@ -184,5 +189,6 @@ eval / grading — проверяется grep.
 
 - [ ] LICENSE: TBD (open_source intent; конкретная лицензия — юридическое решение).
 - [ ] remote для git push (нет remote; push — basta: `submit_or_publish_results`).
-- [ ] `runtime_policy.child_mutation`: сейчас `allowed` (init/refactor завершены, можно вернуть `paused`).
-- [ ] stateful-vs-stateless retry (T2) — архитектурное решение, фиксирует человек или делегирует сессии с обоснованием.
+- [x] `runtime_policy.child_mutation`: сейчас `allowed` + `scope: workstream` (для волн 1-2). Вернуть `paused` после завершения workstream-волны 2.
+- [x] stateful-vs-stateless retry (T2) — РЕШЕНО: **S1 stateless, fresh-per-invocation** (CONTRACT.md §5). R0/R1/R2 (VSM-003) откатаны в той же сессии — «не усложнять»; VSM-003 → superseded. Retry доносит только `recovery_directive`.
+- [ ] **VSM-004 (pending, needs_human_decision)**: концептуальный поворот — Terminal-Bench Dev Set v2 как индикатор автономности (не training data), self-modification продукта = OSM-синтез через vsmlite (не fine-tuning). Человек: «продукт не тренируют, его строят до автономности с учётом метрики проходимости dev-бенча». Инварианты сохраняются: `train_on_eval` (нет ML), `optimize_for_specific_evaluator` (продукт не знает про TB), мембрана (Dev Set → generic tasks). Ждёт решения человека.

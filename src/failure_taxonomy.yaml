@@ -2,64 +2,338 @@
 # General-purpose по построению (не привязан к конкретному оценочному набору).
 # Классы сбоев → recovery policies.
 # S3 (failure classifier) читает это; S2 координирует применение; S4 ищет expansions.
-version: 0.1.0
+#
+# v0.2 (T1): наполнена реальными классами из наблюдаемых failure modes long-horizon
+# coding агентов (SWE engineering postmortems, agent fault taxonomies, observed traces).
+# Группировка по `category` позволяет S3-classifier сужать поиск по контексту прогона:
+# setup-фаза чаще даёт environment/dependency; execution — code/test; comprehension — spec.
+version: 0.2.0
 generated: 2026-07-13
 principle: "retry by failure CLASS, never by task id (Failure Classifier → Recovery Policy → Retry)"
+# NOTSET-escape: Unknown > unknown_share_threshold за цикл ⇒ S3 расширяет taxonomy
+# (new_failure_class_introduction — basta, решение человека).
+unknown_share_threshold: 0.15
 
 failure_classes:
+
+  # ─────────── environment / dependency ───────────
+
   - id: ToolNotFound
-    description: "требуемый tool не установлен/не найден в окружении"
-    signals: ["command not found", "No module named", "tool unavailable"]
+    category: environment
+    description: "требуемый исполняемый tool/CLI не установлен или не найден в PATH окружения"
+    signals:
+      - "command not found"
+      - "No such file or directory"
+      - "tool unavailable"
+      - "not recognized as an internal or external command"
+      - "executable file not found"
     recovery_policy: InstallTool
     recovery_steps:
-      - "определить требуемый tool/package"
-      - "установить в текущее окружение"
+      - "определить требуемый tool/package по имени команды"
+      - "установить в текущее окружение (apt/pip/npm/brew/…)"
+      - "убедиться что binary доступен в PATH"
       - "повторить исходное действие"
-    s2_anti_repeat: "не повторять установку >1 раза за прогон"
+    s2_anti_repeat: "не повторять установку того же tool >1 раза за прогон; при рецидиве → S3 реклассификация"
+
+  - id: ImportError
+    category: dependency
+    description: "модуль Python (или аналог) отсутствует или не импортируется в рантайме"
+    signals:
+      - "ModuleNotFoundError"
+      - "ImportError"
+      - "cannot import name"
+      - "No module named"
+      - "DLL load failed"
+    recovery_policy: InstallDependency
+    recovery_steps:
+      - "извлечь имя модуля из сообщения"
+      - "установить через менеджер пакетов языка (pip install / npm install / …)"
+      - "при namespace mismatch — сопоставить import-name vs package-name (напр. import PIL ↔ pip install pillow)"
+      - "повторить импорт/действие"
+    s2_anti_repeat: "не переустанавливать тот же модуль >1 раза; при рецидиве → DependencyConflict реклассификация"
 
   - id: DependencyConflict
-    description: "конфликт версий зависимостей в окружении"
-    signals: ["version conflict", "incompatible", "DependencyResolutionError"]
+    category: dependency
+    description: "конфликт версий зависимостей в окружении (несовместимые требования пакетов)"
+    signals:
+      - "version conflict"
+      - "incompatible"
+      - "DependencyResolutionError"
+      - "ResolutionImpossible"
+      - "has requirement X but you have Y"
+      - "pkg-resources DistributionNotFound"
     recovery_policy: CreateFreshVenv
     recovery_steps:
-      - "создать свежее venv"
-      - "установить deps заново"
+      - "зафиксировать декларацию deps (requirements.txt / pyproject / package.json)"
+      - "создать свежее виртуальное окружение"
+      - "установить deps заново в чистое окружение"
       - "повторить прогон"
-    s2_anti_repeat: "не пересоздавать venv >1 раза; при рецидиве → S4 (policy expansion)"
+    s2_anti_repeat: "не пересоздавать venv >1 раза за прогон; при рецидиве → S4 (policy expansion — возможно нужен resolver/constraints)"
+
+  - id: CompilationError
+    category: dependency
+    description: "ошибка сборки/компиляции native-компонента или препроцессора (C/C++/Rust/TS-build)"
+    signals:
+      - "error: expected"
+      - "build failed"
+      - "compilation terminated"
+      - "gcc: error"
+      - "cargo build error"
+      - "tsc error TS"
+      - "make: *** Error"
+      - "fatal error:"
+    recovery_policy: FixBuildConfig
+    recovery_steps:
+      - "извлечь файл/строку ошибки из вывода сборки"
+      - "проверить наличие dev-заголовков и build-toolchain"
+      - "применить минимальный фикс (тип/сигнатура/опечатка) либо установить недостающий build-dep"
+      - "пересобрать"
+    s2_anti_repeat: "не повторять сборку без изменения исходника/config >2 раз; при рецидиве → S3 (возможно неверный таргет/платформа)"
+
+  # ─────────── code / execution ───────────
+
+  - id: SyntaxError
+    category: code
+    description: "синтаксическая ошибка в исходном коде (невозможно распарсить)"
+    signals:
+      - "SyntaxError"
+      - "IndentationError"
+      - "TabError"
+      - "unexpected token"
+      - "Parsing error"
+      - "SyntaxError: invalid syntax"
+      - "EOL while scanning string literal"
+    recovery_policy: FixSyntax
+    recovery_steps:
+      - "прочитать указанный файл:строка из traceback"
+      - "локализовать минимальную синтаксическую правку (скобка/двоеточие/отступ/кавычка)"
+      - "применить edit"
+      - "повторить действие, породившее ошибку"
+    s2_anti_repeat: "не применять >2 синтаксических правок в одной точке без прогресса; при рецидиве → S3 (возможно структурная проблема — пересмотреть блок целиком)"
+
+  - id: TestFailure
+    category: code
+    description: "прогон тестов/проверок завершился неудачей (assertion или ожидание vs факт)"
+    signals:
+      - "AssertionError"
+      - "AssertionFailedError"
+      - "tests failed"
+      - "FAILED (failures="
+      - "expected"
+      - "but got"
+      - "1 failed, "
+    recovery_policy: DiagnoseAndPatch
+    recovery_steps:
+      - "прочитать failed assertion: expected vs actual"
+      - "определить — баг в коде или в тесте (последнее — эскалировать, не править тест вслепую)"
+      - "локализовать минимальную правку в реализации"
+      - "перепрогнать ТОЛЬКО упавший тест (узкий scope)"
+      - "при успехе — полный набор тестов"
+    s2_anti_repeat: "не править тест чтобы он прошёл (это circumvent_recovery); не повторять одну правку >2 раз; при рецидиве → S3 реклассификация"
+
+  - id: FileLocalizationError
+    category: code
+    description: "агент обращается к неверному файлу/символу/пути в репозитории (wrong target)"
+    signals:
+      - "No such file"
+      - "cannot find module"
+      - "file does not exist"
+      - "symbol not found"
+      - "name is not defined"
+      - "could not resolve"
+    recovery_policy: RelocalizeAndReplay
+    recovery_steps:
+      - "переискать целевой файл/символ (grep/ctags/structure-aware search)"
+      - "сверить путь с актуальной структурой репозитория"
+      - "повторить действие с корректным путём"
+    s2_anti_repeat: "не повторять обращение к тому же неверному пути >1 раза; при рецидиве → S3 (возможно AmbiguousSpec или устаревшая карта репозитория)"
+
+  # ─────────── git / vcs ───────────
 
   - id: GitConflict
-    description: "git-конфликт при операции над репозиторием задачи"
-    signals: ["merge conflict", "CONFLICT", "unresolved"]
+    category: git
+    description: "git-конфликт при операции над репозиторием задачи (merge/rebase/cherry-pick)"
+    signals:
+      - "CONFLICT (content)"
+      - "merge conflict"
+      - "Merge conflict in"
+      - "Automatic merge failed"
+      - "unresolved conflicts"
+      - "both modified"
     recovery_policy: ResetAndReplay
     recovery_steps:
-      - "reset на чистое состояние задачи"
-      - "повторить последовательность действий"
-    s2_anti_repeat: "не повторять ту же последовательность; при рецидиве → S3 реклассификация"
+      - "прервать конфликтующую операцию (merge --abort / rebase --abort)"
+      - "reset на чистое состояние задачи (стартовая точка прогона)"
+      - "повторить последовательность действий, избегая породившей конфликт операции"
+    s2_anti_repeat: "не повторять ту же конфликтующую последовательность; при рецидиве → S3 реклассификация (возможно нужна иная стратегия интеграции)"
+
+  - id: GitAuthFailure
+    category: git
+    description: "ошибка аутентификации/авторизации при обращении к git-remote (clone/fetch/push)"
+    signals:
+      - "Authentication failed"
+      - "Permission denied (publickey)"
+      - "could not read Username"
+      - "403 Forbidden"
+      - "401 Unauthorized"
+      - "Support for password authentication was removed"
+      - "fatal: could not read Username"
+    recovery_policy: UseAlternateAuth
+    recovery_steps:
+      - "определить требуемый метод auth (SSH key / token / HTTPS-credential-helper)"
+      - "настроить credential (без записи секретов в репозиторий/логи)"
+      - "повторить git-операцию"
+    s2_anti_repeat: "не повторять ту же auth-операцию >1 раза без смены метода; при рецидиве → S3 (возможно отсутствие прав — эскалация, не retry)"
+
+  # ─────────── resource / runtime environment ───────────
 
   - id: TimeoutExpired
-    description: "действие превысило допустимое время"
-    signals: ["timeout", "timed out", "deadline exceeded"]
+    category: resource
+    description: "одно действие (action-level) превысило допустимое время выполнения"
+    signals:
+      - "TimeoutExpired"
+      - "Command timed out"
+      - "deadline exceeded"
+      - "timed out after"
     recovery_policy: RetryWithSmallerScope
     recovery_steps:
-      - "декомпозировать действие"
-      - "повторить с меньшим scope"
-    s2_anti_repeat: "не повторять с тем же scope; при рецидиве → S3 пересмотр policy"
+      - "декомпозировать действие на меньшие шаги"
+      - "повторить с меньшим scope (узкий test, меньший dataset, короткий range)"
+      - "при успехе — постепенно расширять scope"
+    s2_anti_repeat: "не повторять с тем же scope; при рецидиве → HangDetected реклассификация или S3 пересмотр policy"
+
+  - id: HangDetected
+    category: resource
+    description: "прогон завис: нет вывода/прогресса сверх порога (task-level, отличается от action-timeout)"
+    signals:
+      - "no output for"
+      - "hang detected"
+      - "process appears stuck"
+      - "watchdog: no progress"
+      - "deadlock suspected"
+    recovery_policy: KillAndRestart
+    recovery_steps:
+      - "убить зависший процесс/подпроцесс"
+      - "очистить ресурсы (temp files, locks, порты)"
+      - "перезапустить прогон с checkpoint'а (если есть) либо с чистого старта"
+      - "при повторе — добавить таймауты на под-действия (предотвратить тихий hang)"
+    s2_anti_repeat: "не перезапускать >1 раза с тем же вводом без изменений; при рецидиве → S3 (возможно бесконечный цикл в коде — нужен фикс, не retry)"
+
+  - id: ResourceLimit
+    category: resource
+    description: "исчерпаны ресурсы окружения (память/диск/файловые дескрипторы)"
+    signals:
+      - "MemoryError"
+      - "Out of memory"
+      - "OOM"
+      - "Cannot allocate memory"
+      - "No space left on device"
+      - "Too many open files"
+      - "EMFILE"
+      - "RuntimeError: CUDA out of memory"
+    recovery_policy: ReduceFootprint
+    recovery_steps:
+      - "определить лимитирующий ресурс (RAM/disk/fd/GPU)"
+      - "уменьшить footprint: меньший batch/streaming/free intermediate/закрыть дескрипторы"
+      - "повторить с уменьшенным потреблением"
+    s2_anti_repeat: "не повторять с тем же footprint; при рецидиве → S3 (возможно нужна среда с бóльшим лимитом — эскалация, не retry)"
+
+  - id: PermissionDenied
+    category: resource
+    description: "недостаточно прав на файловую/shell-операцию (filesystem permissions)"
+    signals:
+      - "Permission denied"
+      - "EACCES"
+      - "Operation not permitted"
+      - "EPERM"
+      - "access is denied"
+    recovery_policy: FixPermissions
+    recovery_steps:
+      - "определить целевой путь и требуемый доступ (read/write/exec)"
+      - "проверить владельца/режим (ls -l / stat)"
+      - "применить минимальную правку прав (chmod/chown) — не расширять права сверх необходимого"
+      - "повторить действие"
+    s2_anti_repeat: "не расширять права рекурсивно вслепую; при рецидиве → S3 (возможно неверный пользователь/контейнер — эскалация)"
+
+  # ─────────── network ───────────
+
+  - id: NetworkError
+    category: network
+    description: "сетевая ошибка при обращении к внешнему ресурсу (HTTP/DNS/TCP)"
+    signals:
+      - "ConnectionError"
+      - "Connection refused"
+      - "Connection reset"
+      - "Name or service not known"
+      - "Temporary failure in name resolution"
+      - "Max retries exceeded"
+      - "read timed out"
+      - "SSLError"
+    recovery_policy: RetryWithBackoff
+    recovery_steps:
+      - "определить целевой хост/endpoint"
+      - "повторить с экспоненциальным backoff (1s → 2s → 4s)"
+      - "при повторе >N — проверить доступность/URL/credentials"
+    s2_anti_repeat: "не повторять >3 раз с тем же backoff; при рецидиве → S3 (возможно ресурс недоступен/неверный URL — не retry)"
+
+  # ─────────── specification ───────────
+
+  - id: AmbiguousSpec
+    category: spec
+    description: "задача допускает несколько интерпретаций; агент не может однозначно выбрать цель"
+    signals:
+      - "ambiguous"
+      - "multiple valid interpretations"
+      - "unclear requirements"
+      - "specification conflict"
+      - "contradictory constraints"
+    recovery_policy: ClarifySpec
+    recovery_steps:
+      - "зафиксировать конкретную интерпретацию с обоснованием (запись в trace)"
+      - "при наличии clarifying-channel — запросить уточнение"
+      - "при отсутствии — выбрать наиболее вероятную интерпретацию и продолжить"
+      - "отметить предположение в artifacts для последующей верификации"
+    s2_anti_repeat: "не менять интерпретацию вслепую при каждой неудаче; при рецидиве → S3 (возможно нужен явный clarify-шаг, не retry)"
+
+  # ─────────── fallback ───────────
 
   - id: Unknown
-    description: "сбой не классифицирован (S3 должен расширить taxonomy)"
+    category: fallback
+    description: "сбой не классифицирован ни одним из известных классов (S3 должен расширить taxonomy)"
     signals: []
     recovery_policy: EscalateToS3
     recovery_steps:
-      - "S3 анализирует trace"
-      - "если ≥ порога Unknown за цикл → S4 (policy expansion) → new_failure_class_introduction (basta)"
-    s2_anti_repeat: "n/a (эскалация)"
+      - "S3 анализирует trace: error string, stack, контекст действия"
+      - "если доля Unknown ≥ unknown_share_threshold за цикл → S4 (policy expansion) → new_failure_class_introduction (basta, решение человека)"
+      - "до расширения — retry с generic safeguards (fresh state, smaller scope)"
+    s2_anti_repeat: "n/a (эскалация); повторный Unknown того же паттерна → S3 помечает как candidate-class"
 
+# ─────────── policy effectiveness tracking ───────────
 policy_effectiveness_tracking:
-  metric: policy_effectiveness
-  threshold: 0.6
-  below_threshold_action: "S3-mark policy как flaky → S4 ищет alternative"
+  metric: policy_effectiveness          # per-policy success rate: доля применений, после которых сбой не рецидивировал
+  threshold: 0.6                        # ниже → policy помечается flaky
+  window: per_cycle                     # окно измерения — цикл S3
+  below_threshold_action: "S3-mark policy как flaky → S4 ищет alternative policy → recovery_policy_override (basta) либо new_failure_class_introduction"
+  flaky_policies: []                    # runtime: S3 добавляет id policy при падении ниже threshold
 
+# ─────────── classifier guidance (для S3) ───────────
+classifier_guidance:
+  match_order:                          # порядок проверки — от специфичных к общим
+    - code                              # SyntaxError/TestFailure/FileLocalizationError — точные паттерны
+    - dependency                        # ImportError/DependencyConflict/CompilationError
+    - git                               # GitConflict/GitAuthFailure
+    - resource                          # TimeoutExpired/HangDetected/ResourceLimit/PermissionDenied
+    - network                           # NetworkError
+    - environment                       # ToolNotFound (часто перекрывается с ImportError — проверять после)
+    - spec                              # AmbiguousSpec — диагностика отсутствия явной ошибки
+    - fallback                          # Unknown — последний
+  multi_match_resolution: "если несколько классов матчат — предпочитать тот, чьи signals точнее (literal > regex); при равенстве — category текущей фазы прогона (setup→environment/dependency, execution→code/resource, comprehension→spec)"
+  evidence_required: true               # classifier обязан записать matched signal + class в trace
+
+# ─────────── обоснование (NOTES) ───────────
 notes:
-  - "Онтология — skeleton (VSM-002 поэтапно). Классы добавляются по мере наблюдений S3."
-  - "Полная форма (как opensiro-arctic: per-class метаподходы, grade/disclosure) — когда S3 созреет."
-  - "Taxonomy по построению general-purpose: классы и policies не привязаны к конкретному оценочному набору."
+  - "Классы выведены из наблюдаемых failure modes long-horizon coding агентов: SWE engineering task postmortems (file localization, flawed fixes, test failures), agent fault taxonomies (MAST — spec/verification; runtime faults — import/compilation/hang/OOM/permission/network), и direct traces опыта. Группировка по category позволяет S3-classifier сужать поиск по контексту прогона."
+  - "Онтология намеренно general-purpose: классы и policies описывают универсальные режимы сбоев coding-агента, не привязанные к конкретному оценочному набору или домену задач."
+  - "Полная форма (per-class метаподходы, grade/disclosure — как opensiro-arctic) — когда S3 созреет; сейчас v0.2 покрывает контракт S3-classifier (T3) и S2 anti-repeat (T5)."
+  - "Unknown — escape hatch, НЕ класс для ленивой классификации: доля >unknown_share_threshold за цикл ⇒ структурный сигнал S4 (taxonomy gaps) ⇒ basta new_failure_class_introduction."
+  - "recovery_policy_override и new_failure_class_introduction — basta (решение человека), см. ../vsm/.intent.yaml → authority.basta_constraint."

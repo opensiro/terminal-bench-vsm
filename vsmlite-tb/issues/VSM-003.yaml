@@ -1,0 +1,97 @@
+id: VSM-003
+source_system: S5            # human-initiated architecture decision (workstream T2)
+signal_type: policy          # design policy: retry feedback-channel
+severity: S2                 # structural design decision; не identity/values shift (как VSM-002)
+target_unit: child           # влияет на S1-контракт продукта
+
+title: "S1 retry feedback-channel: спектр R0/R1/R2, R1 baseline, launch-time argument от человека"
+summary: |
+  Архитектурное решение для S1-контракта продукта (workstream T2), зафиксированное
+  в сессии. Решило открытый вопрос «stateful-vs-stateless retry» (WORKSTREAM.md:188)
+  через рефрейминг: состояние окружения и память S1 о прошлой попытке — две РАЗНЫЕ
+  оси, и retry характеризуется только второй.
+
+  ОСЬ 1 — State axis (env, fs, git): управляется recovery policy ВНЕ S1. InstallTool
+  установил пакет, ResetAndReplay откатил git — это делает recovery executor (T3),
+  не солвер. В этом смысле retry всегда «stateful» на уровне environment, но это
+  не дело S1.
+
+  ОСЬ 2 — Memory axis (что S1 знает о прошлой попытке): ЭТО И ЕСТЬ R0/R1/R2.
+  S1 как агент стартует fresh-per-invocation; режим определяет, какая часть
+  прошлой попытки доносится в input как `prior_attempt`. Спектр:
+
+    R0 — Blind:              prior_attempt = null. S1 не знает, что это retry.
+                              Use case: env-recovery (InstallTool, CreateFreshVenv).
+    R1 — Feedback-agnostic:  prior_attempt = {failure_class, cost, explored_paths[]}.
+                              Базовый режим. S1 знает класс прошлой ошибки и
+                              исследованные paths, но НЕ trace/artifacts.
+    R2 — Feedback-aware:     prior_attempt = {full_trace, verdict, artifacts_diff,
+                              failure_observations}. S1 видит всю прошлую попытку.
+                              Use case: long-horizon, GitConflict replay.
+
+  Решения (зафиксированы человеком в сессии):
+  (1) R1 — baseline/дефолт, когда recovery directive не указывает явно.
+  (2) Режим выбирает ЧЕЛОВЕК при запуске harness как launch-time argument. Это
+      НЕ решение S3 (T3) и НЕ атрибут failure class (T1 taxonomy) — режим глобален
+      для всех invocations одного harness-run.
+  (3) Один режим на retry: никаких progressive disclosure (R0→R1→R2 по попыткам).
+      Проще аудит (S3* видит один режим + одну policy на retry).
+  (4) Feedback во всех режимах — product-internal (failure class, cost, paths,
+      trace). Никогда не benchmark-level. Сохраняет never_do: optimize_for_specific_evaluator.
+
+  Ложится на VSM-архитектуру: S3-classifier (T3) получает failure_observations
+  из output S1; S2-coordinator координирует retry; S3 выбирает recovery policy;
+  recovery executor меняет environment; s1-dispatcher (T2 CONTRACT) запускает S1
+  снова с prior_attempt согласно feedback_mode.
+
+evidence:
+  - "сессия 2026-07-13: workstream T2, вопрос stateful-vs-stateless retry"
+  - "рефрейминг: разделение на state-axis (env, вне S1) и memory-axis (R0/R1/R2, input S1)"
+  - "решение человека: режим = launch-time argument, R1 дефолт, один режим на retry"
+  - "обоснование R1 как baseline: баланс general-purpose discipline и эффективности; недостаточно контекста для overfit, достаточно чтобы не повторять ошибку"
+  - "инвариант сохранён: feedback product-internal, не нарушает optimize_for_specific_evaluator"
+
+proposal: |
+  Зафиксировать R0/R1/R2 как retry feedback-channel в S1-контракте продукта:
+  (1) vsm/systems/s1-dispatcher/CONTRACT.md → разделы "Input contract" (feedback_mode)
+      и "Feedback modes" (R0/R1/R2 спецификация).
+  (2) prior_attempt формат определён per-mode в CONTRACT.
+  (3) failure_observations формат (что S3 парсит) — mode-agnostic, всегда полный
+      в output (S3 всегда видит всё для классификации; режим ограничивает только
+      что доносится НАЗАД в S1 при retry).
+  (4) vsmlite-tb/vsmlite.yaml → runtime_policy.child_mutation_scope: init_only →
+      workstream (T2 = tailor: s1_design формально вне init; расширение по VSM-003).
+
+acceptance:
+  - "CONTRACT.md (T2) содержит раздел Feedback modes с R0/R1/R2 спецификацией"
+  - "CONTRACT.md явно фиксирует R1 как baseline и launch-time argument как механизм выбора"
+  - "CONTRACT.md явно фиксирует один режим на retry (no progressive disclosure)"
+  - "runtime_policy.child_mutation_scope = workstream в vsmlite.yaml"
+  - "validate.sh GREEN"
+  - "ни одного упоминания Terminal Bench/benchmark/eval в vsm/ и src/"
+
+needs_human_decision: false   # решение уже принято человеком в сессии
+
+policy_question: >
+  Зафиксировать R0/R1/R2 как retry feedback-channel спектр (R1 baseline, launch-time
+  argument, один режим на retry) в S1-контракте продукта?
+
+options:
+  - { id: r1_baseline, label: "R1 как baseline + R0/R1/R2 спектр", hint: "Balanced default; режим = launch-аргумент человека; один режим на retry (Recommended)" }
+  - { id: r0_strict,   label: "R0 (Blind) как baseline",            hint: "Максимум general-purpose чистоты; дороже на long-horizon" }
+  - { id: r2_full,     label: "R2 (Feedback-aware) как baseline",   hint: "Максимум эффективности; больше поверхность для product-internal overfit" }
+
+status: superseded            # человек передумал (та же сессия): R0/R1/R2 откатаны
+decision: "superseded — человек передумал в той же сессии: R0/R1/R2 вычищены из s1-dispatcher; stateful-vs-stateless решён как S1 stateless (fresh-per-invocation), retry доносит только recovery_directive. VSM-003 остаётся в истории (monotonic id)."
+selected_options: []           # superseded — выбор отозван
+
+superseded_by: "VSM-004 (pending) — простой stateless retry вместо R0/R1/R2 спектра"
+superseded_reason: |
+  Человек передумал: не усложнять. R0/R1/R2 спектр вычищен из s1-dispatcher
+  (5 файлов переписаны). Вместо режимов — простое решение: S1 stateless,
+  fresh-per-invocation; retry доносит только recovery_directive (какой класс
+  ожидается, что изменилось в env). T2-контракт сохранён (input/output/lifecycle,
+  failure_observations format). VSM-003 accepted→superseded в той же сессии.
+
+created: 2026-07-13
+updated: 2026-07-13

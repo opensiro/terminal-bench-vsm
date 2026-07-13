@@ -1,0 +1,108 @@
+id: VSM-004
+source_system: S5            # human-initiated conceptual shift
+signal_type: policy          # концептуальный поворот: роль Dev Set + self-modification
+severity: S1                 # structural — меняет понимание как vsmlite выращивает продукт
+target_unit: meta            # vsmlite (родитель) — меняется его операция S1
+
+title: "Dev Set как метрика автономности + general-purpose self-modification продукта (не training)"
+summary: |
+  Концептуальный поворот от человека (сессия 2026-07-13, после отката R0/R1/R2).
+  Переформулировка того, КАК vsmlite выращивает продукт до автономии.
+
+  КЛЮЧЕВОЕ РАЗЛИЧЕНИЕ (от человека): «продукт не тренируют, его СТРОЯТ до
+  автономности с учётом метрики проходимости этого dev-бенча». Это синтез (OSM),
+  не ML-тренировка.
+
+  Идея: vsmlite (родитель, знает про Terminal Bench) использует Terminal-Bench Dev
+  Set v2 как ИНДИКАТОР роста автономности A(t) продукта. Dev Set задачи подаются
+  в продукт как generic coding tasks (мембрана снимает TB-фрейминг). Продукт
+  развивает general-purpose self-adaptation (новые recovery policies, skill DB
+  entries, структурные изменения через OSM-примитивы), НЕ зная про TB. Затем
+  продукт слепо оценивается на Eval Set.
+
+  Self-modification продукта — это OSM-синтез (vsmlite применяет примитивы
+  Split/Merge/Reconfigure через child-dispatcher на основе метрик), НЕ
+  weight-update / fine-tuning. Продукт «изменяет себя» в том смысле, что его
+  структура (taxonomy, skill DB, system definitions) эволюционирует — но
+  изменяет её vsmlite как оператор синтеза, на основе general-purpose метрик
+  продукта + pass-метрики Dev Set (которую видит только родитель).
+
+  Контраст с тем что было: раньше vsmlite выращивал продукт «в общем» (OSM-фазы
+  по emergence-критериям). Теперь emergence-критерии ДОПОЛНЯЮТСЯ pass-метрикой
+  Dev Set как внешним индикатором: «продукт достаточно автономен, когда
+  справляется с Dev Set без вмешательства». Это не меняет never_do — напротив,
+  уточняет границу product↔evaluation.
+
+evidence:
+  - "сессия 2026-07-13: человек — «продукт не тренируют, его строят до автономности с учетом метрики проходимости dev-бенча»"
+  - "контраст: R0/R1/R2 откатаны (VSM-003 superseded) — не усложнять; self-modification = OSM-синтез, не режимы retry"
+  - "vsmlite.yaml → identity.product_evaluation: product_knows=false, membrane на стороне родителя — сохраняется"
+  - "vsm/vsm.yaml → never_do: optimize_for_specific_evaluator — продукт не знает про TB, адаптация general-purpose"
+  - "vsmlite.yaml → never_do: train_on_eval — НЕТ ML-тренировки на eval-разметке; pass-метрика = индикатор для OSM, не gradient"
+  - "OSM §7: vsmlite = dedicated operational unit parent, mission = organizational synthesis — self-modification продукта = синтез"
+
+proposal: |
+  Зафиксировать концептуальный поворот как уточнение роли vsmlite + membrane:
+
+  (1) Dev Set = индикатор автономности (НЕ training data). vsmlite подаёт Dev Set
+      задачи в продукт как generic coding tasks (мембрана). Pass-метрика Dev Set
+      видна ТОЛЬКО родителю; продукт её не видит. vsmlite использует pass-метрику
+      как один из emergence-сигналов для OSM-синтеза (наряду с A(t), 4 знаками).
+
+  (2) Self-modification продукта = OSM-синтез (НЕ training/fine-tuning). vsmlite
+      применяет примитивы Split/Merge/Reconfigure к дочернему VSM через
+      child-dispatcher, когда метрики (включая Dev Set pass-rate) показывают что
+      текущая структура недостаточна. Продукт «изменяет себя» в смысле эволюции
+      своей структуры (taxonomy, skill DB, system definitions), но изменяет её
+      vsmlite — продукт не модифицирует собственную identity сам (basta:
+      identity/values change — решение человека).
+
+  (3) Разделение Dev Set / Eval Set. Dev Set = для развития (vsmlite видит
+      pass-метрику, итеративно синтезирует). Eval Set = для финальной слепой
+      оценки (продукт никогда не видел, vsmlite не использует для синтеза —
+      только для вердикта готовности). Оба живут в родителе; продукт не знает
+      ни про один.
+
+  (4) Инварианты СОХРАНЯЮТСЯ (не нарушаются):
+      - train_on_eval: НЕТ — нет ML-тренировки; pass-метрика = сигнал для OSM.
+      - optimize_for_specific_evaluator: НЕТ — продукт не знает про TB;
+        адаптация general-purpose (recovery policies применимы к любым tasks).
+      - leak_evaluation_context_to_product: НЕТ — мембрана транслирует;
+        продукт видит generic coding tasks.
+      - blinded_evaluation: сохраняется — Eval Set слепой; Dev Set не протекает
+        в product identity.
+
+  (5) Метрика Dev Set — ВНУТРЕННЯЯ для vsmlite, не протекает в продукт. Продукт
+      продолжает измерять свои product KPI (recovery_rate, retry_efficiency,
+      policy_effectiveness — из vsm/vsm.yaml system_3.kpi_list). Dev Set
+      pass-rate — метрика РОДИТЕЛЯ, живёт в vsmlite-tb/state/ + telemetry.
+
+acceptance:
+  - "vsmlite.yaml → identity.product_evaluation дополнена: dev_set role = autonomy indicator (не training data), eval_set = blind final"
+  - "vsmlite.yaml → never_do: train_on_eval формулировка уточнена — «ML-тренировка на eval-разметке запрещена; pass-метрика Dev Set = сигнал для OSM-синтеза, не gradient»"
+  - "vsm/vsm.yaml — БЕЗ ИЗМЕНЕНИЙ (продукт не знает про Dev Set / Eval Set / TB)"
+  - "src/failure_taxonomy.yaml — БЕЗ ИЗМЕНЕНИЙ (taxonomy general-purpose, не привязана к Dev Set)"
+  - "ни одного упоминания Terminal Bench / benchmark / eval в vsm/ и src/ (сохраняется)"
+  - "validate.sh GREEN"
+  - "vsmlite-tb/state/ — метрика Dev Set pass-rate живёт здесь (не в product state/)"
+
+needs_human_decision: true   # conceptual shift роли vsmlite + Dev Set — человек подтверждает
+
+policy_question: >
+  Зафиксировать концептуальный поворот: Terminal-Bench Dev Set v2 = индикатор
+  автономности (не training data), self-modification продукта = OSM-синтез через
+  vsmlite (не fine-tuning), при сохранении всех never_do и мембраны?
+
+options:
+  - { id: accept,   label: "Принять поворот",   hint: "Dev Set = autonomy indicator, self-modification = OSM-синтез, never_do сохранены (Recommended)" }
+  - { id: partial,  label: "Только Dev Set role", hint: "Зафиксировать Dev Set как индикатор, self-modification оставить как есть (общий OSM)" }
+  - { id: defer,    label: "Отложить",           hint: "Вернуться к концепции позже; сейчас продолжить workstream T1-T5 как есть" }
+
+notes:
+  - "Это prepare_only (basta_constraint: prepare_only) — человек постановляет."
+  - "VSM-003 (R0/R1/R2) superseded в той же сессии; VSM-004 — следующее концептуальное решение (monotonic id)."
+  - "Если accept: vsmlite-tb/vsmlite.yaml правится (identity.product_evaluation + never_do формулировка); vsm/ и src/ НЕ трогаются."
+  - "Открытый подвопрос (для человека): где физически живёт Dev Set pass-rate метрика — vsmlite-tb/state/dev_metrics.json? Решается при имплементации."
+
+created: 2026-07-13
+updated: 2026-07-13

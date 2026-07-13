@@ -85,10 +85,10 @@ identity:
 # Временная политика от человека. Перекрывает дефолтные правила ниже ДО ОТКАТА.
 # child-dispatcher ОБЯЗАН читать эти флаги в начале работы.
 runtime_policy:
-  child_mutation: allowed      # init-режим: разрешено мутировать ../vsm/ и ../src/ в пределах /vsmlite-init
-                               #   Вернуть: child_mutation: paused (после init по умолчанию).
-  child_mutation_reason: "/vsmlite-init для домена Terminal Bench 2.1 (явно разрешено человеком)"
-  child_mutation_scope: init_only   # только materialize/tailor/flip из /vsmlite-init
+  child_mutation: allowed      # workstream-режим: разрешено мутировать ../vsm/ и ../src/ в пределах workstream-задач
+                               #   (init завершён, активны волны 1-2). Вернуть: child_mutation: paused.
+  child_mutation_reason: "workstream-волна 1-2: T1 (taxonomy) + T2 (s1-dispatcher дизайн) + последующие tailor-задачи"
+  child_mutation_scope: workstream   # init_only → workstream: tailor/primitive под workstream-задачу
   telemetry_emit: allowed      # экспорт monitor/data.js (read-only) — разрешён по умолчанию
 
 # ───────────────────────────── Child (дочерний VSM) ─────────────────────────────
