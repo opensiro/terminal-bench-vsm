@@ -1,0 +1,22 @@
+{
+  "_comment": "maturation.json — состояние созревания дочернего VSM (Terminal Bench 2.1). Главный файл. phase_activated растёт по фазам OSM; child_initialized flip'ит validate_init (НЕ materialize).",
+  "maturation_state": "Phase 1",
+  "phase_activated": ["S1"],
+  "autonomy": {
+    "current": 0.1,
+    "target": 1.0,
+    "verdict": "DEPENDENT",
+    "signs": {
+      "s5_sign": { "value": null, "from": "issues",   "meets": false },
+      "s4_sign": { "value": null, "from": "intel",    "meets": false },
+      "s3_sign": { "value": null, "from": "units",    "meets": false },
+      "s1_sign": { "value": null, "from": "activity", "meets": false }
+    }
+  },
+  "child_path": "../src",
+  "child_initialized": true,
+  "last_primitive": "Create",
+  "last_transition": "Initial State → Phase 1",
+  "cycle_count": 0,
+  "updated": "2026-07-13"
+}

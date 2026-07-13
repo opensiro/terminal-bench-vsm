@@ -1,0 +1,228 @@
+# vsm.yaml — модель дочернего VSM (выращиваемого vsmlite)
+#
+# Скелет seed/child/. Копируется в ../vsm/ на /vsmlite-init.
+# Поля помечены `# tailored` — заполняются шагом tailor_child (init или cycle).
+# maturation_state обновляется synthesis-operator (родительский vsmlite) по фазам OSM.
+
+name: "Terminal Bench 2.1 VSM"   # materialize: из .intent.yaml → domain
+runtime: claude-code
+version: 0.1.0
+parent: vsmlite               # родительский оператор синтеза
+
+meta:
+  initialized: true           # true после validate_init (green)
+  maturation_state: Phase 1   # Initial State | Phase 0..6 | Autonomous
+  phase_activated: [S1]       # растёт по фазам: [S1] → [S1,S2] → ...
+
+# ───────────────────────────── S5 — Identity ─────────────────────────────
+# Полный текст — в CLAUDE.md (этот файл ссылается). intent-level (из .intent.yaml → mission.statement).
+identity:
+  purpose: |
+    Держать домен «решение agentic-задач Terminal Bench 2.1» жизнеспособным:
+    обеспечивать полноту покрытия категорий задач TB и наблюдаемость хода
+    решений (трассы, затраты, тайминги), адаптируясь к эволюции бенчмарка строго
+    в рамках его правил — и формируя reusable benchmark-agnostic Skill DB.
+  values:
+    - recursion_and_autonomy
+    - variety_discipline
+    - independent_audit
+    - transparency
+    - minimal_intervention
+  never_do:
+    # generic (vsmlite core)
+    - modify_parent_directly   # родительский vsmlite трогает этот VSM только через child-dispatcher
+    - same_provider_for_s3star
+    - s5_decides_for_human     # basta_constraint: prepare_only
+    - disable_algedonic_channel
+    - reuse_record_id
+    # domain hard-constraints (init TB-2.1) — из .intent.yaml → authority.never_do
+    - train_on_eval            # тренировка на eval-разметке TB запрещена правилами бенчмарка
+    - use_harbor_tb2           # github.com/harbor-framework/terminal-bench-2 — абсолютный запрет
+    - auto_submit              # автоматическая отправка результатов вовне (basta)
+    - runtime_aware_of_benchmark   # VSM-001: решающий агент и runtime-функции S2-S4 НЕ знают, что это Terminal Bench; TB-фрейминг снимается на транедукционной границе. Design-time/S5 сохраняет знание для coverage/grading.
+  decisions_requiring_human:
+    # generic (vsmlite core)
+    - any_severity_S0
+    - any_signal_type_algedonic
+    - identity_or_values_change
+    # domain basta (init TB-2.1) — из .intent.yaml → authority.basta_constraint
+    - submit_or_publish_results   # публикация/сабмит результатов (leaderboard, внешние репо, доклады)
+    - change_target_tb_version    # смена целевой версии TB (2.1 → другая) или scope бенчмарка
+    - delete_runs_or_data         # удаление прогонов/данных/логов/кеша (деструктивные операции)
+  basta_constraint:
+    agent_role: prepare_only
+
+  # ─── Runtime membrane (VSM-001, init TB-2.1) ───
+  # Полная изоляция рантайма: знание «это Terminal Bench» — только design-time/S5-слой.
+  runtime_membrane:
+    invariant: "runtime_agnostic_of_benchmark"
+    description: |
+      Решающий агент (S1-solver) и runtime-функции S2–S4 работают benchmark-agnostic.
+      Знание «это Terminal Bench 2.1» ограничено design-time/S5-слоем: этот vsm.yaml
+      (identity), .intent.yaml, CLAUDE.md, VSM-NNN. На транедукционной границе VSM
+      (harness/s1-dispatcher) TB-маркеры снимаются из задачи → солвер получает generic
+      agentic task. Цель: честная мера качества (blinded-eval) — агент решает задачу,
+      а не «играет в бенчмарк».
+    design_time_knows:        # где знание о TB законно
+      - ".intent.yaml (OSM Phase 0 truth)"
+      - "vsm.yaml → identity (this file)"
+      - "CLAUDE.md (S5-конституция)"
+      - "issues/VSM-NNN.yaml (audit trail)"
+      - "S5-guardian SOUL/SKILL (Phase 6+ identity holder)"
+    runtime_agnostic:         # кто НЕ знает в runtime
+      - "S1-solver: получает generic agentic task, без упоминания TB/бенчмарка/grading"
+      - "S2/S3/S3*/S4 в runtime-функциях: работают с обезличенными task-объектами"
+    transduction_boundary:
+      location: "harness / s1-dispatcher (VSM → solver)"
+      strips: [benchmark_name, task_id_origin, grading_hints, category_labels, dataset_provenance]
+      passes_through: [task_prompt_neutral, tools, environment, time_budget]
+      sanity_check: "никакого буквального упоминания 'Terminal Bench', 'TB', 'benchmark', 'grading', 'eval' в контексте, видимом солверу"
+    skill_db_transduction:
+      location: "S4-scout → Skill DB"
+      rule: "skills очищаются от любых TB-следов перед сохранением; benchmark-agnostic only"
+
+# ───────────────────────────── S1 — Operations ─────────────────────────────
+# Прикладной домен: ../src/ (подключается materialize_child на init). intent-level.
+# meta.layout: single → один operational unit. Конкретизация (harness/grader и пр.)
+# — будущие фазы (tailor), НЕ здесь (никакого runtime/python/docker).
+system_1:
+  - name: terminal-bench-solver   # materialize: домен = решение Terminal Bench 2.1
+    path: ../src                  # прикладной домен (дочерний S1 этого VSM)
+    purpose: |
+      Агент-решатель + harness + обёртка грейдера Terminal Bench 2.1: держит
+      жизнеспособным домен решения agentic-задач TB — покрытие категорий задач,
+      наблюдаемость ходов решений, адаптация к эволюции бенчмарка в рамках его
+      правил, формирование benchmark-agnostic Skill DB. (intent-level; runtime
+      конкретизируется на следующих фазах через s1-dispatcher дочернего VSM.)
+    weight: 10
+    owner_agent: s1-dispatcher
+    recursion_note: "прикладной домен; может рекурсивно стать VSM при достаточной сложности (примитив Split, basta — решение человека)"
+
+# ───────────────────────────── S2 — Coordination ─────────────────────────────
+# (проявляется на Phase 2)
+system_2:
+  agent: s2-coordinator
+  cadence: on_demand
+  coordination_rules:
+    - trigger: "агент повторяет действие 3+ раза"
+      action: "стоп, лог, эскалация"
+    - trigger: "попытка создать файлы вне workspace"
+      action: "блок"
+    - trigger: "TB-фрейминг или бенчмарк-маркеры замечены в runtime-контексте, видимом солверу/S2-S4-runtime"
+      action: "СТОП, алгедоническая эскалация S5 (severity S0 — нарушение runtime_membrane, blinded-eval скомпрометирован)"
+  conflict_detection:
+    resource_overlaps: true
+    output_contradictions: true
+    custom_triggers:          # tailored (init TB-2.1) — доменные расхождения между юнитами
+      - "agent-solver и harness-runner расходятся в verdict задачи (solver считает решено, grader — нет)"
+      - "трасса агента противоречит итоговому результату (наблюдаемость показывает X, грейдер оценивает Y)"
+      - "два прогона той же задачи дают разные результаты при том же входе (недетерминизм)"
+      - "утечка TB-фрейминга в runtime: солвер упоминает бенчмарк/grading/eval или получает task с TB-маркерами (нарушение runtime_membrane)"
+
+# ───────────────────────────── S3 — Control ─────────────────────────────
+# (проявляется на Phase 3)
+system_3:
+  agent: s3-optimizer
+  cadence: on_demand
+  reporting_rhythm: deviation-only
+  kpi_list:                   # tailored (init TB-2.1) — ДОМЕННЫЕ KPI, intent-level (НЕ копия примера Opensiro)
+    - coverage_ratio          # доля категорий задач TB, по которым есть attempted прогоны
+    - pass_rate               # доля решённых задач (по грейдеру) среди attempted
+    - trace_observability     # доля прогонов с полной наблюдаемой трассой (для S3/S3*-анализа)
+    - token_spend_per_task    # медианный токен-затраты на задачу (efficiency)
+    - skill_db_reuse_ratio    # доля задач, где переиспользованы skills из benchmark-agnostic Skill DB (а не с нуля)
+  triple_index:               # tailored (init TB-2.1) — intent-level
+    actuality: "текущее покрытие категорий TB + pass_rate из state/metrics.json"
+    capability: "агент-решатель + harness + grader-wrapper способны покрыть N категорий задач"
+    potentiality: "из S4: новые benchmark-agnostic skills расширяют capability без переписывания агента"
+    measurement: "сверка coverage_ratio/pass_rate/skill_db_reuse_ratio каждый цикл"
+  deviation_logic:
+    report_only_deviations: true
+    threshold_percent: 15
+
+# ───────────────────────────── S3* — Audit ─────────────────────────────
+# (проявляется на Phase 4)
+system_3_star:
+  agent: s3-star-auditor
+  cadence: on_demand
+  provider_constraint:
+    must_differ_from: s1      # КРИТИЧНО: другой модель-провайдер
+    reason: "независимый аудит жизнеспособности"
+  reporting_target: s3_and_human
+  independence_rules:
+    - read_only_access
+    - never_trust_self_reports
+
+# ───────────────────────────── S4 — Intelligence ─────────────────────────────
+# (проявляется на Phase 5)
+system_4:
+  agent: s4-scout
+  cadence: on_demand
+  runtime_internet_access:    # VSM-001: S4 в runtime имеет открытый веб-доступ
+    mode: open
+    purpose: "поиск benchmark-agnostic Skill DB (scope S4 unchanged)"
+    constraints:
+      - "never_do: harbor-framework/terminal-bench-2 (абсолютный запрет)"
+      - "всё найденное проходит трансдукцию через runtime_membrane перед Skill DB"
+      - "scope: benchmark-agnostic only (не TB-специфичные источники)"
+    transduction_via: "runtime_membrane.skill_db_transduction"
+  monitoring:
+    competitors: []           # tailored (init TB-2.1) — S4 scoped: benchmark-agnostic Skill DB only; competitors out-of-scope
+    technology:               # tailored (init TB-2.1) — S4 scope: benchmark-agnostic Skill DB only; never use_harbor_tb2
+      - benchmark_agnostic_skill_sources
+      - agentic_patterns
+      - tool_use_patterns
+      - context_management_techniques
+    regulation:               # tailored (init TB-2.1) — правила TB + лицензирование опенсорс
+      - tb_rules_no_train_on_eval
+      - open_source_licensing
+  weak_signals:
+    enabled: true
+    sources:                  # tailored (init TB-2.1) — источник S4 сигналов строго benchmark-agnostic; harbor-framework/terminal-bench-2 NEVER
+      - skill_db_coverage_gaps    # в Skill DB нет skill под наблюдаемый класс задач
+      - coverage_drift            # pass_rate/coverage по категориям TB деградирует
+      - token_burn_anomaly        # резкий рост token_spend_per_task
+      - trace_quality_drop        # падение доли полных трасс
+  premises_register:          # tailored (init TB-2.1) — [{premise, check_frequency, invalidation_signal, consequence_if_invalid}]
+    - premise: "Skill DB остаётся benchmark-agnostic (не contaminated TB-специфичными leak)"
+      check_frequency: per_cycle
+      invalidation_signal: "skill содержит TB eval-данные или сгенерирован из harbor-framework/terminal-bench-2"
+      consequence_if_invalid: "удалить skill, эскалация S3*/human (severity S0 — нарушение правил TB)"
+    - premise: "целевая версия TB стабильна (2.1)"
+      check_frequency: monthly
+      invalidation_signal: "публично объявлена новая версия TB или смена датасета"
+      consequence_if_invalid: "эскалация human (change_target_tb_version — basta), S4 stop scan адаптации"
+    - premise: "грейдер TB детерминирован для воспроизводимости"
+      check_frequency: per_cycle
+      invalidation_signal: "тот же прогон даёт разный verdict"
+      consequence_if_invalid: "S3-mark категорию как flaky, исключить из pass_rate до прояснения"
+
+# ───────────────────────────── Budget ─────────────────────────────
+budget:
+  strategy: balanced
+  system_weights:
+    S1: 0.65
+    S2: 0.05
+    S3: 0.12
+    S3_star: 0.05
+    S4: 0.10
+    S5: 0.03
+
+# ───────────────────────────── Heartbeats ─────────────────────────────
+heartbeats:
+  mode: optional              # дочерний VSM также преимущественно on-demand
+  s2_coordinator: { every: 30m }
+  s3_optimizer: { every: 2h }
+  s3_star_audit: { every: 8h }
+  s4_scout: { every: 1d }
+  s5_guardian: { every: 1d }
+
+# ───────────────────────────── Persistence ─────────────────────────────
+persistence:
+  state_dir: state/
+  issues_dir: issues/
+  gitignored:
+    - state/*.tmp
+  tracked:
+    - state/*.json
+    - issues/*.yaml

@@ -1,0 +1,13 @@
+{
+  "_comment": "live_metrics.json — read-only метрики родительского vsmlite, наблюдаемые над этим дочерним VSM + ../src/. Пишет collect_metrics.py родителя. Здесь — seed/placeholder.",
+  "generated": "2026-07-13",
+  "child_vsm": {
+    "exists": true,
+    "name": "Terminal Bench 2.1 VSM",
+    "maturation_state": "Phase 1"
+  },
+  "units": [
+    { "name": "terminal-bench-solver", "path": "../src", "role": "агент-решатель + harness + обёртка грейдера Terminal Bench 2.1" }
+  ],
+  "activity": []
+}
