@@ -176,6 +176,21 @@ def _output_contract(system_name: str) -> str:
             "intel_write. Strategic shifts (new failure class, policy expansion) "
             "require a VSM-NNN (basta — human decision)."
         ),
+        "s5-guardian": (
+            "── Output contract (S5) ──\n"
+            "End your response with a JSON block enclosed in ```json ... ```:\n"
+            "```\n"
+            '{"action": "osm_primitive|operational|blocked",\n'
+            ' "primitive": "<Split|Merge|Reconfigure|null>",\n'
+            ' "issue_id": <string>,\n'
+            ' "decision": <string>,\n'
+            ' "intervention_logged": <bool>,\n'
+            ' "blocked_reason": "<identity_change_requires_parent|null>"}\n'
+            "```\n"
+            "You are the AUTONOMOUS ARCHITECT (VSM-006): decide and ACT, do not "
+            "escalate to human. Apply OSM primitives for structural issues via "
+            "osm_apply. Identity/values/never_do changes = BLOCKED (require parent)."
+        ),
     }
     return contracts.get(
         system_name,

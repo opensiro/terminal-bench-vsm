@@ -241,6 +241,9 @@ def capability_report(config: VerifyConfig | None = None) -> CapabilityReport:
     # ── S4 scout verify (VSM-016) ──
     report.systems["s4_scout"] = _verify_s4_scout()
 
+    # ── S5 guardian verify (VSM-017) ──
+    report.systems["s5_guardian"] = _verify_s5_guardian()
+
     # Overall
     if report.all_passed:
         report.overall = "all_passed"
@@ -881,6 +884,122 @@ def _verify_s4_scout() -> SystemStatus:
 
     return SystemStatus(
         name="s4_scout",
+        passed=all(c.passed for c in checks),
+        checks=checks,
+        evidence=evidence,
+    )
+
+
+def _verify_s5_guardian() -> SystemStatus:
+    """Verify S5 guardian agent (VSM-017): autonomous architect.
+
+    Checks the S5 tool surface (identity_read + osm_apply + issue_resolve +
+    algedonic_log), the handle_algedonic/triage_issues protocol entries, and
+    the identity-change block (single autonomy limit per VSM-006).
+    """
+    checks = []
+    evidence = {}
+    import tempfile
+    from pathlib import Path
+
+    # Check 1: S5 tool surface registers correctly
+    t0 = time.time()
+    try:
+        from agent_runtime.mcp_server import create_server
+        with tempfile.TemporaryDirectory() as ws:
+            # Minimal vsm/ layout for guardian tools
+            (Path(ws) / "issues").mkdir()
+            (Path(ws) / "state").mkdir()
+            (Path(ws) / "vsm.yaml").write_text(
+                "identity:\n  purpose: test\n  values: [x]\n  never_do: [y]\n",
+                encoding="utf-8")
+            server = create_server(ws, None,
+                ["identity_read", "osm_apply", "issue_resolve", "algedonic_log", "fs"])
+            tool_names = [t["name"] for t in server.list_tools()]
+            required = ["identity_read", "osm_apply", "issue_resolve", "algedonic_log"]
+            missing = [t for t in required if t not in tool_names]
+            checks.append(CheckResult(
+                name="s5_tool_surface",
+                passed=not missing,
+                detail=f"{len(required)} tools; missing={missing or 'none'}",
+                duration_ms=(time.time() - t0) * 1000,
+            ))
+            evidence["tool_count"] = len(tool_names)
+    except Exception as exc:
+        checks.append(CheckResult(
+            name="s5_tool_surface", passed=False,
+            detail=f"error: {type(exc).__name__}: {exc}",
+            duration_ms=(time.time() - t0) * 1000,
+        ))
+
+    # Check 2: identity_read + osm_apply round-trip
+    t0 = time.time()
+    try:
+        from agent_runtime.mcp_server import create_server
+        with tempfile.TemporaryDirectory() as ws:
+            (Path(ws) / "issues").mkdir()
+            (Path(ws) / "state").mkdir()
+            (Path(ws) / "vsm.yaml").write_text(
+                "identity:\n  purpose: test harness\n  values: [autonomy]\n"
+                "  never_do: [optimize_for_specific_evaluator]\n",
+                encoding="utf-8")
+            server = create_server(ws, None, ["identity_read", "osm_apply", "algedonic_log"])
+
+            ident = server.handlers["identity_read"]()
+            assert ident["exit_code"] == 0
+            assert "optimize_for_specific_evaluator" in ident["never_do"]
+
+            osm = server.handlers["osm_apply"](
+                primitive="Reconfigure", target="s3-optimizer",
+                rationale="taxonomy gap detected")
+            assert osm["declared"] is True
+
+            # Intervention logged to state/interventions.json
+            import json
+            interventions = json.loads(
+                (Path(ws) / "state" / "interventions.json").read_text())
+            assert len(interventions["interventions"]) == 1
+
+            checks.append(CheckResult(
+                name="identity_osm_roundtrip",
+                passed=True,
+                detail=f"identity read OK; osm_apply declared + intervention logged",
+                duration_ms=(time.time() - t0) * 1000,
+            ))
+            evidence["osm_primitive"] = "Reconfigure"
+    except Exception as exc:
+        checks.append(CheckResult(
+            name="identity_osm_roundtrip", passed=False,
+            detail=f"error: {type(exc).__name__}: {exc}",
+            duration_ms=(time.time() - t0) * 1000,
+        ))
+
+    # Check 3: protocol entries (handle_algedonic + triage_issues)
+    t0 = time.time()
+    try:
+        from agent_runtime.protocol import AgentProtocol, ProtocolConfig, ROLE_CONFIGS
+        assert "s5-guardian" in ROLE_CONFIGS
+        s5_tools = ROLE_CONFIGS["s5-guardian"]["tools"]
+        assert "osm_apply" in s5_tools and "identity_read" in s5_tools
+        proto = AgentProtocol(ProtocolConfig())
+        assert hasattr(proto, "handle_algedonic")
+        assert hasattr(proto, "triage_issues")
+        checks.append(CheckResult(
+            name="s5_protocol_entries",
+            passed=True,
+            detail=f"S5 tools={s5_tools}; handle_algedonic + triage_issues present",
+            duration_ms=(time.time() - t0) * 1000,
+        ))
+        evidence["s5_tools"] = s5_tools
+    except Exception as exc:
+        checks.append(CheckResult(
+            name="s5_protocol_entries", passed=False,
+            detail=f"error: {type(exc).__name__}: {exc}",
+            duration_ms=(time.time() - t0) * 1000,
+        ))
+
+    return SystemStatus(
+        name="s5_guardian",
         passed=all(c.passed for c in checks),
         checks=checks,
         evidence=evidence,

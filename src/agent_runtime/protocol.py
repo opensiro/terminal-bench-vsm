@@ -63,6 +63,11 @@ ROLE_CONFIGS: dict[str, dict[str, Any]] = {
         "provider": "zai",
         "max_turns": 15,
     },
+    "s5-guardian": {
+        "tools": ["identity_read", "osm_apply", "issue_resolve", "algedonic_log", "fs"],
+        "provider": "zai",
+        "max_turns": 15,
+    },
 }
 
 
@@ -373,6 +378,87 @@ class AgentProtocol:
             # S4 scan results persist in state/intel.json (written by the agent
             # via intel_write tool); the ephemeral state-bus entry is cleaned up.
             self.close_task(trigger_id)
+
+    # ── S5: autonomous architect (algedonic + triage, VSM-006/017) ──
+
+    def handle_algedonic(self, signal: dict) -> AgentResult:
+        """S5 guardian agent: handle an algedonic signal (VSM-017).
+
+        S5 is the autonomous architect (VSM-006). When S3*/S4 raise an algedonic
+        signal (severity S0/S1 — structural concern), S5 does NOT escalate to
+        human. Instead it acts as architect:
+          - analyze the signal (structural defect, viability breach, etc.)
+          - decide: operational fix, or structural OSM primitive (Split/Merge/
+            Reconfigure), or blocked (identity change requires parent)
+          - execute via osm_apply / issue_resolve tools
+          - log the intervention (observable by parent VSM-005 metric)
+
+        S5 does NOT touch identity/values/never_do (the single autonomy limit —
+        identity change requires a parent decision via VSM-NNN).
+
+        Args:
+            signal: {source: "S3*|S4|S3", severity: "S0|S1", type: <string>,
+                     detail: <string>, context: {...}}
+
+        Returns:
+            AgentResult with parsed = {action: "osm_primitive|operational|blocked",
+                                       primitive: <string|null>, issue_id: <string>,
+                                       intervention_logged: <bool>}.
+        """
+        import hashlib
+        sig_id = f"s5-algedonic-{hashlib.sha1(str(signal).encode()).hexdigest()[:8]}"
+        self.open_task(sig_id, {"algedonic_signal": signal})
+        try:
+            algedonic_input = {
+                "signal": signal,
+                "instruction": (
+                    "This is an ALGEDONIC signal (S0/S1 — structural concern). "
+                    "As autonomous architect (VSM-006), decide and ACT (do not "
+                    "escalate to human): apply an OSM primitive (Split/Merge/"
+                    "Reconfigure) via osm_apply if structural, or resolve "
+                    "operationally via issue_resolve. Identity/values/never_do "
+                    "changes are BLOCKED (require parent). Log every intervention."
+                ),
+            }
+            result = self._invoke(sig_id, "s5-guardian", "algedonic_input",
+                                  algedonic_input, "s5_decision")
+            return result
+        finally:
+            self.close_task(sig_id)
+
+    def triage_issues(self, pending_issues: list[dict]) -> AgentResult:
+        """S5 guardian agent: triage + resolve pending issues (VSM-017).
+
+        The autonomous architect's routine duty: process issues with
+        status=triage. For each, S5 decides (not prepares for human):
+          - operational → decision + execution
+          - structural → OSM primitive
+          - identity change → blocked (标记 requires_parent)
+
+        Args:
+            pending_issues: list of issue dicts (id, title, severity, signal_type).
+
+        Returns:
+            AgentResult with parsed = {resolutions: [{issue_id, action, ...}]}.
+        """
+        import hashlib
+        triage_id = f"s5-triage-{hashlib.sha1(str(pending_issues).encode()).hexdigest()[:8]}"
+        self.open_task(triage_id, {"pending_issues": pending_issues})
+        try:
+            triage_input = {
+                "issues": pending_issues,
+                "instruction": (
+                    "Triage and RESOLVE each issue (VSM-006 autonomous architect — "
+                    "do not escalate to human). For each: decide operational fix, "
+                    "structural OSM primitive, or blocked (identity change). "
+                    "Record decisions via issue_resolve."
+                ),
+            }
+            result = self._invoke(triage_id, "s5-guardian", "triage_input",
+                                  triage_input, "s5_resolutions")
+            return result
+        finally:
+            self.close_task(triage_id)
 
     # ── Recovery executor (not an agent — deterministic, stays Python) ──
     # The recovery executor applies env changes (pip install, venv, git reset).

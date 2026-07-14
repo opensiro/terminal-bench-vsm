@@ -88,6 +88,11 @@ def create_server(
         from .tools.classifier_tools import register_classifier_tools
         register_classifier_tools(server, workspace)
 
+    # ── Guardian tools (S5) ──
+    if tool_set & {"identity_read", "osm_apply", "issue_resolve", "algedonic_log"}:
+        from .tools.guardian_tools import register_guardian_tools
+        register_guardian_tools(server, workspace)
+
     return server
 
 

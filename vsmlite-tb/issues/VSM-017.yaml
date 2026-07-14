@@ -1,0 +1,78 @@
+id: VSM-017
+source_system: S5            # parent S5 — финальная система в серии VSM-012
+signal_type: policy          # агентизация S5 guardian
+severity: S1                 # structural — последняя система; VSM-012 завершается
+target_unit: child           # дочерний VSM (продукт) — S5 в agent-mode
+
+title: "S5 guardian → goose-agent: autonomous architect (algedonic + triage, OSM primitives, VSM-012 series complete)"
+
+summary: |
+  Шестая и финальная система в серии VSM-012 (полная агентизация S1–S5). S5
+  guardian переходит из концептуальной роли (Phase 6 placeholder) на agent-runtime.
+
+  S5 = АВТОНОМНЫЙ АРХИТЕКТОР (VSM-006): triage → decision → execution. Резолвит
+  issues сам (НЕ эскалирует к human). Вмешивается при алгедонике от S3*/S4 через
+  OSM-примитивы (Split/Merge/Reconfigure).
+
+  ТРЕТИЙ УНИКАЛЬНЫЙ ПАТТЕРН интеграции (vs recovery-cycle invoke + on-demand scan):
+    - handle_algedonic(signal) — реактивная обработка S0/S1 сигналов
+    - triage_issues(pending) — routine duty: резолвить status=triage issues
+    - S5 решает и ДЕЙСТВУЕТ: osm_apply (декларативный → s1-dispatcher исполняет),
+      issue_resolve (записывает decision), algedonic_log (интервенция наблюдаема)
+
+  ЕДИНСТВЕННОЕ ОГРАНИЧЕНИЕ АВТОНОМИИ (VSM-006): identity/values/never_do change =
+  BLOCKED (требует родительского решения через VSM-NNN). S5-goose знает это через
+  identity_read tool + SOUL/NEVER DO.
+
+evidence:
+  - "src/agent_runtime/protocol.py::handle_algedonic — reactive S0/S1 processing"
+  - "src/agent_runtime/protocol.py::triage_issues — routine issue resolution"
+  - "src/agent_runtime/protocol.py::ROLE_CONFIGS['s5-guardian'] — identity/osm/issue/algedonic tools"
+  - "src/agent_runtime/tools/guardian_tools.py — identity_read, osm_apply, issue_resolve, algedonic_log"
+  - "src/agent_runtime/goose_runner.py::_output_contract['s5-guardian'] — action + primitive + blocked_reason"
+  - "src/runtime/verify.py::_verify_s5_guardian — 3 checks (tool surface, identity+osm round-trip, protocol)"
+  - "capability_report: s5_guardian PASS (8 систем всего — серия завершена)"
+
+proposal: |
+  VSM-017 = S5 guardian агентизация. Серия VSM-012 (полная агентизация S1–S5)
+  ЗАВЕРШАЕТСЯ. Все 6 систем — goose-агенты на agent-runtime.
+
+  Паттерны интеграции (3 типа):
+    1. Recovery-cycle invoke (S1/S2/S3/S3*) — orchestrator, sequential/parallel
+    2. On-demand scan (S4) — scan_on_demand, heartbeat/trigger-driven
+    3. Reactive architect (S5) — handle_algedonic + triage_issues, VSM-006 autonomous
+
+  Что НЕ меняется:
+    - S5 НЕ эскалирует к human (VSM-006); человек наблюдает через родительский dashboard
+    - Identity/values/never_do change = BLOCKED (единственное ограничение автономии)
+    - osm_apply декларативный: S5 объявляет примитив, s1-dispatcher исполняет (мембрана)
+    - Каждое вмешательство логируется (state/interventions.json, VSM-005 observable)
+
+acceptance:
+  - "handle_algedonic(signal) — reactive S0/S1 entry (третий паттерн)"
+  - "triage_issues(pending) — routine autonomous resolution"
+  - "S5 tool surface: identity_read + osm_apply + issue_resolve + algedonic_log"
+  - "guardian_tools: identity read + osm declarative + intervention log, unit-tested"
+  - "identity-change block: osm_apply НЕ мутирует identity (VSM-006 autonomy limit)"
+  - "capability_report: s5_guardian PASS (8 систем — серия VSM-012 complete)"
+  - "make validate GREEN"
+
+needs_human_decision: false   # operational агентизация, финальная система
+
+status: done
+decision: "done — S5 guardian агентизирован; autonomous architect (VSM-006); handle_algedonic + triage_issues; identity-change blocked; capability_report 8 систем PASS. СЕРИЯ VSM-012 ЗАВЕРШЕНА: все S1-S5 = goose-агенты."
+selected_options: []
+
+references:
+  - VSM-012   # полная агентизация (full) — СЕРИЯ ЗАВЕРШЕНА (S5 последняя)
+  - VSM-006   # product S5 = autonomous architect (не эскалирует к human)
+  - VSM-005   # S5 interventions observable by parent (intervention metric)
+
+notes:
+  - "СЕРИЯ VSM-012 COMPLETE: S1, S2, S3, S3*, S4, S5 — все goose-агенты на agent-runtime."
+  - "3 паттерна интеграции: recovery-cycle invoke (S1-S3*), on-demand scan (S4), reactive architect (S5)."
+  - "S5 единственная система с identity guard (identity-change blocked — VSM-006)."
+  - "Все системы: capability_report PASS (8), make validate GREEN, мембрана VSM-002 сохранена."
+
+created: 2026-07-14
+updated: 2026-07-14
