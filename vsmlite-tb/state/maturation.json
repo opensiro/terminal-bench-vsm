@@ -1,23 +1,53 @@
 {
   "_comment": "maturation.json — состояние созревания дочернего VSM. Главный файл vsmlite. Пишет synthesis-operator / cycle; читают все + render_data.py.",
-  "maturation_state": "Phase 1",
-  "phase_activated": ["S1"],
+  "maturation_state": "Phase 4",
+  "phase_activated": [
+    "S1",
+    "S2",
+    "S3",
+    "S3*"
+  ],
   "autonomy": {
-    "current": 0.1,
+    "current": 0.175,
     "target": 1.0,
     "verdict": "DEPENDENT",
     "signs": {
-      "s5_sign": { "value": null, "from": "issues",   "meets": false },
-      "s4_sign": { "value": null, "from": "intel",    "meets": false },
-      "s3_sign": { "value": null, "from": "units",    "meets": false },
-      "s1_sign": { "value": null, "from": "activity", "meets": false }
+      "s5_sign": {
+        "value": 0.0,
+        "from": "interventions",
+        "meets": true
+      },
+      "s4_sign": {
+        "value": 0,
+        "from": "intel",
+        "meets": false
+      },
+      "s3_sign": {
+        "value": 0,
+        "from": "units",
+        "meets": false
+      },
+      "s1_sign": {
+        "value": 0,
+        "from": "activity",
+        "meets": false
+      },
+      "eval_sign": {
+        "value": 0.0,
+        "from": "dev_metrics",
+        "meets": false
+      }
+    },
+    "weights": {
+      "operational": 0.7,
+      "eval": 0.3
     }
   },
   "child_path": "../vsm",
   "child_src_path": "../src",
   "child_initialized": true,
   "last_primitive": "Create",
-  "last_transition": "Initial State → Phase 1",
+  "last_transition": "Phase 3 → Phase 4",
   "cycle_count": 0,
-  "updated": "2026-07-13"
+  "updated": "2026-07-14"
 }

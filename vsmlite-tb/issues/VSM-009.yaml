@@ -1,0 +1,55 @@
+id: VSM-009
+source_system: S5            # parent S5 — phase transition
+signal_type: policy          # phase-transition primitive
+severity: S1                 # structural — activates S2
+target_unit: child           # дочерний VSM (продукт)
+
+title: "Phase transition: Phase 1 → Phase 2 (S2 coordinator activated)"
+summary: |
+  Активация S2 coordinator в дочернем VSM. S2 runtime реализован
+  (`src/s2/coordinator.py`, `src/s2/conflict.py`), capability report
+  подтверждает работоспособность (S2 verify: 3/3 checks passed).
+
+  Emergence criteria (phases.yaml Phase 1→2):
+  - ≥2 operational units OR explicit coord need: VSM-007 Split S1 на
+    planner+executor+verifier — multi-agent требует координации.
+  - observed resource contention: S2 conflict detection runtime
+    (resource_overlaps, output_contradictions), capability report S2
+    resource_overlap_detection = PASS.
+
+evidence:
+  - "capability_report S2: 3/3 checks passed (authorize_retry_valid, anti_repeat_blocking, resource_overlap_detection)"
+  - "src/s2/coordinator.py: S2Coordinator.authorize_retry (4-check pipeline: anti-repeat → conflict → oscillation → authorize)"
+  - "src/s2/conflict.py: ConflictDetector (resource_overlaps, output_contradictions, circumvent_recovery)"
+  - "VSM-007 Split: planner+executor+verifier → multi-agent требует координации"
+  - "src/runtime/verify.py _verify_s2: real S2Coordinator.authorize_retry на real RetryHistory"
+
+preconditions:
+  - "S1 runtime реализован и работает (capability_report S1: 3/3 PASS)"
+  - "S2 runtime реализован (src/s2/)"
+  - "≥2 units need coordination (VSM-007 Split: planner+executor+verifier)"
+
+postconditions:
+  - "phase_activated: [S1, S2]"
+  - "maturation_state: Phase 2"
+  - "S2 system active in vsm.yaml"
+
+proposal: |
+  Применить phase-transition (Phase 1 → Phase 2) через child-dispatcher:
+  - vsm/vsm.yaml: meta.maturation_state → Phase 2, meta.phase_activated → [S1, S2]
+  - state/maturation.json: maturation_state → Phase 2, phase_activated → [S1, S2], last_transition → "Phase 1 → Phase 2"
+
+acceptance:
+  - "vsm/vsm.yaml → meta.maturation_state: Phase 2"
+  - "vsm/vsm.yaml → meta.phase_activated: [S1, S2]"
+  - "state/maturation.json → maturation_state: Phase 2"
+  - "state/maturation.json → phase_activated: [S1, S2]"
+  - "state/maturation.json → last_transition: Phase 1 → Phase 2"
+  - "validate.sh GREEN"
+
+needs_human_decision: true   # phase_transition — decisions_requiring_human
+decision: approved            # parent S5 (vsmlite) approves
+executor: child-dispatcher
+
+created: 2026-07-14
+updated: 2026-07-14

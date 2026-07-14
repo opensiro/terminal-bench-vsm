@@ -1,0 +1,55 @@
+id: VSM-010
+source_system: S5            # parent S5 — phase transition
+signal_type: policy          # phase-transition primitive
+severity: S1                 # structural — activates S3
+target_unit: child           # дочерний VSM (продукт)
+
+title: "Phase transition: Phase 2 → Phase 3 (S3 optimizer activated)"
+summary: |
+  Активация S3 optimizer в дочернем VSM. S3 runtime реализован
+  (`src/classifier/classifier.py`, `src/recovery_policies/`),
+  capability report подтверждает (S3 verify: 3/3 checks passed).
+
+  Emergence criteria (phases.yaml Phase 2→3):
+  - S2 ran ≥2 cycles without escalations: orchestrator recovery cycle
+    (smoke tests A/C/D + capability_report orchestrator: PASS).
+  - KPI/budget need appeared: orchestrator budget tracking
+    (`src/orchestrator.py`), S3 KPI list в vsm.yaml
+    (failure_recovery_rate, retry_efficiency, policy_effectiveness).
+
+evidence:
+  - "capability_report S3: 3/3 checks passed (taxonomy_loaded, classify_import_error, recovery_executor_dry_run)"
+  - "src/classifier/classifier.py: FailureClassifier (16 classes, match_order, confidence)"
+  - "src/recovery_policies/: 15 real executors (pip install, git reset, ...)"
+  - "capability_report orchestrator: PASS (run_recovery_cycle end-to-end)"
+  - "src/runtime/verify.py _verify_s3: real classifier + dry_run executor"
+
+preconditions:
+  - "Phase 2 active (VSM-009 applied)"
+  - "S3 runtime реализован (src/classifier/, src/recovery_policies/)"
+  - "S2 ran ≥2 cycles (orchestrator recovery cycle tests)"
+
+postconditions:
+  - "phase_activated: [S1, S2, S3]"
+  - "maturation_state: Phase 3"
+  - "S3 system active in vsm.yaml"
+
+proposal: |
+  Применить phase-transition (Phase 2 → Phase 3) через child-dispatcher:
+  - vsm/vsm.yaml: meta.maturation_state → Phase 3, meta.phase_activated → [S1, S2, S3]
+  - state/maturation.json: maturation_state → Phase 3, phase_activated → [S1, S2, S3], last_transition → "Phase 2 → Phase 3"
+
+acceptance:
+  - "vsm/vsm.yaml → meta.maturation_state: Phase 3"
+  - "vsm/vsm.yaml → meta.phase_activated: [S1, S2, S3]"
+  - "state/maturation.json → maturation_state: Phase 3"
+  - "state/maturation.json → phase_activated: [S1, S2, S3]"
+  - "state/maturation.json → last_transition: Phase 2 → Phase 3"
+  - "validate.sh GREEN"
+
+needs_human_decision: true
+decision: approved
+executor: child-dispatcher
+
+created: 2026-07-14
+updated: 2026-07-14

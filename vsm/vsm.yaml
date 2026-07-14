@@ -11,8 +11,8 @@ parent: external              # VSM-005 parent isolation: продукт не з
 
 meta:
   initialized: true           # true после validate_init (green)
-  maturation_state: Phase 1   # Initial State | Phase 0..6 | Autonomous
-  phase_activated: [S1]       # растёт по фазам: [S1] → [S1,S2] → ...
+  maturation_state: Phase 4   # Initial State | Phase 0..6 | Autonomous
+  phase_activated: [S1, S2, S3, S3*]   # растёт по фазам: [S1] → [S1,S2] → ...
 
 # ───────────────────────────── S5 — Identity ─────────────────────────────
 # Полный текст — в CLAUDE.md (этот файл ссылается). intent-level (из .intent.yaml → mission.statement).

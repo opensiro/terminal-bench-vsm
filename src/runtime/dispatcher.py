@@ -83,6 +83,13 @@ class S1Dispatcher:
             from mcp_server.server import create_server
             self._mcp_server = create_server(str(input.workspace))
 
+        # 3.1 S1 preflight self-check (CONTRACT: S1 contains its own verification).
+        # Lazy import avoids circular imports (verify imports dispatcher at runtime).
+        from .verify import preflight_check, preflight_diagnostic_output
+        preflight = preflight_check(input, self._mcp_server)
+        if not preflight.ok:
+            return preflight_diagnostic_output(preflight)
+
         # 4. Run solver (mono → RuleBasedSolver, multi → MultiAgentSolver)
         if self._solver_mode == "multi":
             from .multi_agent import MultiAgentSolver
@@ -108,6 +115,16 @@ class S1Dispatcher:
 
         output.cost = budget.summary()
         return output
+
+    def capability_report(self, workspace: str = ""):
+        """Run full e2e capability report (S1 self-verification).
+
+        On-demand e2e: solver → MCP → trace → recovery cycle. Used for phase
+        transitions, config changes, S5 requests. Lazy import to avoid circular
+        imports (verify imports dispatcher at runtime).
+        """
+        from .verify import capability_report, VerifyConfig
+        return capability_report(VerifyConfig(workspace=workspace))
 
 
 def invoke(

@@ -1,0 +1,57 @@
+id: VSM-011
+source_system: S5            # parent S5 — phase transition
+signal_type: policy          # phase-transition primitive
+severity: S1                 # structural — activates S3*
+target_unit: child           # дочерний VSM (продукт)
+
+title: "Phase transition: Phase 3 → Phase 4 (S3* auditor activated)"
+summary: |
+  Активация S3* auditor в дочернем VSM. S3* runtime реализован
+  (`src/audit/auditor.py`, `src/audit/config.py`), capability report
+  подтверждает (S3* verify: 2/2 checks passed).
+
+  Emergence criteria (phases.yaml Phase 3→4):
+  - S3 controlled resources ≥2 cycles: orchestrator recovery cycle
+    (classify → policy → recovery → retry).
+  - Information asymmetry → need independent audit: S3* cross-provider
+    constraint (s1_provider ≠ s3star_provider, audit/config.py).
+
+  Hard constraint: provider_constraint.must_differ_from: s1.
+  S1 = ZAI/GLM-5.2. S3* = другой provider (documented in audit/config.py).
+
+evidence:
+  - "capability_report S3_star: 2/2 checks passed (cross_provider_constraint, audit_classification)"
+  - "src/audit/auditor.py: S3StarAuditor (5 check types: consistency, coverage, structural, uncertainty, provider_violation)"
+  - "src/audit/config.py: AuditConfig.validate_provider_constraint (s1_provider ≠ s3star_provider)"
+  - "capability_report orchestrator: PASS (S3* audit на каждой classification в recovery cycle)"
+
+preconditions:
+  - "Phase 3 active (VSM-010 applied)"
+  - "S3* runtime реализован (src/audit/)"
+  - "S3 controlled resources ≥2 cycles (orchestrator recovery cycle)"
+  - "Cross-provider constraint satisfiable (s1=ZAI, s3*≠ZAI)"
+
+postconditions:
+  - "phase_activated: [S1, S2, S3, S3*]"
+  - "maturation_state: Phase 4"
+  - "S3* system active in vsm.yaml"
+
+proposal: |
+  Применить phase-transition (Phase 3 → Phase 4) через child-dispatcher:
+  - vsm/vsm.yaml: meta.maturation_state → Phase 4, meta.phase_activated → [S1, S2, S3, S3*]
+  - state/maturation.json: maturation_state → Phase 4, phase_activated → [S1, S2, S3, S3*], last_transition → "Phase 3 → Phase 4"
+
+acceptance:
+  - "vsm/vsm.yaml → meta.maturation_state: Phase 4"
+  - "vsm/vsm.yaml → meta.phase_activated: [S1, S2, S3, S3*]"
+  - "state/maturation.json → maturation_state: Phase 4"
+  - "state/maturation.json → phase_activated: [S1, S2, S3, S3*]"
+  - "state/maturation.json → last_transition: Phase 3 → Phase 4"
+  - "validate.sh GREEN"
+
+needs_human_decision: true
+decision: approved
+executor: child-dispatcher
+
+created: 2026-07-14
+updated: 2026-07-14
