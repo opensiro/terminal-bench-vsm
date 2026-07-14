@@ -1,0 +1,131 @@
+id: VSM-013
+source_system: S5            # parent S5 — архитектурный foundation для VSM-012
+signal_type: gap             # нет infra-слоя для агентного runtime
+severity: S1                 # structural — блокирует всю серию VSM-014+ (агентизация систем)
+target_unit: child           # дочерний VSM (продукт) — новый модуль в ../src/
+
+title: "Agent runtime foundation: inter-process state-bus + goose-runner + coordination protocol"
+
+summary: |
+  Фундамент для VSM-012 (полная агентизация S1–S5). Без этого слоя ни одна
+  система не может стать goose-агентом — нет инфраструктуры запуска и координации.
+
+  VSM-012 принял: каждая система = goose-агент внутри докера. Нужны 3 компонента:
+
+  (1) INTER-PROCESS STATE-BUS. Сейчас SessionStore (session_sync/) — in-process
+      (Python dict + RLock). Goose-агенты = subprocess'ы → нужен exchange через
+      файловую систему (sandbox-friendly, не Redis). Shared state per-task:
+      {plan, observations, classifications, audit_findings, retry_history, ...}.
+      Каждый агент читает входы, пишет свои выходы.
+
+  (2) GOOSE-RUNNER. Generic-обёртка: собрать промпт из SOUL/SKILL/TASK системы,
+      подключить MCP с нужным tool surface, запустить goose как subprocess,
+      собрать структурированный результат. Аналог HarnessRunner, но для ЛЮБОЙ
+      системы (не только S1), со своим tool surface per роль.
+
+  (3) COORDINATION PROTOCOL. Заменяет Python-вызовы в orchestrator.py. Каждый
+      шаг recovery-cycle = вызов агента: orchestrator пишет input в state-bus →
+      запускает goose-агента → агент пишет output в state-bus → orchestrator
+      читает. Async, but recovery-cycle = sequential (S1→S3→S3*→S2 по CONTRACT).
+
+  НЕ МЕНЯЕТ: мембрану VSM-002, never_do, stateless CONTRACT §5, general-purpose.
+  Совместимость с eval: текущий eval-bridge (docker-exec MCP) — частный случай
+  goose-runner для S1; VSM-013 обобщает паттерн.
+
+evidence:
+  - "src/session_sync/store.py — in-process SessionStore (RLock, dict); нужен inter-process (file-based)"
+  - "src/runtime/harness.py — HarnessRunner запускает goose через --with-extension wrapper; паттерн для обобщения"
+  - "src/orchestrator.py::run_recovery_cycle — Python-вызовы S1/S3/S3*/S2; при агентизации = protocol calls"
+  - "vsmlite-tb/eval/agent_phase.py — docker-exec MCP bridge доказывает что goose+MCP в контейнере работает"
+  - "vsm/systems/{s2-coordinator,s3-optimizer,s3-star-auditor,s4-scout,s5-guardian}/ — SOUL/SKILL/TASK готовы для goose-промптов"
+
+proposal: |
+  Создать в ../src/agent_runtime/ (новый модуль продукта) три компонента:
+
+  ── 1. state_bus.py — inter-process shared state ──
+  File-based (JSON in /logs/state-bus/), thread+process-safe через atomic writes
+  (write temp → rename). Per-task namespace. API (mirror SessionStore):
+    write(task_id, key, value), read(task_id, key), append(task_id, key, item),
+    read_all(task_id), lock(task_id) [context manager for atomic multi-write].
+  Schema: {task_id, created, agents: [...], s1_output, s3_classification,
+           s3star_audit, s2_authorization, recovery_directive, retry_history}.
+  TTL cleanup (как SessionStore). Совместим с in-process SessionStore (adapter).
+
+  ── 2. goose_runner.py — generic agent launcher ──
+  AgentConfig(system_name, soul_path, skill_path, task_path, mcp_tools, budget).
+  run(config, input) → AgentResult:
+    - собрать промпт: SOUL (identity) + SKILL (capabilities) + TASK (конкретное
+      задание из state-bus) + available tools
+    - MCP tool surface per роль (см. tool registry ниже)
+    - subprocess: goose run --text <prompt> --with-extension <mcp-wrapper>
+      --no-session --max-turns N --output-format text
+    - парсить stdout → структурированный результат (JSON в stdout или marker)
+    - писать trace в /logs/<system>_trace.json (для observability)
+  Tool registry (per роль):
+    - S1: fs/shell/git (coding) [уже есть в mcp_server/tools/]
+    - S2: state_bus (read/write), conflict_check, retry_authorize
+    - S3: taxonomy_read, signal_match, policy_select
+    - S3*: state_bus (read-only), audit_check [ДРУГОЙ провайдер — config flag]
+    - S4: browser (internet), pattern_store
+    - S5: policy_read, identity_check, algedonic_send
+
+  ── 3. protocol.py — coordination protocol ──
+  Каждый шаг recovery-cycle = protocol call. Заменяет прямые Python-вызовы:
+    orchestrator.invoke_s1(input) → запускает S1 goose-агента
+    orchestrator.invoke_s3(observations) → запускает S3 goose-агента
+    orchestrator.invoke_s3star(classification, observations) → S3* агент
+    orchestrator.invoke_s2(history, classification) → S2 агент
+  Каждый: write input to state-bus → goose-runner → read output from state-bus.
+  orchestrator.py рефакторится: Python-классы → protocol-вызовы. S3* = ДРУГОЙ
+  провайдер (config в goose_runner, cross-provider constraint сохраняется).
+
+  ── Порядок реализации (через child-dispatcher, НЕ родителем напрямую) ──
+  Мембрана: родитель НЕ мутирует ../src/. Этот issue = план; реализация =
+  child-dispatcher (agent в .claude/agents/). Шаги:
+    Step 1: state_bus.py (inter-process SessionStore)
+    Step 2: goose_runner.py (generic launcher + tool registry)
+    Step 3: protocol.py (coordination API)
+    Step 4: orchestrator.py рефакторинг (Python-вызовы → protocol)
+    Step 5: capability_report (verify.py) обновить под агентный runtime
+  Каждый Step = отдельный коммит child-dispatcher'а; capability_report = gate.
+
+acceptance:
+  - "../src/agent_runtime/ создан: __init__, state_bus.py, goose_runner.py, protocol.py"
+  - "state_bus.py: file-based, atomic writes, API mirror SessionStore, capability_report PASS"
+  - "goose_runner.py: запускает goose для ЛЮБОЙ системы (S1–S5), per-role tool surface, trace writes"
+  - "protocol.py: invoke_s1/s3/s3star/s2 — каждый = state-bus write → goose → read"
+  - "orchestrator.py рефакторен: Python-классы → protocol calls (поведение сохранено)"
+  - "capability_report (verify.py) PASS под агентным runtime (S1+S2+S3+S3*+orchestrator)"
+  - "src/ и vsm/ — мембрана VSM-002 сохранена (validate.sh GREEN, без упоминаний TB)"
+  - "Совместимость: существующий eval-bridge (vsmlite-tb/eval/) не сломан"
+
+needs_human_decision: true   # structural infra нового слоя; человек подтверждает архитектуру
+
+policy_question: >
+  Создать agent_runtime/ (state-bus + goose-runner + protocol) как foundation
+  для VSM-012? Это новый infra-модуль в ../src/, реализуемый child-dispatcher'ом.
+  Альтернатива: инкрементально, по одному компоненту за issue (state_bus → runner
+  → protocol как VSM-013a/b/c).
+
+options:
+  - { id: accept, label: "Принять foundation целиком", hint: "VSM-013 = state_bus + goose_runner + protocol + orchestrator refactor; child-dispatcher реализует по шагам (Recommended)" }
+  - { id: split, label: "Разбить на VSM-013a/b/c", hint: "state_bus (a) → goose_runner (b) → protocol+orchestrator (c); каждый = отдельный issue и коммит" }
+  - { id: defer, label: "Отложить", hint: "Сначала агентизировать S1 (VSM-007 расширение) без общего foundation; state-bus когда появится S2-агент" }
+
+status: accepted             # человек принял: foundation целиком
+decision: "accept: VSM-013 = foundation целиком (state_bus + goose_runner + protocol + orchestrator refactor). Реализуется по шагам (каждый = коммит), capability_report = gate между шагами. Мембрана сохранена: agent_runtime/ = продукт, benchmark-agnostic; child_mutation: allowed (workstream-режим)."
+selected_options: [accept]
+
+references:
+  - VSM-012   # полная агентизация (принято: full) — VSM-013 = её foundation
+  - VSM-007   # Split S1 + session_sync — state_bus обобщает SessionStore до inter-process
+  - VSM-002   # мембрана; agent_runtime = продукт, benchmark-agnostic
+
+notes:
+  - "Реализация — через child-dispatcher (мембрана: родитель не мутирует ../src/ напрямую)."
+  - "state_bus file-based (не Redis): sandbox-friendly, достаточно для recovery-cycle частоты."
+  - "goose-runner обобщает HarnessRunner + eval/agent_phase.py docker-exec bridge."
+  - "После VSM-013: серия VSM-014..018 (по системе: S2→S3→S3*→S4→S5 агентизация)."
+
+created: 2026-07-14
+updated: 2026-07-14

@@ -1,0 +1,135 @@
+id: VSM-012
+source_system: S5            # parent S5 — концептуальный поворот runtime продукта
+signal_type: policy          # архитектурная развилка runtime
+severity: S0                 # critical — меняет identity/runtime продукта целиком (S1–S5)
+target_unit: child           # дочерний VSM (продукт) — полный рефакторинг runtime
+
+title: "Полная агентизация S1–S5: каждая система = goose-агент внутри докера (Reconfigure runtime)"
+
+summary: |
+  Концептуальный поворот runtime продукта (инициатива человека, сессия 2026-07-14).
+
+  СЕЙЧАС: продукт — гибрид. S1 = внешний harness (goose/claude) + продуктовый
+  MCP-сервер («руки»); S2/S3/S3* = детерминированные Python-функции
+  (coordinator.py, classifier.py, auditor.py); S5 = отсутствует (basta —
+  родитель/человек). orchestrator.py координирует цикл recovery. Все системы
+  живут как Python-код в ../src/, управляютсяdispatcher.invoke().
+
+  ПРЕДЛАГАЕТСЯ: каждая система S1–S5 = ОТДЕЛЬНЫЙ goose-агент внутри
+  Docker-контейнера, со своим SOUL/SKILL/TASK, своим набором тулов и скриптов,
+  координируясь через общий state. orchestrator = протокол взаимодействия
+  агентов, а не Python-оркестратор. Продукт — рой агентных ролей, а не монолит.
+
+  ВАЖНО: seed/child/systems/ УЖЕ содержит агентные маски для всех систем
+  (s2-coordinator, s3-optimizer, s3-star-auditor, s4-scout, s5-guardian — каждая
+  с SOUL/SKILL/HEARTBEAT/TASK). VSM-012 = сделать эти маски ИСПОЛНЯЕМЫМИ
+  goose-агентами, а не только документацией к Python-функциям.
+
+evidence:
+  - "vsm/vsm.yaml → system_1/2/3/3_star/4: описания ролей, но runtime = ../src/ Python"
+  - "vsmlite-tb/seed/child/systems/{s2-coordinator,s3-optimizer,s3-star-auditor,s4-scout,s5-guardian}/ — агентные маски УЖЕ спроектированы (SOUL/SKILL/TASK), но не исполняются goose"
+  - "src/orchestrator.py — Python-оркестратор recovery cycle (S1→S3→S3*→recovery→S2→retry); при агентизации = протокол координации агентов"
+  - "src/s2/coordinator.py::authorize_retry — Python 4-check (anti-repeat, conflict, oscillation); кандидат на агентизацию"
+  - "src/classifier/classifier.py::classify — Python signal-matching; кандидат на агентизацию (но риск: classifier должен остаться детерминированным!)"
+  - "src/audit/auditor.py::audit_classification — Python + cross-provider constraint; кандидат на агентизацию (S3* = goose на ДРУГОМ провайдере)"
+  - "src/runtime/llm_interface.py:1-17 — «in-process API path deliberately closed; production = HarnessRunner»; VSM-012 переоткрывает агентный путь"
+  - "vsmlite-tb/eval/agent_phase.py — docker-exec MCP bridge: goose+MCP внутри контейнера; паттерн для агентизации"
+  - "phases.yaml: продукт в Phase 4 (S1–S3* активны); S4/S5 ещё не проявлены — VSM-012 может совпасть с Phase 5→6"
+
+proposal: |
+  VSM-012 = концептуальная развилка, НЕ готовая к реализации. Человек постановляет
+  направление; затем серия VSM-013+ (по одной системе за раз) реализует через
+  child-dispatcher. Этот issue фиксирует ЗАМЫСЕЛ и архитектурные вопросы.
+
+  ── Что меняется при полной агентизации ──
+
+  (1) Каждая система = goose-агент со своим tool surface:
+    - S1 solver: goose + coding tools (fs/shell/git) [уже так через harness]
+    - S2 coordinator: goose + coordination tools (state read/write, conflict
+      detection, retry authorize) [сейчас Python coordinator.py]
+    - S3 optimizer: goose + classification tools (taxonomy read, signal match,
+      policy select) [сейчас Python classifier.py]
+    - S3* auditor: goose НА ДРУГОМ ПРОВАЙДЕРЕ + audit tools (read-only state,
+      cross-provider constraint) [сейчас Python auditor.py]
+    - S4 scout: goose + internet/pattern-discovery tools [не реализован]
+    - S5 guardian: goose + policy/identity tools [не реализован]
+
+  (2) Координация = общий state (Redis/file/stdio-bus), а не Python-вызовы.
+    orchestrator.py → протокол обмена сообщениями между агентами.
+
+  (3) Каждый агент живёт внутри Docker-контейнера (sandbox), со своими
+    скриптами и тулами. Рой агентов, не монолит.
+
+  ── Ключевые архитектурные вопросы (для человека) ──
+
+  Q1: ДЕТЕРМИНИЗМ S3 classifier. Сейчас classify — детерминированный signal-
+      matching (regex по taxonomy). Goose-агент = вероятностный (LLM). Готовы
+      ли потерять детерминизм ради гибкости? Или S3 остаётся Python (гибрид:
+      S1/S2/S4/S5 = агенты, S3/S3* = Python)? Это РЕШАЮЩИЙ вопрос — affects
+      classifier_precision KPI, recovery reproducibility, S3* audit.
+
+  Q2: S3* CROSS-PROVIDER. Сейчас constraint в audit/config.py (s1≠s3star).
+      При агентизации: S3* goose на другом провайдере — структурно сильнее
+      (другая модель, не просто другая конфигурация). Но сложнее оркестрация.
+
+  Q3: STATE КООРДИНАЦИИ. Python-оркестратор → обмен сообщениями. Какой
+      транспорт? Redis (тяжело для sandbox)? File-based state (просто, но
+      race conditions)? stdio-bus (как MCP)? Это новый слой инфраструктуры.
+
+  Q4: ПРИМИТИВ OSM. Это Reconfigure (runtime меняется, identity сохраняется)
+      или Split (продукт делится на рекурсивные под-VSM по системам)? От этого
+      зависит Phase-модель и emergence criteria.
+
+  Q5: ПОРЯДОК АГЕНТИЗАЦИИ. Сразу все (big bang) или по одной системе
+      (инкрементально: S5 → S4 → S3* → S3 → S2, каждая = отдельный VSM-NNN)?
+      Инкрементально безопаснее, дольше.
+
+  Q6: СОВМЕСТИМОСТЬ С EVAL. Текущий eval-bridge (vsmlite-tb/eval/) тестирует
+      S1=harness+MCP. При агентизации S2–S5 тоже становятся тестируемыми.
+      Eval должен расширяться: не только «решила ли задача», но и «координировал
+      ли S2», «классифицировал ли S3». Это новый класс метрик.
+
+  ── Что НЕ меняется ──
+  - Мембрана VSM-002 (продукт не знает про TB; task_prompt нейтрален).
+  - never_do: same_provider_for_s3star, skip_failure_classification, circumvent_recovery.
+  - Stateless CONTRACT §5 (каждый invoke свежий; state только в общем state-bus).
+  - general_purpose_discipline (агенты не tied к конкретному оценочному набору).
+
+acceptance:
+  - "Этот issue = концептуальная фиксация; acceptance = человек выбирает направление (см. options)"
+  - "При accept: серия VSM-013+ (по одной системе) реализует через child-dispatcher"
+  - "vsm/vsm.yaml runtime: claude-code → agentized (если accept) — отдельно per системе"
+  - "phases.yaml: возможно Phase 5→6 совпадает с агентизацией S4/S5"
+  - "src/ БЕЗ ПРЯМЫХ ИЗМЕНЕНИЙ в этом issue — только концепция; реализация в VSM-013+"
+
+needs_human_decision: true   # S0 severity, identity-affecting — обязательно человек
+
+policy_question: >
+  Полная агентизация S1–S5 (каждая система = goose-агент внутри докера со своими
+  тулами) — принять направление, ограничить гибридом (S3/S3* остаются Python),
+  или отложить? Ключевое: готовы ли потерять детерминизм S3 classifier?
+
+options:
+  - { id: full, label: "Полная агентизация S1–S5", hint: "Все системы = goose-агенты; S3 теряет детерминизм; новый state-слой; big-bang или инкрементально (VSM-013+)" }
+  - { id: hybrid, label: "Гибрид (S1/S2/S4/S5 = агенты, S3/S3* = Python)", hint: "S3 classifier остаётся детерминированным; S3* cross-provider в конфиге; агентизация координационных/исследовательских ролей" }
+  - { id: s1_only, label: "Только S1 multi-agent (расширение VSM-007)", hint: "Planner/verifier VSM-007 → реальные goose-агенты; S2–S5 не трогаются" }
+  - { id: defer, label: "Отложить", hint: "Зафиксировать концепцию, вернуться после Phase 5 (S4) — агентизация S5 логичнее когда S5 проявлен" }
+
+status: accepted             # человек принял: полная агентизация S1–S5
+decision: "accept: full — полная агентизация S1–S5. Каждая система = goose-агент внутри докера со своим SOUL/SKILL/тулами. S3 classifier теряет детерминизм (становится LLM-агентом) — человек принял этот tradeoff. Реализация = серия VSM-013+ (по одной системе за раз, через child-dispatcher). Q1 (детерминизм S3) = решён в пользу агентизации. Остальные Q2–Q6 решаются per-issue в серии."
+selected_options: [full]
+
+references:
+  - VSM-007   # Split S1 → planner+executor+verifier; VSM-012 = расширение на все системы
+  - VSM-002   # мембрана product↔evaluation; сохраняется при агентизации
+  - VSM-001   # cross-provider constraint (S3*); агентизация усиливает (другая модель)
+
+notes:
+  - "seed/child/systems/ уже содержит SOUL/SKILL/TASK для всех 5 систем — агентные маски спроектированы, нужно сделать исполняемыми."
+  - "Q1 (детерминизм S3) — РЕШАЮЩИЙ вопрос; recommend hybrid если детерминизм критичен для classifier_precision KPI."
+  - "vsmlite-tb/eval/agent_phase.py (docker-exec MCP bridge) — готовый паттерн для агентного runtime; goose+MCP внутри контейнера уже работает."
+  - "При accept: НЕ реализовывать в этом issue — серия VSM-013+ (по системе), каждая через child-dispatcher."
+  - "orchestrator.py → при полной агентизации становится протоколом координации (state-bus), не Python-оркестратором."
+
+created: 2026-07-14
+updated: 2026-07-14

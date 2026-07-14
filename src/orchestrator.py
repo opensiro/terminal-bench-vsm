@@ -43,6 +43,17 @@ class OrchestratorConfig:
     # S3* provider constraint (VSM-005): s1_provider ≠ s3star_provider
     s1_provider: str = ""             # documented for cross-provider audit
     s3star_provider: str = ""         # must differ from s1_provider
+    # VSM-013: agent-runtime mode. False (default) = direct Python calls
+    # (backward-compatible; capability_report uses this). True = coordinate
+    # S1/S3/S3*/S2 via AgentProtocol (goose-agents + state-bus). The recovery
+    # executor stays Python in both modes (deterministic infra, not a role).
+    use_agents: bool = False
+    # VSM-015: parallel S3||S3* in agent-mode. False (default) = sequential
+    # (S3 classify → S3* audits S3's result). True = both independently classify
+    # the same observations in parallel, then divergence is compared. Faster
+    # (~50% on classify+audit step) AND a stronger audit (no anchoring bias).
+    # Only applies when use_agents=True.
+    parallel_s3_s3star: bool = False
 
 
 @dataclass
@@ -78,8 +89,22 @@ def run_recovery_cycle(
 
     Returns:
         RecoveryCycleResult with final output + full audit trail.
+
+    Routing: if config.use_agents=True, delegates to run_recovery_cycle_agents
+    (VSM-013 agent-runtime mode). Otherwise runs the original Python path.
     """
     cfg = config or OrchestratorConfig()
+
+    # VSM-013: agent-runtime mode — S1/S3/S3*/S2 as goose-agents via protocol.
+    if cfg.use_agents:
+        from agent_runtime.protocol import AgentProtocol, ProtocolConfig
+        proto_cfg = ProtocolConfig(
+            s1_provider=cfg.s1_provider or "zai",
+            s3star_provider=cfg.s3star_provider or "anthropic",
+        )
+        protocol = AgentProtocol(proto_cfg)
+        return run_recovery_cycle_agents(input, protocol, cfg)
+
     task_id = f"task-{hash(input.task_prompt) % 100000}"
 
     history = RetryHistory(task_id=task_id)
@@ -258,6 +283,184 @@ def run_recovery_cycle(
     result.final_output.verdict = Verdict.TASK_FAILED
     result.terminated_by = "max_retries"
     return result
+
+
+def run_recovery_cycle_agents(
+    input: S1Input,
+    protocol: Any,                    # AgentProtocol (agent_runtime.protocol)
+    config: OrchestratorConfig | None = None,
+) -> RecoveryCycleResult:
+    """Agent-mode recovery cycle (VSM-013): S1/S3/S3*/S2 invoked as goose-agents.
+
+    Same lifecycle + return type as run_recovery_cycle, but each reasoning step
+    (S1 solve, S3 classify, S3* audit, S2 authorize) runs as a goose-agent
+    subprocess coordinated via the state-bus. The recovery executor stays Python
+    (deterministic infra). Activated by OrchestratorConfig.use_agents=True.
+    """
+    cfg = config or OrchestratorConfig()
+    import hashlib
+    task_id = f"task-{hash(input.task_prompt) % 100000}"
+
+    history = RetryHistory(task_id=task_id)
+    result = RecoveryCycleResult(
+        final_output=S1Output(),
+        total_attempts=0,
+        history=history,
+    )
+
+    remaining_time = input.budget.time_seconds
+    remaining_tokens = input.budget.tokens
+    remaining_actions = input.budget.actions
+    current_directive: RecoveryDirective | None = None
+    policy_attempt_counts: dict[str, int] = {}
+
+    protocol.open_task(task_id, {
+        "task_prompt": input.task_prompt,
+        "workspace": str(input.workspace),
+        "budget": {"time_seconds": remaining_time, "tokens": remaining_tokens,
+                   "actions": remaining_actions},
+    })
+
+    try:
+        for attempt_num in range(cfg.max_retries + 1):
+            result.total_attempts = attempt_num + 1
+
+            # ── Step 1: S1 agent ──
+            s1_in = {
+                "task_prompt": input.task_prompt,
+                "workspace": str(input.workspace),
+                "budget": {"time_seconds": max(1, remaining_time),
+                           "tokens": max(1, remaining_tokens),
+                           "actions": max(1, remaining_actions)},
+                "recovery_directive": (current_directive.__dict__ if current_directive else None),
+            }
+            s1_res = protocol.invoke_s1(task_id, s1_in)
+            s1_out = (s1_res.parsed or {}) if s1_res.parsed else {}
+
+            # Map agent output → S1Output (best-effort; agent returns structured JSON)
+            verdict_str = s1_out.get("verdict", "unknown")
+            try:
+                verdict = Verdict(verdict_str)
+            except ValueError:
+                verdict = Verdict.UNKNOWN
+            cost = s1_out.get("cost", {})
+            remaining_time -= int(cost.get("time_used", 0))
+            remaining_tokens -= int(cost.get("tokens_used", 0))
+            remaining_actions -= int(cost.get("actions_taken", 0))
+            obs_dicts = s1_out.get("failure_observations", [])
+
+            output = S1Output(verdict=verdict, cost=cost)
+            output.failure_observations = [_obs_from_agent(o) for o in obs_dicts]
+
+            # ── Step 2: termination check ──
+            if verdict == Verdict.TASK_RESOLVED:
+                result.final_output = output
+                result.terminated_by = "task_resolved"
+                history.add(AttemptRecord(attempt_num=attempt_num, failure_class="none",
+                                          policy_applied="none", verdict="task_resolved"))
+                return result
+            if verdict == Verdict.BUDGET_EXHAUSTED or remaining_time <= 0 or remaining_actions <= 0:
+                output.verdict = Verdict.BUDGET_EXHAUSTED
+                result.final_output = output
+                result.terminated_by = "budget_exhausted"
+                return result
+            if not obs_dicts:
+                result.final_output = output
+                result.terminated_by = "no_observations"
+                return result
+
+            # ── Steps 3+4: S3 classify + S3* audit ──
+            # VSM-015: parallel mode — both independently classify the same
+            # observations, divergence is the audit signal (no anchoring bias).
+            # Sequential mode (default) — S3 classifies, S3* audits S3's result.
+            if cfg.parallel_s3_s3star:
+                s3_res, s3star_res, divergence = protocol.invoke_s3_parallel(task_id, obs_dicts)
+                classification = (s3_res.parsed or {}) if s3_res.parsed else {}
+                audit = divergence  # structured divergence = the audit result
+            else:
+                # ── Step 3: S3 agent (classify) ──
+                s3_res = protocol.invoke_s3(task_id, obs_dicts)
+                classification = (s3_res.parsed or {}) if s3_res.parsed else {}
+                # ── Step 4: S3* agent (audit, cross-provider) ──
+                s3star_res = protocol.invoke_s3star(task_id, classification, obs_dicts)
+                audit = (s3star_res.parsed or {}) if s3star_res.parsed else {}
+            result.classifications.append(classification)
+            result.audit_results.append(audit)
+            failure_class = classification.get("failure_class", "Unknown")
+            policy_id = classification.get("recovery_policy", "DiagnoseAndPatch")
+
+            if audit.get("algedonic"):
+                result.final_output = output
+                result.terminated_by = "algedonic"
+                return result
+
+            # ── Step 5: recovery executor (Python infra, not an agent) ──
+            attempt_key = f"{failure_class}:{policy_id}"
+            policy_attempt = policy_attempt_counts.get(attempt_key, 0)
+            recovery_dict = protocol.apply_recovery(
+                task_id, policy_id, failure_class, str(input.workspace),
+                obs_dicts, policy_attempt, dry_run=True,
+            )
+            result.recovery_results.append(recovery_dict)
+            policy_attempt_counts[attempt_key] = policy_attempt + 1
+
+            if recovery_dict.get("blocked") or not recovery_dict.get("applied"):
+                result.final_output = output
+                result.terminated_by = f"recovery_blocked:{recovery_dict.get('blocked') or 'not_applied'}"
+                return result
+
+            # ── Step 6: S2 agent (authorize retry) ──
+            s2_res = protocol.invoke_s2(task_id, failure_class, policy_id, policy_attempt)
+            auth = (s2_res.parsed or {}) if s2_res.parsed else {}
+            result.s2_authorizations.append(auth)
+            history.add(AttemptRecord(
+                attempt_num=attempt_num, failure_class=failure_class,
+                policy_applied=policy_id,
+                verdict=verdict_str,
+                env_changes=recovery_dict.get("env_changes", []),
+            ))
+
+            if not auth.get("authorized"):
+                result.final_output = output
+                result.terminated_by = f"not_authorized:{auth.get('blocked_by')}"
+                return result
+
+            # ── Step 7: prepare retry directive ──
+            current_directive = RecoveryDirective(
+                failure_class=failure_class,
+                policy_applied=policy_id,
+                env_changes=recovery_dict.get("env_changes", []),
+                policy_attempt=policy_attempt + 1,
+            )
+
+        result.final_output.verdict = Verdict.TASK_FAILED
+        result.terminated_by = "max_retries"
+        return result
+    finally:
+        protocol.close_task(task_id)
+
+
+# ── Agent-output helpers (VSM-013 agent-mode: goose JSON → dataclasses) ──
+
+# Valid fields for FailureObservation (from runtime/types.py). Goose-agents may
+# emit extra/missing fields; we keep only valid ones with defaults.
+_FAILURE_OBS_FIELDS = {"kind", "value", "source", "command", "action",
+                       "deadline_seconds", "at_action"}
+
+
+def _obs_from_agent(o: Any) -> FailureObservation:
+    """Tolerantly map an agent-produced observation dict → FailureObservation.
+
+    Goose-agents emit free-form JSON; only valid dataclass fields are kept,
+    defaults filled for missing ones. Non-dict values become error_string obs.
+    """
+    if not isinstance(o, dict):
+        return FailureObservation(kind="error_string", value=str(o))
+    # Keep only valid fields, coerce types best-effort
+    clean = {k: v for k, v in o.items() if k in _FAILURE_OBS_FIELDS}
+    # Ensure required 'kind' has a value
+    clean.setdefault("kind", "error_string")
+    return FailureObservation(**clean)
 
 
 # ── Dict serializers (for audit trail) ──

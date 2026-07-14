@@ -235,6 +235,9 @@ def capability_report(config: VerifyConfig | None = None) -> CapabilityReport:
     # ── Orchestrator verify ──
     report.systems["orchestrator"] = _verify_orchestrator(workspace, taxonomy_path, cfg)
 
+    # ── Agent runtime verify (VSM-013 foundation) ──
+    report.systems["agent_runtime"] = _verify_agent_runtime()
+
     # Overall
     if report.all_passed:
         report.overall = "all_passed"
@@ -244,6 +247,105 @@ def capability_report(config: VerifyConfig | None = None) -> CapabilityReport:
         report.overall = "failed"
 
     return report
+
+
+def _verify_agent_runtime() -> SystemStatus:
+    """Verify agent_runtime foundation (VSM-013): state-bus + protocol API.
+
+    Checks the foundation WITHOUT launching goose (keeps verify fast & offline).
+    Goose-runner + full agent invocations are exercised in eval/integration tests.
+    """
+    checks = []
+    evidence = {}
+
+    # Check 1: state_bus inter-process read/write
+    import tempfile
+    t0 = time.time()
+    try:
+        from agent_runtime.state_bus import StateBus
+        with tempfile.TemporaryDirectory() as td:
+            bus = StateBus(root=td)
+            bus.create("verify-task", agents=["s1", "s3"])
+            bus.update("verify-task", "s1_output", {"verdict": "task_failed"})
+            val = bus.read("verify-task", "s1_output")
+            assert val == {"verdict": "task_failed"}
+            bus.close("verify-task")
+        checks.append(CheckResult(
+            name="state_bus_read_write",
+            passed=True,
+            detail="create/update/read/close OK (file-based, atomic)",
+            duration_ms=(time.time() - t0) * 1000,
+        ))
+        evidence["state_bus"] = "OK"
+    except Exception as exc:
+        checks.append(CheckResult(
+            name="state_bus_read_write",
+            passed=False,
+            detail=f"error: {type(exc).__name__}: {exc}",
+            duration_ms=(time.time() - t0) * 1000,
+        ))
+
+    # Check 2: goose_runner prompt assembly + result parsing
+    t0 = time.time()
+    try:
+        from agent_runtime.goose_runner import AgentConfig, build_prompt, parse_result
+        from pathlib import Path
+        systems_dir = Path(__file__).resolve().parent.parent.parent / "vsm" / "systems"
+        cfg = AgentConfig(system_name="s2-coordinator", systems_dir=systems_dir)
+        prompt = build_prompt(cfg, '{"test": true}')
+        assert "S2" in prompt and "coordinator" in prompt
+        parsed = parse_result('text\n```json\n{"x": 1}\n```\n')
+        assert parsed == {"x": 1}
+        checks.append(CheckResult(
+            name="goose_runner_prompt_parse",
+            passed=True,
+            detail=f"prompt={len(prompt)} chars, parse_result extracts JSON",
+            duration_ms=(time.time() - t0) * 1000,
+        ))
+        evidence["goose_runner"] = "OK"
+    except Exception as exc:
+        checks.append(CheckResult(
+            name="goose_runner_prompt_parse",
+            passed=False,
+            detail=f"error: {type(exc).__name__}: {exc}",
+            duration_ms=(time.time() - t0) * 1000,
+        ))
+
+    # Check 3: protocol API + role configs
+    t0 = time.time()
+    try:
+        from agent_runtime.protocol import ProtocolConfig, ROLE_CONFIGS
+        pcfg = ProtocolConfig()
+        # Cross-provider constraint: S3* provider must differ from S1
+        s1_cfg = pcfg._agent_config("s1-dispatcher")
+        s3star_cfg = pcfg._agent_config("s3-star-auditor")
+        assert s1_cfg.provider != s3star_cfg.provider, \
+            f"cross-provider violated: s1={s1_cfg.provider}, s3*={s3star_cfg.provider}"
+        # Each role has a tool surface
+        for role in ("s1-dispatcher", "s2-coordinator", "s3-optimizer", "s3-star-auditor"):
+            assert ROLE_CONFIGS[role]["tools"], f"{role} has no tools"
+        checks.append(CheckResult(
+            name="protocol_role_configs",
+            passed=True,
+            detail=f"4 roles configured; s1={s1_cfg.provider}, s3*={s3star_cfg.provider} (differs)",
+            duration_ms=(time.time() - t0) * 1000,
+        ))
+        evidence["protocol"] = {"s1_provider": s1_cfg.provider,
+                                "s3star_provider": s3star_cfg.provider}
+    except Exception as exc:
+        checks.append(CheckResult(
+            name="protocol_role_configs",
+            passed=False,
+            detail=f"error: {type(exc).__name__}: {exc}",
+            duration_ms=(time.time() - t0) * 1000,
+        ))
+
+    return SystemStatus(
+        name="agent_runtime",
+        passed=all(c.passed for c in checks),
+        checks=checks,
+        evidence=evidence,
+    )
 
 
 def _verify_s1(workspace: Path, cfg: VerifyConfig) -> SystemStatus:

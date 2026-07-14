@@ -1,0 +1,86 @@
+id: VSM-015
+source_system: S5            # parent S5 — оптимизация производительности agent-runtime
+signal_type: policy          # параллелизация S3||S3*
+severity: S2                 # structural — меняет семантику аудита (независимая классификация)
+target_unit: child           # дочерний VSM (продукт) — agent_runtime + orchestrator
+
+title: "Параллелизация S3||S3*: независимая классификация + divergence audit (VSM-014 perf fix)"
+
+summary: |
+  Оптимизация производительности agent-runtime (VSM-014 выявил: полный cycle = 4×
+  goose ~минуты). Главный bottleneck — последовательные S3 classify → S3* audit.
+  VSM-015 распараллеливает их: S3 и S3* НЕЗАВИСИМО классифицируют одни и те же
+  observations параллельно (ThreadPoolExecutor, 2 goose subprocess'а одновременно),
+  затем divergence сравнивает две классификации.
+
+  Выигрыш двойной:
+    1. ПРОИЗВОДИТЕЛЬНОСТЬ: classify+audit step ~50% быстрее (параллельно вместо
+       последовательно; goose subprocess'ы освобождают GIL во время wait).
+    2. КАЧЕСТВО АУДИТА: S3* больше НЕ видит классификацию S3 → нет anchoring bias.
+       Две независимые классификации на разных провайдерах (VSM-001 cross-provider)
+       дают richer audit signal: divergence в failure_class = потенциальная
+       misclassification или taxonomy ambiguity.
+
+  СЕМАНТИЧЕСКОЕ ИЗМЕНЕНИЕ: раньше S3* аудировал self-consistency S3 (signal
+  действительно в observations?). Теперь S3* аудирует DIVERGENCE — сравнивает свою
+  независимую классификацию с S3. Это сильнее: ловит misclassification, а не только
+  hallucinated evidence.
+
+  Divergence logic (_classify_divergence):
+    - classes_match (S3 == S3*): OK
+    - class divergence + both high confidence → CRITICAL + algedonic (escalate S5)
+    - policy divergence, same class → WARN (multiple valid policies exist)
+    - confidence mismatch → INFO
+
+evidence:
+  - "src/agent_runtime/protocol.py::invoke_s3_parallel — ThreadPoolExecutor(2), оба классифицируют независимо"
+  - "src/agent_runtime/protocol.py::_classify_divergence — structured comparison → findings + algedonic"
+  - "src/agent_runtime/protocol.py::_s3star_classify_config — S3* в parallel-mode: taxonomy tools + classify contract"
+  - "src/agent_runtime/goose_runner.py::AgentConfig.contract_override — per-mode output contract"
+  - "src/orchestrator.py::OrchestratorConfig.parallel_s3_s3star — флаг (default False, backward-compat)"
+  - "src/orchestrator.py — Steps 3+4 branch: parallel vs sequential"
+  - "Unit-тест divergence: 4 случая (match/class-CRITICAL/policy-WARN/confidence-INFO) — PASSED"
+
+proposal: |
+  VSM-015 = активация параллельного режима S3||S3*. Реализация готова; флаг
+  parallel_s3_s3star=False по умолчанию (обратная совместимость). Включение = True.
+
+  Что меняется:
+    - protocol.invoke_s3_parallel() — S3 + S3* параллельно (ThreadPoolExecutor)
+    - S3* в parallel-mode использует _s3star_classify_config (classify, не audit)
+    - orchestrator branch в agent-mode: parallel vs sequential
+    - _classify_divergence → structured audit {passed, findings, algedonic}
+
+  Что НЕ меняется:
+    - sequential mode (parallel_s3_s3star=False) — полностью сохранён
+    - capability_report — PASS (офлайн, без goose)
+    - Python-mode orchestrator (use_agents=False) — не тронут
+    - cross-provider constraint (S3* ≠ S1 provider) — сохранён
+
+acceptance:
+  - "protocol.invoke_s3_parallel: ThreadPoolExecutor(2), оба классифицируют независимо"
+  - "_classify_divergence: 4 случая (match/divergence-CRITICAL/policy/confidence) — unit-tested"
+  - "contract_override: per-mode output contract (S3* classify vs audit)"
+  - "capability_report PASS (6 систем, backward-compat)"
+  - "make validate GREEN"
+  - "E2E: invoke_s3_parallel с реальным goose — параллельно, divergence computed"
+
+needs_human_decision: false   # operational оптимизация на готовом foundation
+
+status: done
+decision: "done — S3||S3* параллелизация реализована; divergence audit сильнее sequential (no anchoring bias); unit-tested; capability_report PASS"
+selected_options: []
+
+references:
+  - VSM-013   # agent-runtime foundation
+  - VSM-014   # выявил perf лимиту (4× goose последовательно)
+  - VSM-001   # cross-provider constraint (S3* ≠ S1) — сохранён в parallel
+
+notes:
+  - "Параллелизация через ThreadPoolExecutor: goose subprocess.run освобождает GIL во время wait → реальный parallelism."
+  - "Semantic improvement: S3* independent classify (no anchoring) > S3* audit-of-S3. Divergence ловит misclassification, не только hallucinated evidence."
+  - "Algedonic trigger: class divergence + high confidence → escalate (два независимых агента расходятся = structural concern)."
+  - "Дальше: VSM-016 (полная S3* агентизация), VSM-017 (S4), VSM-018 (S5). Параллелизация других шагов — S1 независим от S3/S3*, S2 после recovery — sequential по необходимости."
+
+created: 2026-07-14
+updated: 2026-07-14
