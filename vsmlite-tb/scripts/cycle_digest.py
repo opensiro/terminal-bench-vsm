@@ -52,17 +52,56 @@ def _pending_human_issues():
     return pending
 
 
+def _eval_line(dev_metrics, eval_history):
+    """Строка eval pass-rate + trend для REPL-дайджеста S5.
+
+    Формат: «▸ eval: 42% (↑ +4% от прошлого прогона, 42/100)» или
+    «▸ eval: не запускался (make eval-all для прогона)».
+    """
+    if not dev_metrics or not isinstance(dev_metrics, dict):
+        return "▸ eval: не запускался (`make eval-all` для прогона)"
+    summary = dev_metrics.get("summary", {})
+    total = summary.get("total", 0)
+    if total == 0:
+        return "▸ eval: 0 задач (`make eval-all` для прогона)"
+    pass_rate = summary.get("pass_rate", 0.0)
+    passed = summary.get("passed", 0)
+
+    # trend из eval_history
+    trend_str = ""
+    if eval_history and isinstance(eval_history, list) and len(eval_history) >= 2:
+        current = eval_history[-1].get("pass_rate", 0.0)
+        previous = eval_history[-2].get("pass_rate", 0.0)
+        delta = current - previous
+        if delta > 0.005:
+            arrow = "↑"
+        elif delta < -0.005:
+            arrow = "↓"
+        else:
+            arrow = "→"
+        trend_str = f" ({arrow} {delta:+.0%} от прошлого прогона)"
+    elif eval_history:
+        trend_str = " (первый прогон)"
+
+    return f"▸ eval: **{pass_rate:.0%}**{trend_str} — {passed}/{total} tasks"
+
+
 def main():
     mat = _read(STATE / "maturation.json", {})
     status = _read(STATE / "status.json", {})
     audit = _read(STATE / "audit.json", {})
     intel = _read(STATE / "intel.json", {})
+    dev_metrics = _read(STATE / "dev_metrics.json", {})
+    eval_history = _read(STATE / "eval_history.json", [])
 
     autonomy = mat.get("autonomy", {}) if mat else {}
     score = autonomy.get("current", 0.0)
     verdict_a = autonomy.get("verdict", "DEPENDENT")
     phase = mat.get("maturation_state", "Initial State")
     cycle = mat.get("cycle_count", 0)
+
+    # eval pass-rate (VSM-005 входной индикатор) + trend
+    eval_line = _eval_line(dev_metrics, eval_history)
 
     pending = _pending_human_issues()
     critical = [p for p in pending if p["severity"] in ("S0", "S1")
@@ -77,6 +116,7 @@ def main():
     lines.append(f"## Цикл {cycle} — digest")
     lines.append("")
     lines.append(f"▸ A(t): **{score}** ({verdict_a}) | maturation: **{phase}**")
+    lines.append(eval_line)
     if red_findings:
         lines.append(f"▸ ⚠️ S3* audit: {len(red_findings)} RED finding(s) — см. state/audit.json")
     if intel and intel.get("signals"):

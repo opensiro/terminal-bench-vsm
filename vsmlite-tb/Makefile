@@ -4,7 +4,7 @@ SHELL := /usr/bin/env bash
 
 MODE ?= normal
 
-.PHONY: help prompt-% run-% all-prompts validate telemetry autonomy digest init-check
+.PHONY: help prompt-% run-% all-prompts validate telemetry autonomy digest init-check eval-list eval-run eval-all eval-summary
 
 help: ## показать это сообщение
 	@grep -E '^[a-zA-Z_-]+:.*?## ' $(MAKEFILE_LIST) | awk 'BEGIN{FS=":.*?## "}{printf "  \033[36m%-18s\033[0m %s\n", $$1, $$2}'
@@ -36,3 +36,17 @@ digest: ## дайджест изменений цикла для REPL-юзера
 
 init-check: ## структурная проверка init-состояния (без flip meta.initialized)
 	@scripts/validate.sh --init-check
+
+# ── eval/: Terminal-Bench Dev Set v2 пайплайн ──
+eval-list: ## список задач в датасете
+	@python3 -m eval list
+
+eval-run: ## прогнать одну задачу: make eval-run TASK=<task_id>
+	@test -n "$(TASK)" || { echo "укажите TASK=<task_id> (см. make eval-list)"; exit 2; }
+	@python3 -m eval run --task $(TASK)
+
+eval-all: ## прогнать все задачи (по фильтру: FILTER=difficulty=medium LIMIT=5)
+	@python3 -m eval run-all $(if $(FILTER),--filter $(FILTER)) $(if $(LIMIT),--limit $(LIMIT))
+
+eval-summary: ## вывести pass-rate из state/dev_metrics.json
+	@python3 -m eval summary

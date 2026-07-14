@@ -1,0 +1,77 @@
+id: VSM-008
+source_system: S1            # operational — реализация eval-пайплайна (S1 vsmlite)
+signal_type: gap             # gap: нет материализованной метрики Dev Set pass-rate
+severity: S2                 # structural дополнение родителя (не identity-affecting)
+target_unit: meta            # vsmlite (родитель) — новый модуль eval/
+
+title: "Terminal-Bench Dev Set v2 eval-пайплайн: docker-exec MCP bridge + dev_metrics.json"
+summary: |
+  Реализован eval-пайплайн в vsmlite-tb/eval/ (новый модуль родителя), который
+  оценивает продукт (../src/ — failure-aware harness) на 100 задачах
+  Terminal-Bench Dev Set v2 (open-thoughts/OpenThoughts-TB-dev-v2) и записывает
+  pass-rate в state/dev_metrics.json — как материализацию ВХОДНОГО индикатора
+  автономности A(t) из VSM-004/005.
+
+  Ключевое архитектурное решение — "docker-exec MCP bridge": продуктовый
+  MCP-сервер (../src/mcp_server/) запускается ВНУТРИ TB-контейнера через
+  `docker exec -i <container> python3 -m mcp_server.server`, а harness
+  (claude-code/goose) подключается к нему с хоста через mcp_config.json.
+  Каждый shell.exec MCP выполняется в реальном TB-окружении; trace пишется
+  в продуктовом формате (T2 CONTRACT §3). Продукт НЕ модифицируется и НЕ
+  импортируется родителем как модуль — только read-only bind mount ../src
+  + subprocess. Мембрана VSM-002 сохранена.
+
+  Мембрана материализована в eval/membrane.py: TB instruction.md → нейтральный
+  task_prompt (вырезается канарейка + оценочные термины), verify_neutrality()
+  бросает ошибку при утечке. Грейдинг (eval/grader.py) честный outcome-based:
+  tests/ копируются в контейнер ПОСЛЕ фазы агента (анти-reward-hacking),
+  tests/test.sh пишет 1/0 в /logs/verifier/reward.txt.
+
+evidence:
+  - "vsmlite-tb/eval/ — новый модуль: loader, membrane, container, agent_phase, grader, runner, metrics, __main__"
+  - "vsmlite-tb/state/dev_metrics.json — целевой файл метрики (решает открытый вопрос из VSM-004 notes)"
+  - "vsmlite-tb/scripts/validate.sh §2c — добавлена проверка benchmark membrane (VSM-002): grep ../vsm/ ../src/ на terminal-bench/harbor"
+  - "vsmlite-tb/Makefile — eval-list/eval-run/eval-all/eval-summary таргеты"
+  - "huggingface.co/datasets/open-thoughts/OpenThoughts-TB-dev-v2 — 100 TB задач, НЕ табличный (папки на диске)"
+
+proposal: |
+  Структурное дополнение родителя (vsmlite-tb/eval/), НЕ затрагивающее продукт.
+  needs_human_decision: false — operational/structural, не identity-affecting.
+  Фиксируется в истории (monotonic id) для audit trail.
+
+  Связь с A(t) (VSM-004/005): dev_metrics.json summary.pass_rate — ВХОДНОЙ
+  индикатор автономности (в паре с S5 intervention count как ОБРАТНЫЙ).
+  Рост pass_rate ↑ + снижение interventions ↓ = рост автономности.
+
+  Связь с мембраной (VSM-002): eval/membrane.py — материализация мембраны,
+  которая раньше была только концептуальной ("при трансляции TB-задачи в продукт
+  TB-фрейминг снимается"). Теперь это исполняемый код с verify_neutrality().
+
+acceptance:
+  - "vsmlite-tb/eval/ создан: __init__, __main__, config, loader, membrane, container, agent_phase, grader, runner, metrics"
+  - "vsmlite-tb/state/dev_metrics.json — целевой формат метрики (summary + by_category + by_difficulty + tasks[])"
+  - "make validate GREEN с новой проверкой §2c (benchmark membrane VSM-002)"
+  - "src/ и vsm/ БЕЗ ИЗМЕНЕНИЙ (продукт не тронут)"
+  - "make eval-list, eval-run TASK=<id>, eval-all, eval-summary — CLI точки входа работают"
+  - "eval/membrane.py verify_neutrality() проходит на реальных instruction.md"
+  - "vsmlite-tb/requirements.txt — huggingface_hub как единственная новая зависимость"
+
+needs_human_decision: false   # structural дополнение родителя; не identity-affecting
+
+status: done                  # реализовано
+decision: "done — eval-пайплайн реализован, validate GREEN, мембрана усилена проверкой §2c"
+selected_options: []
+
+references:
+  - VSM-002   # мембрана product↔evaluation — материализована в eval/membrane.py
+  - VSM-004   # Dev Set как индикатор автономности — dev_metrics.json решает открытый вопрос
+  - VSM-005   # pass_rate как ВХОДНОЙ индикатор A(t) (в паре с intervention count)
+
+notes:
+  - "Требуется Docker daemon на хосте. TB-образы ubuntu:24.04-based, сборка ~минуты/задача."
+  - "Полный прогон 100 задач — длительный; CLI даёт --limit и --filter для инкрементальной разработки."
+  - "Продуктовый MCP-сервер запускается в контейнере с PYTHONPATH=/opt/mcp_server_src (read-only mount ../src)."
+  - "harness-логика сборки аргументов НЕ импортируется из src/runtime/harness.py (развязка от внутреннего API продукта)."
+
+created: 2026-07-14
+updated: 2026-07-14

@@ -1,0 +1,12 @@
+# vsmlite-tb — Python-зависимости.
+#
+# Большинство скриптов в scripts/ используют только stdlib + PyYAML (уже в системе).
+# eval/ — eval-пайплайн Terminal-Bench Dev Set v2 (см. eval/README.md).
+
+# eval/: скачивание датасета с HuggingFace Hub.
+# Датасет публичный — HF_TOKEN опционален.
+huggingface_hub>=0.24.0
+
+# (опционально) PyYAML — используется scripts/render_data.py для парсинга issues/.
+# Обычно уже установлен в системе; раскомментируйте при необходимости.
+# PyYAML>=6.0

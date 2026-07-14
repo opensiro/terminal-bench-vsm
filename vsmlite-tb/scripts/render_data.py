@@ -13,6 +13,8 @@
   state/heartbeat.json  → heartbeat
   issues/VSM-*.yaml     → issues
   state/live_metrics.json → units[], activity[] (от collect_metrics.py)
+  state/dev_metrics.json → eval (pass-rate Terminal-Bench Dev Set v2, VSM-005)
+  state/eval_history.json → eval.trend (per-run снэпшоты для S4)
 
 Usage:
   python3 scripts/render_data.py
@@ -97,11 +99,17 @@ def main():
     live = _read(STATE / "live_metrics.json", {})
     history = _read(STATE / "history.json", [])
     interventions = _read(STATE / "interventions.json", {})
+    dev_metrics = _read(STATE / "dev_metrics.json", {})
+    eval_history = _read(STATE / "eval_history.json", [])
 
     autonomy = maturation.get("autonomy", {}) if maturation else {}
     kpi = metrics.get("kpi", {}) if metrics else {}
     intervention_list = interventions.get("interventions", []) if isinstance(interventions, dict) else []
     cycle_count = maturation.get("cycle_count", 0) if maturation else 0
+
+    # eval (Terminal-Bench Dev Set v2) — VSM-005 входной индикатор автономности
+    eval_summary = dev_metrics.get("summary", {}) if isinstance(dev_metrics, dict) else {}
+    eval_trend = _eval_trend(eval_history)
 
     data = {
         "generated": datetime.now().isoformat(timespec="seconds"),
@@ -121,6 +129,17 @@ def main():
             "s5_intervention_count": len(intervention_list),   # VSM-005: lower = more autonomous
             "s5_intervention_cycles": len({i.get("cycle") for i in intervention_list if i.get("cycle") is not None}),
             "intervention_share": round(len({i.get("cycle") for i in intervention_list if i.get("cycle") is not None}) / cycle_count, 3) if cycle_count else 0.0,
+            "eval_pass_rate": eval_summary.get("pass_rate", None),   # VSM-005: Terminal-Bench Dev Set v2
+        },
+        "eval": {
+            "dataset": dev_metrics.get("dataset") if isinstance(dev_metrics, dict) else None,
+            "harness": dev_metrics.get("harness") if isinstance(dev_metrics, dict) else None,
+            "generated": dev_metrics.get("generated") if isinstance(dev_metrics, dict) else None,
+            "summary": eval_summary,
+            "by_difficulty": dev_metrics.get("by_difficulty", {}) if isinstance(dev_metrics, dict) else {},
+            "by_category": dev_metrics.get("by_category", {}) if isinstance(dev_metrics, dict) else {},
+            "trend": eval_trend,   # {current, previous, delta, direction} для S4/UI
+            "history": eval_history[-30:] if isinstance(eval_history, list) else [],  # последние 30 прогонов
         },
         "maturation": {
             "state": maturation.get("maturation_state", "Initial State"),
@@ -157,6 +176,9 @@ def main():
     print(f"── render_data ──")
     print(f"  project: {project}")
     print(f"  A(t): {data['metrics']['autonomy_score']} | phase: {data['metrics']['maturation_phase']}")
+    pr = data['metrics'].get('eval_pass_rate')
+    eval_str = f"{pr:.0%}" if pr is not None else "—"
+    print(f"  eval: {eval_str} pass-rate ({data['eval']['trend']['direction']})")
     print(f"  issues: {len(data['issues'])} | units: {len(data['units'])} | activity days: {len(data['activity'])}")
     print(f"  → {target.relative_to(ROOT)}")
 
@@ -174,6 +196,28 @@ def _maybe_snapshot(history, metrics):
     history = history[-90:]
     (STATE / "history.json").write_text(
         json.dumps(history, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+
+
+def _eval_trend(eval_history):
+    """Trend pass-rate из eval_history.json: delta + direction.
+
+    eval_history: list of {date, pass_rate, ...} снэпшотов (от eval/metrics.py).
+    Возвращает {current, previous, delta, direction} или пустой каркас если нет.
+    """
+    if not eval_history or not isinstance(eval_history, list):
+        return {"current": 0.0, "previous": None, "delta": 0.0, "direction": "none"}
+    current = eval_history[-1].get("pass_rate", 0.0)
+    if len(eval_history) < 2:
+        return {"current": current, "previous": None, "delta": 0.0, "direction": "none"}
+    previous = eval_history[-2].get("pass_rate", 0.0)
+    delta = round(current - previous, 4)
+    if delta > 0.005:
+        direction = "up"
+    elif delta < -0.005:
+        direction = "down"
+    else:
+        direction = "flat"
+    return {"current": current, "previous": previous, "delta": delta, "direction": direction}
 
 
 if __name__ == "__main__":

@@ -89,6 +89,24 @@ else
   ok "vsm/ и src/ не раскрывают роль vsmlite как оператора (parent isolation)"
 fi
 
+# ── 2c. Benchmark membrane (VSM-002): продукт не знает про Terminal Bench ──
+echo "2c. benchmark membrane (VSM-002): vsm/ и src/ без упоминаний оценочных стендов"
+# Продукт (benchmark-agnostic) не должен упоминать Terminal-Bench / TB / harbor.
+# Эти термины живут только в родителе (vsmlite-tb/, включая eval/).
+# Мембрана VSM-002: при трансляции TB-задачи в продукт TB-фрейминг снимается.
+# Допускаются negation-комментарии (напр. "НИКАКИХ упоминаний terminal bench") —
+# это инвариант-напоминание, а не утечка фрейминга. Отфильтровываем строки,
+# содержащие отрицание рядом с термином (упоминани|не |без |no |without).
+tb_leak=$(grep -rinE 'terminal[ -]?bench|t[ -]?bench|harbor[ -]?framework|laude[ -]?institute' ../vsm/ ../src/ 2>/dev/null \
+  | grep -viE 'без |не |no |without|упоминани|never|запрет|forbid|никак' \
+  | grep -vE '^\s*#' || true)
+if [ -n "$tb_leak" ]; then
+  fail "vsm/ или src/ содержат упоминания Terminal-Bench/harbor (мембрана VSM-002 нарушена):"
+  echo "$tb_leak" | sed 's/^/      /'
+else
+  ok "vsm/ и src/ не упоминают Terminal-Bench/harbor как факт (мембрана VSM-002 сохранена)"
+fi
+
 # ── 3. Структура каталогов ──
 echo "3. структура"
 for d in systems synthesis init issues state monitor scripts ref meta seed/child .claude/agents .claude/commands; do

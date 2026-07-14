@@ -25,3 +25,9 @@ state/domain_draft.local.yaml
 
 # ── Claude Code local overrides ──
 .claude/settings.local.json
+
+# ── eval/: кеш скачанного датасета TB Dev Set v2 (~100 задач, не в git) ──
+.cache/
+
+# ── eval/: артефакты прогонов (если будут вне state/) ──
+eval/runs/

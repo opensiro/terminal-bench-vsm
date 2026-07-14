@@ -289,6 +289,12 @@ heartbeats:
   s3_star_audit:  { every: 8h,  prompt: "/vsmlite-check --audit" }
   s4_scout:       { every: 1d,  prompt: "/vsmlite-scan" }
   s5_guardian:    { every: 1d,  prompt: "pending-decisions sweep" }
+  # eval (Terminal-Bench Dev Set v2) — VSM-005 входной индикатор автономности.
+  # Каркас под автоматический триггер (heartbeat); пока disabled — запуск ручной
+  # через /vsmlite-eval или `make eval-all`. См. eval/README.md, VSM-008.
+  # Включить: раскомментировать + выставить cadence (каждый прогон дорогой:
+  # Docker build + harness API-токены, ~минуты/задача ×100).
+  # eval_run: { every: 1d, prompt: "/vsmlite-eval --limit 10", enabled: false }
 
 # ───────────────────────────── Persistence ─────────────────────────────
 persistence:
