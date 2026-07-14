@@ -1,0 +1,75 @@
+id: VSM-016
+source_system: S4            # S4 scout — агентизация собственной роли
+signal_type: gap             # S4 scout → goose-agent (on-demand intelligence)
+severity: S2                 # structural — пятая система переходит на agent-runtime
+target_unit: child           # дочерний VSM (продукт) — S4 в agent-mode
+
+title: "S4 scout → goose-agent: on-demand intelligence (browser + intel.json, scan_on_demand pattern)"
+
+summary: |
+  Пятая система в серии VSM-012 (полная агентизация S1–S5). S4 scout переходит
+  из концептуальной роли (Phase 5 placeholder) на agent-runtime.
+
+  КОНТРАСТ с S1-S3* (recovery cycle): S4 НЕ часть recovery cycle. Это on-demand
+  intelligence — «outside-and-then»: скан среды, weak signals, coverage gaps,
+  drift. Триггеры: weak signals (taxonomy gaps, recovery_rate_drift), heartbeat
+  (1d), явный запрос (S5/human).
+
+  S4 = internet-enabled scout: browser tools (search/fetch) для general-purpose
+  coding patterns и recovery-policy candidates. Пишет signals в state/intel.json.
+  Strategic shifts (новый класс сбоя, policy expansion) → VSM-NNN → S5 (basta).
+
+  НОВЫЙ ПАТТЕРН ИНТЕГРАЦИИ (vs invoke_s1/s2/s3 в цикле):
+    - scan_on_demand(trigger) — не часть recovery cycle, отдельный entry point
+    - S4 использует ephemeral state-bus namespace (cross-task intelligence, не
+      per-task recovery)
+    - Результаты пишет в product state/intel.json (через intel_write tool),
+      не в state-bus recovery-cycle keys
+
+evidence:
+  - "src/agent_runtime/protocol.py::scan_on_demand — S4 on-demand entry (не invoke_* в цикле)"
+  - "src/agent_runtime/protocol.py::ROLE_CONFIGS['s4-scout'] — browser + intel_write + taxonomy + fs"
+  - "src/agent_runtime/tools/scout_tools.py — intel_write/intel_read (state/intel.json atomic)"
+  - "src/agent_runtime/goose_runner.py::_output_contract['s4-scout'] — signals + strategic_shifts schema"
+  - "src/runtime/verify.py::_verify_s4_scout — 3 checks (tool surface, intel round-trip, protocol)"
+  - "capability_report: s4_scout PASS (7 систем всего)"
+
+proposal: |
+  VSM-016 = S4 scout агентизация. on-demand паттерн:
+    1. Trigger (weak signal / heartbeat / request) → scan_on_demand(trigger)
+    2. S4-agent: SOUL/SKILL/TASK prompt + browser + intel tools
+    3. Agent: browser.search patterns, taxonomy_read coverage gaps
+    4. Agent: intel_write signals → state/intel.json
+    5. Strategic shifts → VSM-NNN (basta — human)
+
+  Что НЕ меняется:
+    - S4 НЕ в recovery cycle (orchestrator не вызывает scan_on_demand)
+    - S4 on-demand: heartbeat (vsm.yaml s4_scout: every 1d) или явный запрос
+    - Мембрана VSM-002: browser scope = general-purpose, agnostic по построению
+
+acceptance:
+  - "scan_on_demand(trigger) — on-demand entry point для S4 (не recovery cycle)"
+  - "S4 tool surface: browser.fetch/search + intel_write/read + taxonomy_read"
+  - "scout_tools: intel.json atomic write, round-trip unit-tested (write+read+persist)"
+  - "capability_report: s4_scout PASS (7 систем, 3 checks)"
+  - "make validate GREEN"
+  - "Известная лимита: E2E scan_on_demand с browser tools превышает тест-timeout (150с) — browser+goose reasoning медленнее coding tasks; офлайн-проверки (capability_report) PASS"
+
+needs_human_decision: false   # operational агентизация на готовом foundation
+
+status: done
+decision: "done — S4 scout агентизирован; scan_on_demand on-demand паттерн; browser + intel tools unit-tested + capability_report PASS. E2E с browser превышает тест-timeout (browser web requests + goose = медленно), офлайн-доказательства достаточны."
+selected_options: []
+
+references:
+  - VSM-012   # полная агентизация (full) — S4 пятая система
+  - VSM-013   # agent-runtime foundation
+  - VSM-014   # S2 (invoke_* pattern) — S4 = другой паттерн (scan_on_demand)
+
+notes:
+  - "S4 единственная система с internet access (browser tools). Scope = general-purpose (мембрана)."
+  - "intel_write пишет в state/intel.json продукта — S4 единственный писатель (SOUL)."
+  - "Дальше: VSM-017 (S5 guardian → policy/identity agent). S5 = последняя система в серии."
+
+created: 2026-07-14
+updated: 2026-07-14

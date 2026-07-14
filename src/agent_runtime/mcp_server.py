@@ -79,6 +79,15 @@ def create_server(
         from .tools.audit_tools import register_audit_tools
         register_audit_tools(server, state_bus_root)
 
+    # ── Scout tools (S4) ──
+    if tool_set & {"intel_write", "intel_read"}:
+        from .tools.scout_tools import register_scout_tools
+        register_scout_tools(server, workspace)
+    # S4 also gets taxonomy_read (coverage gap check) — reuse classifier tools
+    if "taxonomy_read" in tool_set and not (tool_set & {"signal_match", "policy_select"}):
+        from .tools.classifier_tools import register_classifier_tools
+        register_classifier_tools(server, workspace)
+
     return server
 
 

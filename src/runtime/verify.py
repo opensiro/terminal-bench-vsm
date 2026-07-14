@@ -238,6 +238,9 @@ def capability_report(config: VerifyConfig | None = None) -> CapabilityReport:
     # ── Agent runtime verify (VSM-013 foundation) ──
     report.systems["agent_runtime"] = _verify_agent_runtime()
 
+    # ── S4 scout verify (VSM-016) ──
+    report.systems["s4_scout"] = _verify_s4_scout()
+
     # Overall
     if report.all_passed:
         report.overall = "all_passed"
@@ -786,6 +789,98 @@ def _verify_orchestrator(workspace: Path, taxonomy_path: str, cfg: VerifyConfig)
 
     return SystemStatus(
         name="orchestrator",
+        passed=all(c.passed for c in checks),
+        checks=checks,
+        evidence=evidence,
+    )
+
+
+def _verify_s4_scout() -> SystemStatus:
+    """Verify S4 scout agent (VSM-016): on-demand intelligence.
+
+    Checks the S4 tool surface (browser + intel_write/read + taxonomy) and the
+    scan_on_demand protocol entry, WITHOUT launching goose (keeps verify offline).
+    """
+    checks = []
+    evidence = {}
+    import tempfile
+    from pathlib import Path
+
+    # Check 1: S4 tool surface registers correctly
+    t0 = time.time()
+    try:
+        from agent_runtime.mcp_server import create_server
+        with tempfile.TemporaryDirectory() as ws:
+            Path(ws, "state").mkdir()
+            server = create_server(ws, None,
+                ["browser", "intel_write", "intel_read", "taxonomy_read", "fs"])
+            tool_names = [t["name"] for t in server.list_tools()]
+            required = ["browser.fetch", "browser.search", "intel_write", "intel_read"]
+            missing = [t for t in required if t not in tool_names]
+            checks.append(CheckResult(
+                name="s4_tool_surface",
+                passed=not missing,
+                detail=f"{len(required)} tools; missing={missing or 'none'}",
+                duration_ms=(time.time() - t0) * 1000,
+            ))
+            evidence["tool_count"] = len(tool_names)
+    except Exception as exc:
+        checks.append(CheckResult(
+            name="s4_tool_surface", passed=False,
+            detail=f"error: {type(exc).__name__}: {exc}",
+            duration_ms=(time.time() - t0) * 1000,
+        ))
+
+    # Check 2: intel_write/read round-trip
+    t0 = time.time()
+    try:
+        from agent_runtime.mcp_server import create_server
+        with tempfile.TemporaryDirectory() as ws:
+            Path(ws, "state").mkdir()
+            server = create_server(ws, None, ["intel_write", "intel_read"])
+            w = server.handlers["intel_write"](signals=[
+                {"type": "gap", "severity": "warn", "summary": "test signal"}])
+            r = server.handlers["intel_read"]()
+            assert w["exit_code"] == 0 and r["total"] == 1
+            checks.append(CheckResult(
+                name="intel_write_read",
+                passed=True,
+                detail=f"write={w['written']}, read total={r['total']}",
+                duration_ms=(time.time() - t0) * 1000,
+            ))
+            evidence["intel"] = "OK"
+    except Exception as exc:
+        checks.append(CheckResult(
+            name="intel_write_read", passed=False,
+            detail=f"error: {type(exc).__name__}: {exc}",
+            duration_ms=(time.time() - t0) * 1000,
+        ))
+
+    # Check 3: scan_on_demand protocol entry + S4 role config
+    t0 = time.time()
+    try:
+        from agent_runtime.protocol import AgentProtocol, ProtocolConfig, ROLE_CONFIGS
+        assert "s4-scout" in ROLE_CONFIGS
+        s4_tools = ROLE_CONFIGS["s4-scout"]["tools"]
+        assert "browser" in s4_tools and "intel_write" in s4_tools
+        proto = AgentProtocol(ProtocolConfig())
+        assert hasattr(proto, "scan_on_demand")
+        checks.append(CheckResult(
+            name="scan_on_demand_protocol",
+            passed=True,
+            detail=f"S4 tools={s4_tools}, scan_on_demand present",
+            duration_ms=(time.time() - t0) * 1000,
+        ))
+        evidence["s4_tools"] = s4_tools
+    except Exception as exc:
+        checks.append(CheckResult(
+            name="scan_on_demand_protocol", passed=False,
+            detail=f"error: {type(exc).__name__}: {exc}",
+            duration_ms=(time.time() - t0) * 1000,
+        ))
+
+    return SystemStatus(
+        name="s4_scout",
         passed=all(c.passed for c in checks),
         checks=checks,
         evidence=evidence,

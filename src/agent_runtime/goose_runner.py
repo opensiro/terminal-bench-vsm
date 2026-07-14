@@ -160,6 +160,22 @@ def _output_contract(system_name: str) -> str:
             "Audit INDEPENDENTLY (you are on a different provider). Use the audit_check "
             "tool for deterministic facts, then apply your own judgment."
         ),
+        "s4-scout": (
+            "── Output contract (S4) ──\n"
+            "End your response with a JSON block enclosed in ```json ... ```:\n"
+            "```\n"
+            '{"signals": [{"type": "pattern|gap|drift|weak_signal",\n'
+            '              "severity": "info|warn|critical",\n'
+            '              "summary": <string>, "detail": <string>,\n'
+            '              "status": "triage|done"}],\n'
+            ' "strategic_shifts": [{"type": "new_failure_class|policy_expansion",\n'
+            '                       "summary": <string>, "requires_vsm_nnn": <bool>}],\n'
+            ' "patterns_discovered": <int>}\n'
+            "```\n"
+            "Use browser.search for web discovery. Write signals to intel.json via "
+            "intel_write. Strategic shifts (new failure class, policy expansion) "
+            "require a VSM-NNN (basta — human decision)."
+        ),
     }
     return contracts.get(
         system_name,

@@ -58,6 +58,11 @@ ROLE_CONFIGS: dict[str, dict[str, Any]] = {
         "provider": "anthropic",   # VSM-001: MUST differ from s1
         "max_turns": 10,
     },
+    "s4-scout": {
+        "tools": ["browser", "taxonomy_read", "intel_write", "fs"],
+        "provider": "zai",
+        "max_turns": 15,
+    },
 }
 
 
@@ -318,6 +323,56 @@ class AgentProtocol:
         }
         return self._invoke(task_id, "s2-coordinator", "s2_authorize_input", s2_input,
                             "s2_authorization")
+
+    # ── S4: on-demand intelligence (NOT part of recovery cycle) ──
+
+    def scan_on_demand(self, trigger: dict) -> AgentResult:
+        """S4 scout agent: on-demand environment scan (VSM-016).
+
+        S4 is NOT part of the recovery cycle (S1→S3||S3*→S2). It is an on-demand
+        intelligence role triggered by:
+          - weak signals (taxonomy gaps, recovery_rate_drift, retry_burn_anomaly)
+          - heartbeat (vsm.yaml: s4_scout every 1d)
+          - explicit request (S5 / human)
+
+        S4 uses browser tools (search/fetch) to scan for general-purpose coding
+        patterns and recovery-policy candidates, then writes signals to
+        state/intel.json. Strategic shifts → VSM-NNN → S5.
+
+        Unlike invoke_s1/s2/s3, this does NOT use a per-task state-bus namespace
+        (S4 is cross-task intelligence, not per-task recovery). It uses a fresh
+        ephemeral task_id and writes results to the product's state/intel.json
+        via the intel_write tool.
+
+        Args:
+            trigger: {type: "weak_signal|heartbeat|request", detail: "...",
+                      context: {...}}  — what prompted the scan.
+
+        Returns:
+            AgentResult with parsed = {signals: [...], strategic_shifts: [...],
+                                       patterns_discovered: [...]}.
+        """
+        import hashlib
+        trigger_id = f"s4-scan-{hashlib.sha1(str(trigger).encode()).hexdigest()[:8]}"
+        self.open_task(trigger_id, {"trigger": trigger})
+        try:
+            scan_input = {
+                "trigger": trigger,
+                "instruction": (
+                    "Scan for general-purpose coding patterns and recovery-policy "
+                    "candidates relevant to the trigger. Use browser.search for "
+                    "web discovery, taxonomy_read to check current coverage. Write "
+                    "findings to intel.json via intel_write. Flag strategic shifts "
+                    "(e.g. uncovered failure class) — these require a VSM-NNN (basta)."
+                ),
+            }
+            result = self._invoke(trigger_id, "s4-scout", "scan_input", scan_input,
+                                  "scan_result")
+            return result
+        finally:
+            # S4 scan results persist in state/intel.json (written by the agent
+            # via intel_write tool); the ephemeral state-bus entry is cleaned up.
+            self.close_task(trigger_id)
 
     # ── Recovery executor (not an agent — deterministic, stays Python) ──
     # The recovery executor applies env changes (pip install, venv, git reset).
