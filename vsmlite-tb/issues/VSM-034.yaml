@@ -1,0 +1,86 @@
+id: VSM-034
+source_system: S4            # cycle-обогащённая разведка домена продукта: поведенческий паттерн
+signal_type: quality         # quality — продуктовая неспособность решать класс задач
+severity: S2                 # бьёт по核心 A(t): pass-rate 33% держит eval_sign в not-meets
+target_unit: child           # продукт (vsm-product / glm-5.2 triad) — поведенческая деградация
+
+title: "vsm-product: empty-workspace surrender — 2 tool calls → no_observations"
+
+summary: |
+  Системный поведенческий паттерн продукта (vsm-product, glm-5.2 triad) на TB-2.1
+  задачах. Когда workspace /app стартует пустым ИЛИ требует подготовительных
+  действий (clone repo, создать файл, прочитать формат входов), продукт делает
+  ровно 2 вызова и замирает:
+    1. fs.list({"path": "."})     → пустой контент "" (относительный путь, /app пуст)
+    2. shell.exec("pytest")       → "collected 0 items"
+  …затем triad завершается terminated_by=no_observations, total_attempts=1.
+  Никакой попытки следовать инструкции задачи (clone /app/pyknotid, создать
+  /app/pipeline_parallel.py, прочитать входные файлы).
+
+  КОНТРАСТ — успешные задачи (constraints-scheduling, jsonl-aggregator на PASS):
+  продукт сразу fs.list("/app") (АБСОЛЮТНЫЙ путь), видит входные файлы, читает их,
+  пишет solve-скрипт, запускает. 6-8 шагов, 5-7 tool_calls → task_resolved.
+
+  Это НЕ infra (контейнер жив, pytest работает, патч VSM-033 держит deps — нет
+  ModuleNotFoundError). Это продуктовая деградация: «посмотрел на CWD → pytest по
+  пустому workspace → сдался» вместо следования task prompt. Паттерн устойчиво
+  повторяется — 2/3 eval-test канареек и ~7/16 исторических trial'ов.
+
+evidence:
+  - "state/harbor-trials/build-cython-ext__MFPs87i/agent/trajectory.json: 3 steps, 2 tool_calls (fs.list('.')→'', pytest→0 items), terminated_by=no_observations. Task требовал: git clone pyknotid + build Cython ext — продукт не сделал НИ ОДНОГО шага задачи"
+  - "state/harbor-trials/torch-pipeline-parallelism__RV35bKQ/agent/trajectory.json: ИДЕНТИЧНЫЙ паттерн — 3 steps, 2 tool_calls (fs.list('.')→'', pytest→0 items), terminated_by=no_observations. Task требовал: создать /app/pipeline_parallel.py — не создан"
+  - "state/harbor-trials/build-cython-ext__MFPs87i/agent/product-trace.json → s1_control: verdict=fail_no_checkpoint 'solver produced no artifacts; pytest collected 0 tests'"
+  - "state/harbor-trials/jsonl-aggregator__zFZNYfL/agent/trajectory.json: тот же паттерн (3 steps, no_observations), хотя входные records_*.jsonl В /app — продукт fs.list('.') не нашёл их (относительный путь)"
+  - "КОНТРАСТ PASS: state/harbor-trials/constraints-scheduling__2SXTCbE/agent/trajectory.json: 8 steps, 7 tool_calls (fs.list('/app')→видит .ics, read 3 files, write solve.py, exec, verify) → task_resolved, reward=1.0"
+  - "КОНТРАСТ PASS: state/harbor-trials/jsonl-aggregator__FzUJhfY/agent/trajectory.json: 6 steps, 5 tool_calls → task_resolved"
+  - "state/batch_summaries/eval-test__20260715-233538.json: pass_rate=33.3% (1/3) — constraints PASS, build-cython/torch FAIL по этому паттерну"
+
+pattern_signature: |
+  fs.list относительным путём "." → пусто → shell.exec pytest → 0 tests → stop.
+  Условие триггера: workspace не содержит «очевидных» готовых входов по
+  относительному пути ИЛИ продукт не пробует абсолютный /app / чтение task prompt.
+
+affected_tasks_observed:
+  - "build-cython-ext (eval-test MFPs87i): FAIL no_observations, 2 calls"
+  - "torch-pipeline-parallelism (eval-test RV35bKQ): FAIL no_observations, 2 calls"
+  - "jsonl-aggregator (zFZNYfL, dKkAb3W, qMf54fm, LiGdATB, Hk4nGNf): no_observations (история)"
+  - "build-merkle-tree-cli-sha512 (MNeXTCu): no_observations"
+
+not_affected_observed:
+  - "constraints-scheduling (2SXTCbE): PASS — /app содержал .ics, продукт их прочитал"
+  - "jsonl-aggregator (5poudkc, FzUJhfY): PASS — продукт нашёл входы и решил"
+
+proposal: |
+  Non-binding. S5 (basta: prepare_only) готовит, не постановляет. Возможные
+  направления (решает человек):
+  - prompt-engineering продукта: явная инструкция «первым шагом fs.list('/app') по
+    АБСОЛЮТНОМУ пути + прочитай task prompt, НЕ запускай pytest по пустому
+    workspace»; запрет сдаваться на collected 0 items.
+  - workspace-seeding: если задача требует clone — продукт должен клонировать в
+    /app, а не ждать готового (системный prompt: «выполняй шаги задачи»).
+  - triad control-loop: s1_control verdict=fail_no_checkpoint при 0 artifacts —
+    сейчас это терминальный handoff; рассмотреть recovery (2-я попытка с другим
+    framing) вместо single-attempt сдачи.
+  - diagnostic: отличать «продукт не попробовал» (2 calls, no artifacts) от
+    «продукт попробовал, но не решил» (many calls, wrong output) — это разные
+    failure-классы, сейчас оба → reward=0.0.
+
+acceptance:
+  - "На eval-test канарейках (build-cython-ext, torch-pipeline-parallelism) продукт делает >2 tool_calls и создаёт артефакты (clone/file write), а не fs.list('.')+pytest→stop"
+  - "pass_rate на пустой-workspace категории задач растёт в следующем цикле (cycle_history trend up)"
+  - "s1_control различает 'no_attempt' (0 artifacts, ≤2 calls) от 'attempted_wrong' (artifacts/wrong output)"
+
+needs_human_decision: true   # продуктовая стратегия — решение человека (prompt vs control-loop vs seeding)
+
+references:
+  - VSM-033   # prebuild infra — снимает infra-барьер; теперь виден реальный продуктовый предел (этот issue)
+  - VSM-031   # cycle automation — этот issue обнаружен детерминистическим cycle over eval-test
+  - VSM-030   # eval observability — batch_summary seam позволил увидеть per-task паттерн
+
+notes:
+  - "Паттерн НЕ зависит от patched-image (VSM-033): после патча контейнер жив, pytest работает, deps есть — провал именно в поведении продукта."
+  - "upsert-баг dev_metrics (metrics.record перезаписывает по task_id) маскирует масштаб: dev_metrics показывал 1/1, реальность — см. batch_summaries per_task. Этот баг — отдельный кандидат на issue."
+  - "terminated_by=no_observations ≠ 'triad не нашла что тестировать'. Triad отработала (attempts=1, pytest запущен), но КЛАССИФИКАТОР дал 0 observations т.к. нет артефактов для классификации. Корень — продукт не произвёл артефакты."
+
+created: 2026-07-16
+updated: 2026-07-16
