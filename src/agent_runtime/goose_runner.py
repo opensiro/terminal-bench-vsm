@@ -318,6 +318,16 @@ _GOOSE_PROVIDER_MAP: dict[str, dict[str, str]] = {
     "zai": {
         "GOOSE_PROVIDER": "zai",
         "GOOSE_MODEL": "glm-5.2",
+        # GLM-5.2 reasoning effort. The host goose config.yaml sets "max"; the
+        # container has no config.yaml, so we must propagate it explicitly. Without
+        # this, goose defaults to a lower effort and the agent produces shallow
+        # output that fails TB tasks despite "working" (real API calls, non-trivial
+        # duration). "max" = deepest chain-of-thought before answering.
+        "GOOSE_THINKING_EFFORT": "max",
+        # z.ai API endpoint (host config.yaml has it; container doesn't). Without
+        # this, goose may default to a different/incorrect base URL for the zai
+        # provider and fail to reach the model.
+        "ZAI_BASE_URL": "https://api.z.ai/api/anthropic",
     },
     "anthropic": {
         "GOOSE_PROVIDER": "anthropic",
