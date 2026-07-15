@@ -90,8 +90,52 @@ def main() -> int:
     )
 
     # Structured summary for ProductAdapter → ATIF trajectory conversion.
-    verdict = getattr(result.final_output, "verdict", None)
+    # Includes the rich S1 output (trace, plan, verify, control) so the adapter
+    # can build a real per-tool-call trajectory and we can diagnose what the
+    # triad actually did (which commands ran, what they returned, why verify
+    # said resolved/failed). Without this, product-trace.json is a bare summary
+    # and observability is impossible.
+    final = result.final_output
+    verdict = getattr(final, "verdict", None)
     verdict_str = getattr(verdict, "value", str(verdict)) if verdict else "unknown"
+
+    # S1 trace: each tool-call the executor (AgentLoop) made + its observation.
+    s1_trace = []
+    for entry in getattr(final, "trace", []) or []:
+        action = getattr(entry, "action", {}) or {}
+        s1_trace.append({
+            "idx": getattr(entry, "idx", 0),
+            "tool": action.get("tool", "unknown"),
+            "args": action.get("args", {}),
+            "observation": (getattr(entry, "observation", "") or "")[:2000],
+            "ts": getattr(entry, "ts", ""),
+        })
+
+    # Triad verify result: why the verifier said resolved/failed (LLM judge).
+    verify = getattr(final, "verify_result", None)
+    s1_verify = None
+    if verify is not None:
+        s1_verify = {
+            "passed": getattr(verify, "passed", False),
+            "reason": getattr(verify, "reason", ""),
+            "checks": getattr(verify, "checks", []),
+        }
+
+    # Triad control results: test-controller verdicts per attempt.
+    s1_control = []
+    for cr in getattr(final, "control_results", []) or []:
+        s1_control.append({
+            "verdict": getattr(getattr(cr, "verdict", None), "value", str(getattr(cr, "verdict", ""))),
+            "reason": getattr(cr, "reason", ""),
+            "test_output": (getattr(cr, "test_output", "") or "")[:500],
+        })
+
+    # Artifacts diff: files created/modified by the agent.
+    s1_artifacts = [
+        {"path": getattr(a, "path", ""), "op": getattr(a, "op", "")}
+        for a in getattr(final, "artifacts", []) or []
+    ]
+
     summary = {
         "terminated_by": result.terminated_by or "unknown",
         "total_attempts": result.total_attempts,
@@ -100,6 +144,11 @@ def main() -> int:
         "audit_results": result.audit_results,
         "s2_authorizations": result.s2_authorizations,
         "recovery_results": result.recovery_results,
+        # Rich S1 fields (observability for planner tuning + harbor trajectory).
+        "s1_trace": s1_trace,
+        "s1_verify": s1_verify,
+        "s1_control": s1_control,
+        "s1_artifacts": s1_artifacts,
     }
 
     trace_path = Path(args.trace_file)

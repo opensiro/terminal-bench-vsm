@@ -41,6 +41,7 @@ from harbor.models.trajectories import (
     Observation,
     ObservationResult,
     Step,
+    ToolCall,
     Trajectory,
 )
 
@@ -254,23 +255,58 @@ class ProductAdapter(BaseAgent):
             return None
 
     def _build_trajectory(self, summary: dict, task_prompt: str) -> Trajectory:
-        """Build a minimal ATIF Trajectory from the recovery-cycle summary.
+        """Build an ATIF Trajectory from the recovery-cycle summary.
 
-        Phase 1: one user step (the task) + one agent step (the recovery verdict).
-        Phase 2 will expand this into per-sub-agent steps (planner/test-controller/
-        verifier/s3/s3*/s2) when use_agents=True produces a richer trace.
+        Rich mode (when s1_trace is present): one agent Step per tool-call the
+        executor made — tool name, args, observation. This is the real trajectory:
+        visible in `harbor view`, analyzable by `harbor analyze`, and readable
+        from product-trace.json for planner tuning.
+
+        Fallback (no s1_trace — stub, no_observations, or infra error): the old
+        2-step format (user prompt + verdict summary).
         """
         terminated_by = summary.get("terminated_by", "unknown")
         attempts = summary.get("total_attempts", 0)
         verdict = summary.get("verdict", "unknown")
+        s1_trace = summary.get("s1_trace") or []
 
+        # Step 1 is always the user task prompt.
         steps = [
             Step(
                 step_id=1,
                 source="user",
-                message=task_prompt[:2000],  # truncate; full prompt in product-stdout.log
+                message=task_prompt[:2000],
             ),
-            Step(
+        ]
+
+        if s1_trace:
+            # Rich mode: one agent step per tool-call. Each step carries the
+            # tool_call (function_name + arguments) and the observation (what the
+            # tool returned). This makes the trajectory a faithful record of what
+            # the agent did, not just the final verdict.
+            for i, entry in enumerate(s1_trace):
+                tool = entry.get("tool", "unknown")
+                args = entry.get("args", {})
+                obs = entry.get("observation", "")
+                steps.append(Step(
+                    step_id=i + 2,  # step_id starts at 1; user is 1
+                    source="agent",
+                    message=f"{tool}({json.dumps(args, default=str)[:200]})",
+                    tool_calls=[ToolCall(
+                        tool_call_id=f"call-{i}",
+                        function_name=tool,
+                        arguments=args if isinstance(args, dict) else {"raw": str(args)},
+                    )],
+                    observation=Observation(results=[
+                        ObservationResult(
+                            source_call_id=f"call-{i}",
+                            content=obs[:4000],
+                        )
+                    ]),
+                ))
+        else:
+            # Fallback: single agent step with the verdict summary.
+            steps.append(Step(
                 step_id=2,
                 source="agent",
                 message=(
@@ -280,19 +316,22 @@ class ProductAdapter(BaseAgent):
                 observation=Observation(results=[
                     ObservationResult(content=json.dumps(summary, default=str)[:4000])
                 ]),
-            ),
-        ]
+            ))
 
         return Trajectory(
             schema_version="ATIF-v1.7",
             agent=Agent(
                 name=self.name(),
                 version=self.version() or "unknown",
-                model_name="stub-phase1",  # Phase 2: real provider/model from goose_runner
+                model_name="glm-5.2",
             ),
             steps=steps,
             final_metrics=FinalMetrics(
                 total_steps=len(steps),
-                extra={"terminated_by": terminated_by, "total_attempts": attempts},
+                extra={
+                    "terminated_by": terminated_by,
+                    "total_attempts": attempts,
+                    "tool_calls": len(s1_trace),
+                },
             ),
         )
