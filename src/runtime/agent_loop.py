@@ -173,6 +173,12 @@ class AgentLoop:
             else:
                 output.verdict = Verdict.UNKNOWN
 
+        # Enrich output with solver-specific sub-results if the solver exposes
+        # them (duck-typed; TriadSolver exposes control_results, others don't).
+        get_cr = getattr(self.solver, "get_control_results", None)
+        if callable(get_cr):
+            output.control_results = get_cr()
+
         output.cost = budget.summary()
         return output
 
