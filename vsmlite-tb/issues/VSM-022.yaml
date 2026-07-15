@@ -1,0 +1,72 @@
+id: VSM-022
+source_system: S3            # control/optimization: метрика A(t) невалидна при пустом trace
+signal_type: drift           # drift — pass_rate измеряет не то, что должен
+severity: S1                 # напрямую ломает входной индикатор автономности A(t) (VSM-004/005)
+target_unit: meta            # eval-пайплайн vsmlite (родитель), не дочерний продукт
+
+title: "eval: harness обходит продуктовый MCP — trace пуст при PASS, pass_rate невалиден"
+summary: |
+  Smoke-test jsonl-aggregator (TB Dev Set v2) → PASS (reward='1', pytest 1/0), но
+  trace_len=0: продуктовый MCP-сервер не получил ни одного tool-call. claude-code
+  решает задачу через собственный host-bash (видели `find / -name records_*.jsonl`
+  на хосте), минуя docker-exec MCP bridge. pass_rate сейчас измеряет harness, а не
+  автономность продукта → входной индикатор A(t) (state/dev_metrics.json) невалиден,
+  телеметрия T2 CONTRACT §3 trace для vsmforge пуста.
+
+evidence:
+  - "smoke-test: jsonl-aggregator PASS, agent_exit=0, dur=488s, trace_len=0, failure_obs=0 (state/dev_metrics.json#tasks[0])"
+  - "process tree: claude → npm exec @z_ai/mcp-server → docker exec -i ... python3 -m mcp_server.server (MCP-bridge активен, но не используется)"
+  - "claude параллельно спавнил host-bash через нативный Bash tool (НЕ через MCP)"
+  - "eval/agent_phase.py:121-129 (_build_harness_args, ветка claude-code): нет --allowedTools → claude сохраняет нативные Bash/Read/Write/Edit на хосте"
+  - "src/mcp_server/server.py:152 serve_stdio — trace пишется в --trace-file ТОЛЬКО при tool-call'ах через MCP; без вызовов файл пуст"
+
+proposal: |
+  Ограничить tool-surface harness'а только продуктовым MCP (вариант A): добавить в
+  _build_harness_args (claude-code) ограничение, отключающее нативные Bash/Read/Write/Edit.
+  Тогда весь I/O идёт через продукт → trace заполняется → pass_rate измеряет реальный
+  продукт. Принять с оговоркой: измерить regress на том же jsonl-aggregator.
+  Альтернативы B (двойной прогон) / C (документация) — в policy_question.
+
+acceptance:
+  - "eval/agent_phase.py claude-code ветка ограничивает tools до MCP-сервера продукта"
+  - "повторный прогон jsonl-aggregator: trace_len > 0 (продуктовый MCP получает вызовы)"
+  - "goose-ветка либо аналогично ограничена, либо заведён отдельный issue для неё"
+  - "make validate GREEN (мембрана VSM-002 + parent isolation VSM-005 не нарушены)"
+  - "state/dev_metrics.json pass_rate обновлён после повтора"
+
+needs_human_decision: true   # severity S1 + выбор подхода (A/B/C) меняет семантику метрики
+
+policy_question: |
+  Как измерять автономность продукта? (A) только MCP-инструменты продукта — честно, но
+  возможен regress pass_rate; (B) двойной прогон unrestricted + MCP-only — мера
+  «стоимости изоляции», но 2× время; (C) признать текущий режим intentionally
+  unrestricted — 0 кода, но A(t)-метрика остаётся неточной.
+
+options:
+  - id: A
+    label: "ограничить harness до MCP продукта (--allowedTools)"
+    hint: "минимальное изменение; восстанавливает семантику pass_rate=продукт; возможен regress"
+  - id: B
+    label: "двойной прогон unrestricted + MCP-only"
+    hint: "сохраняет baseline; даёт метрику стоимости изоляции; 2× время прогона"
+  - id: C
+    label: "документировать как unrestricted (не чинить сейчас)"
+    hint: "0 кода; A(t) остаётся семантически неточной; trace для vsmforge пуст"
+
+status: superseded
+decision: "A — ограничить harness до MCP продукта (первоначальное решение 2026-07-15). Обоснование: цель измерения = прогресс продукта во времени (T0→T1), обе точки в режиме A → delta честна. SUPERSEDED VSM-024 (2026-07-15): pivot eval на harbour-framework делает дилемму --allowedTools moot — harbour управляет tool-surface и средой исполнения, а не claude-code. Acceptance trace_len>0 не доказан (state/dev_metrics.json:34 trace_len=0). VSM-022 решение A было верным для старой архитектуры; в harbour-архитектуре проблема растворяется."
+selected_options: [A]
+
+references:
+  - VSM-008   # eval-пайплайн Terminal-Bench Dev Set v2 (фиксация решения)
+  - VSM-004   # Dev Set как входной индикатор автономности A(t)
+  - VSM-005   # parent isolation / intervention metric
+  - VSM-002   # мембрана (TB-фрейминг снимается до продукта)
+
+notes:
+  - "Сессия подтвердила: docker-exec MCP bridge РАБОТАЕТ (subprocess tree активен), но harness его не использует, т.к. ему доступнее нативный Bash."
+  - "PASS задачи ≠ продукт её решил. Без ограничения tool-surface pass_rate — это сила harness (claude-code), не автономность продукта."
+  - "goose-ветка: --with-extension wrapper не эквивалентен --allowedTools; требует отдельной проверки при выборе A."
+
+created: 2026-07-15
+updated: 2026-07-15

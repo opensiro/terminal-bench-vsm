@@ -22,6 +22,7 @@ mission:
   out_of_scope:
     - "тренировка/обучение на eval-разметке TB (нарушает правила бенчмарка — NEVER)"
     - "использование harbor-framework/terminal-bench-2 в любой форме (NEVER, см. authority)"
+      # VSM-024: запрет harbor снят — harbour = infra-раннер (не датасет/решатель). См. ниже authority.never_do.
     - "автоматическая публикация/сабмит результатов во внешние системы (basta)"
     - "кодогенерация под конкретные фреймворки/runtime — это layer S1, не VSM-миссия"
     - "формирование самого бенчмарка или его датасета — мы решаем TB, не модифицируем его"
@@ -45,7 +46,6 @@ authority:
     - Изменения identity/values/never-do этого VSM (S5).
   never_do:
     - "train_on_eval: любая тренировка/обучение на eval-разметке TB — запрещена правилами бенчмарка"
-    - "use_harbor_tb2: не использовать github.com/harbor-framework/terminal-bench-2 ни в каком виде (явное требование человека)"
     - "auto_submit: автоматическая отправка результатов во внешние системы"
     - "modify_parent_directly: ../../vsmlite/ трогает этот VSM только через child-dispatcher"
     - "same_provider_for_s3star: S3* всегда на другом модель-провайдере, read-only"
@@ -63,8 +63,6 @@ autonomy:
         benchmark-agnostic Skill DB (обнаружение, интеграция, релевантность);
         эволюции TB (смены версий, новые категории задач) — кроме смены
         целевой версии (это basta);
-        Ни S4, ни любой иной агент НИКОГДА не обращается к
-        harbor-framework/terminal-bench-2.
     - S3-sign (units[]): ≥2 operational units работают с низким pressure
         (напр. agent-solver + harness-runner + grader-wrapper).
     - S1-sign (activity[]): ≥3 активных git-дней в ../vsm/ + стабильные прогоны.
@@ -75,6 +73,6 @@ s4_scope_constraint:
     Skill DB. Это единственный объект разведки среды. Любые иные источники
     (включая связанные с бенчмарком как таковым) — вне scope S4.
   explicit_never:
-    - "github.com/harbor-framework/terminal-bench-2 — запрет абсолютный, без исключений"
+    []   # VSM-024: harbour-запрет снят (harbour = infra-раннер, не доменный источник)
   allowed_sources:
     - "benchmark-agnostic источники skills/patterns для agentic-задач (общие, не TB-специфичные)"

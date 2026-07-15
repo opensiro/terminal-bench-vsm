@@ -59,8 +59,12 @@ identity:
     - reverse_phase_without_human  # откат фазы дочернего VSM — только по решению человека
     # evaluation-stand hard constraints (TB; живут в оценщике, НЕ в продукте)
     - train_on_eval              # тренировка/обучение на eval-разметке TB запрещена правилами бенчмарка
-    - use_harbor_tb2             # github.com/harbor-framework/terminal-bench-2 — абсолютный запрет
     - leak_evaluation_context_to_product   # VSM-002: не протекать знание о TB в ../vsm/ или ../src/
+    # VSM-024: use_harbor_tb2 (абсолютный запрет harbor) СНЯТ. harbour-framework — это
+    # infra-раннер (как docker-compose/pytest), а не датасет и не решатель. Датасет тянется
+    # через HF (open-thoughts/OpenThoughts-TB-dev-v2). harbour разрешён с ограниченным scope:
+    # только в vsmlite-tb/ (родитель-оценщик). Мембрана VSM-002 сохраняется — продукт
+    # (vsm/, src/) по-прежнему не знает про harbour (validate.sh §2c без изменений).
   decisions_requiring_human:   # → VSM-NNN needs_human_decision:true → REPL-дайджест
     - any_severity_S0
     - any_signal_type_algedonic

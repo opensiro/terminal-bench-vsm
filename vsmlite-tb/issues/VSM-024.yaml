@@ -1,0 +1,95 @@
+id: VSM-024
+source_system: S5            # human-initiated identity/values change: снимаем never_do
+signal_type: policy          # policy — архитектурный разворот eval-пайплайна
+severity: S1                 # identity-affecting (never_do ревизия) + смена harness/раннера
+target_unit: meta            # vsmlite (родитель) — eval-пайплайн + identity
+
+title: "Разворот eval-пайплайна на harbor-framework: ProductAdapter + снятие запрета harbor"
+summary: |
+  Архитектурный разворот: кастомный eval-пайплайн (loader/container/agent_phase/grader,
+  дублирующий функциональность harbor-framework) заменяется на harbor как infra-раннер +
+  ProductAdapter — harbour custom-agent, обёртывающий orchestrator.run_recovery_cycle()
+  продукта целиком. Harbour = зрелый бенчмарк-раннер (job/trial/verifier/trajectory), НЕ
+  датасет и НЕ решатель.
+
+  Две предпосылки разворота, выявленные сессией:
+  1. VSM-022 показал, что pass_rate измерял harness (claude-code), а не автономность
+     продукта — harness обходил продуктовый MCP через нативные тулы. Custom eval/ не давал
+     полной trajectory recovery-cycle (S3/S3*/S2 координация не отслеживалась).
+  2. harbor даёт полнее observability: ATIF trajectory recovery-cycle (все 6 VSM-агентов,
+     не только S1 tool-calls), web-UI (harbor view), анализ reward-hacking (harbor analyze),
+     встроенный verifier/retRies/concurrency.
+
+  Identity change: use_harbor_tb2 (абсолютный запрет harbor, vsmlite.yaml:62) — запрещён по
+  ошибке как будто harbor = «датасет, на котором cheat'им». На самом деле harbor =
+  инфраструктура раннера (как docker-compose/pytest). Датасет тянется через HF
+  (open-thoughts/OpenThoughts-TB-dev-v2), harbour его не заменяет. Запрет снят с
+  ограниченным scope: harbor разрешён ТОЛЬКО в vsmlite-tb/ (родитель-оценщик); продукт
+  (vsm/, src/) по-прежнему не знает про harbour (мембрана VSM-002 сохраняется).
+
+  Архитектура: ProductAdapter.run() выполняет один environment.exec() внутри docker-контейнера
+  → orchestrator.run_recovery_cycle() → продукт сам спавнит своих goose-агентов → полная
+  trajectory recovery-cycle пишется в ATIF-формате → harbor verifier ставит reward →
+  harbour_bridge парсит trial → state/dev_metrics.json (через существующий metrics.py).
+
+evidence:
+  - "harbor 0.18.0 установлен (/home/alex/.local/bin/harbor): run/job/trial/analyze/view, --agent goose (первоклассная), --agent module.path:ClassName (custom), --mcp-config"
+  - "vsmlite.yaml:62 use_harbor_tb2 — абсолютный запрет; добавлен в c5a0407 (VSM-002, 2026-07-13) тем же автором, что инициировал разворот — осознанная ревизия своего решения"
+  - "VSM-022 acceptance: trace_len > 0 не доказано (state/dev_metrics.json:34 trace_len=0); premise 'claude-code обходит MCP' теряет смысл при pivot на harbour-managed tool-surface"
+  - "src/agent_runtime/ — продукт уже мультиагентный (goose_runner + protocol + orchestrator recovery-cycle S1→S3→S3*→S2→retry); src/mcp_server/ — лишь tool-provider для S1, не сам продукт"
+  - "harbor BaseAgent contract (site-packages/harbor/agents/base.py): run(instruction, environment, context) async, populate_context_post_run; /logs/agent/ bind-mounted для trajectory"
+  - "harbour ATIF trajectory (models/trajectories/): Trajectory{steps:[Step{tool_calls,observation}]} — полная agent trajectory, не только MCP-calls"
+  - "validate.sh §2c grep'ит ../vsm/ ../src/ (продукт) на harbour — НЕ vsmlite-tb/; запрет harbour в identity, не в исполняемом инварианте"
+
+proposal: |
+  Фаза 0 (identity/policy) + Фаза 1 (feasibility smoke) в этой сессии:
+  0.1 Снять use_harbor_tb2 из vsmlite.yaml never_do (строка 62) + _intent_draft harbor-строки.
+  0.2 Закрыть VSM-022/VSM-023 как superseded (дилеммы растворяются в harbour-архитектуре).
+  1.x ProductAdapter (stub use_agents=False для smoke) → доказать infra-feasibility.
+  Фаза 2/3 (use_agents=True реальный мультиагент + cleanup старого eval/) — следующая сессия.
+
+  Мембрана VSM-002 сохраняется полностью: harbour живёт только в vsmlite-tb/ (родитель);
+  ProductAdapter вызывает membrane.translate() перед продуктом; validate.sh §2c без изменений.
+
+acceptance:
+  - "vsmlite.yaml:62 use_harbor_tb2 удалён из never_do (harbor = infra-раннер, не датасет)"
+  - "VSM-022 status: superseded → VSM-024; VSM-023 status: superseded → VSM-024"
+  - "ProductAdapter (eval/harbor_adapter.py) — наследник harbor BaseAgent, run() вызывает orchestrator"
+  - "smoke-test jsonl-aggregator: trial завершается, agent/trajectory.json валиден (ATIF), reward приходит"
+  - "harbour_bridge.parse_trial() → state/dev_metrics.json обновлён (формат summary/by_*/tasks[] сохранён)"
+  - "make validate GREEN (§2c без изменений: продукт по-прежнему без harbour/TB)"
+  - "мембрана VSM-002: FORBIDDEN_TERMS в membrane.py по-прежнему включает harbour (продукт защищён)"
+
+needs_human_decision: true   # identity change (never_do) по vsmlite.yaml:70 identity_or_values_change
+
+policy_question: |
+  Снять запрет harbour (use_harbor_tb2) с ограниченным scope — разрешить в vsmlite-tb/ как
+  infra-раннер eval-пайплайна, при полном сохранении мембраны VSM-002 (продукт agnostic)?
+  + pivot eval на harbour + ProductAdapter (goose primary harness).
+
+options:
+  - id: accept
+    label: "Принять разворот (Phase 0+1 в сессии, 2/3 следующая)"
+    hint: "Снять запрет harbour (scoped), ProductAdapter stub smoke-test, cleanup в Phase 3"
+
+status: accepted              # человек постановал в сессии (3 вопроса AskUserQuestion)
+decision: "accept — снять запрет harbour с ограниченным scope (только vsmlite-tb/); pivot eval-пайплайна на harbour + ProductAdapter; goose primary harness. Обоснование: harbour = infra-раннер (НЕ датасет), даёт полнее observability (ATIF trajectory recovery-cycle, harbor analyze/view), решает VSM-022 структурно (harbour управляет tool-surface, не claude-code). Мембрана VSM-002 сохраняется полностью. Scope сессии: Phase 0 (identity) + Phase 1 (stub smoke); Phase 2/3 (реальный мультиагент + cleanup) — следующая сессия."
+selected_options: [accept]
+
+references:
+  - VSM-002   # мембрана product↔evaluation — сохраняется (harbour только в родителе)
+  - VSM-005   # parent isolation — ProductAdapter в vsmlite-tb/, не в продукте
+  - VSM-008   # eval-пайплайн (docker-exec MCP bridge) — superseded архитектурой VSM-024
+  - VSM-022   # harness обходит MCP → superseded (harbour управляет tool-surface)
+  - VSM-023   # goose --allowedTools gap → superseded (harbour --agent goose)
+  - VSM-001   # cross-provider S3* — внутри продукта, harbour не вмешивается
+
+notes:
+  - "Запрет harbour (vsmlite.yaml:62) добавлен в c5a0407 (VSM-002) — ошибочно классифицирован как 'датасет для cheating'. Harbour = раннер-инфраструктура."
+  - "Продукт уже мультиагентный (src/agent_runtime/): orchestrator recovery-cycle S1→S3→S3*→S2→retry; goose_runner спавнит per-role goose-agents. src/mcp_server/ — лишь S1 tool-provider."
+  - "harbour даёт наблюдаемость, которой не было в custom eval/: ATIF trajectory (все 6 агентов, не только S1), harbor view (web-UI), harbor analyze (reward-hacking rubric)."
+  - "Проверено: validate.sh §2c grep'ит только ../vsm/ ../src/ (продукт); запрет harbour в identity, не в исполняемом инварианте. Продукт остаётся чистым."
+  - "VSM-022 acceptance trace_len>0 не доказан (state/dev_metrics.json:34 trace_len=0) — ещё аргумент за superseded."
+
+created: 2026-07-15
+updated: 2026-07-15

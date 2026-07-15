@@ -1,0 +1,71 @@
+id: VSM-023
+source_system: S3            # control/optimization: goose-ветка не измеряет продукт (наследие VSM-022)
+signal_type: gap             # gap — инструмент для goose отсутствует
+severity: S2                 # goose не primary harness (default claude-code), но метрика неполна
+target_unit: meta            # eval-пайплайн vsmlite (родитель)
+
+title: "eval: goose-ветка не ограничивается до MCP продукта — нет эквивалента --allowedTools"
+summary: |
+  VSM-022 решение A (ограничение tool-surface до MCP продукта) реализовано только
+  для claude-code через --allowedTools mcp__<server>__*. goose CLI не имеет
+  эквивалентного флага: --with-extension подключает MCP-сервер, но НЕ отключает
+  built-in tools (developer, computer-controller, ...), а --no-profile убирает
+  лишь user-профиль, не core builtins. В результате goose-ветка может решать
+  задачи через собственные built-in tools, минуя продуктовый MCP → trace пуст,
+  pass_rate невалиден (наследие VSM-022 для goose). Текущий default harness —
+  claude-code, поэтому impact ограничен; goose нужен для cross-provider проверки
+  (S3* provider_constraint must_differ_from s1).
+
+evidence:
+  - "issues/VSM-022.yaml:69 — goose-ветка: --with-extension wrapper не эквивалентен --allowedTools; требует отдельной проверки при выборе A"
+  - "eval/agent_phase.py:130-148 (_build_harness_args goose-ветка) — нет ограничения tool-surface; комментарий VSM-023 добавлен"
+  - "goose run --help: флаги --with-extension / --no-profile / --with-builtin — НЕТ allow/deny tool-list"
+  - "claude --help: --allowedTools/--allowed-tools есть только у claude-code CLI (подтверждение асимметрии harness'ов)"
+
+proposal: |
+  S5 non-binding рекомендация. Варианты (аналогично VSM-022 policy):
+    (A1) goose recipe/.goosehints с явным исключением builtins — если goose
+         поддерживает disable-builtin в recipe-формате (требует проверки goose docs);
+    (A2) кастомный MCP-wrapper/proxy, который перехватывает built-in tool-calls и
+         возвращает ошибку — заставляет goose идти через MCP (дороже, ломает чистоту bridge);
+    (C)  признать goose cross-provider-check only: trace из goose не используется
+         для A(t), только как «доказательство что задача решаема другим harness»
+         (минимальное изменение — документация + assert в metrics для goose).
+  До решения: goose не используется для canary-set T0/T1 (claude-code only).
+
+acceptance:
+  - "решение выбрано (A1/A2/C) и зафиксировано в decision-поле"
+  - "если A1/A2: повторный прогон goose на canary set → trace_len > 0"
+  - "если C: eval/README.md отражает 'goose = cross-provider check, trace невалиден для A(t)'"
+
+needs_human_decision: true   # выбор подхода меняет семантику goose-прогонов
+
+policy_question: |
+  Как обеспечить честность метрики A(t) для goose, учитывая отсутствие --allowedTools?
+
+options:
+  - id: C
+    label: "goose = cross-provider check only (trace не для A(t))"
+    hint: "0 кода; goose-прогоны не учитываются в A(t); claude-code остаётся primary для метрики"
+  - id: A1
+    label: "recipe/.goosehints с исключением builtins"
+    hint: "требует проверки goose recipe-синтаксиса; среднее изменение"
+  - id: A2
+    label: "MCP proxy, перехватывающий builtins"
+    hint: "дороже; ломает простоту docker-exec bridge"
+
+status: superseded           # SUPERSEDED VSM-024 (2026-07-15)
+decision: "SUPERSEDED VSM-024: goose --allowedTools gap растворяется в harbour-архитектуре. harbour --agent goose управляет tool-surface и средой первоклассно (enum, без кастомных wrapper'ов); дилемма 'recipe/.goosehints vs MCP-proxy' больше не стоит, т.к. ProductAdapter обёртывает весь orchestrator (мультиагентный), а не голый goose+S1-tools. Проблема не отвергнута (wontfix), а растворена в новой архитектуре."
+selected_options: []
+
+references:
+  - VSM-022   # родительский issue — ограничение tool-surface harness'а
+  - VSM-004   # Dev Set как входной индикатор автономности A(t)
+  - VSM-005   # parent isolation / S3* cross-provider
+
+notes:
+  - "goose CLI (goose run --help, версия на дату создания) НЕ содержит allow/deny tool-list флагов."
+  - "claude-code --allowedTools синтаксис: mcp__<server>__* (wildcard), подтверждён claude --help + code.claude.com/docs/en/permissions."
+
+created: 2026-07-15
+updated: 2026-07-15
