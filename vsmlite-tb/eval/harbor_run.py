@@ -134,12 +134,14 @@ def _prepare_overlay_task(original_task_dir: Path, overlay_dir: Path) -> Path:
         "RUN pip install --no-cache-dir --quiet pyyaml\n"
         # Direct binary download instead of the installer script — the script
         # opens /dev/tty for an interactive configure prompt that doesn't exist
-        # in `docker build`. We download the tarball, extract goose to
-        # /usr/local/bin (on PATH in all base images), skip configure entirely.
+        # in `docker build`. Download the tarball, extract to /tmp, move goose
+        # to /usr/local/bin (on PATH in all base images), skip configure.
         "RUN ARCH=$(uname -m) && \\\n"
         f"    curl -fsSL https://github.com/aaif-goose/goose/releases/download/{_GOOSE_VERSION}/"
-        "goose-$ARCH-unknown-linux-gnu.tar.bz2 | \\\n"
-        "    tar -xj -C /usr/local/bin goose && \\\n"
+        "goose-$ARCH-unknown-linux-gnu.tar.bz2 -o /tmp/goose.tar.bz2 && \\\n"
+        "    tar -xjf /tmp/goose.tar.bz2 -C /tmp && \\\n"
+        "    mv /tmp/goose /usr/local/bin/goose && chmod +x /usr/local/bin/goose && \\\n"
+        "    rm /tmp/goose.tar.bz2 && \\\n"
         "    goose --version\n"
     )
 
