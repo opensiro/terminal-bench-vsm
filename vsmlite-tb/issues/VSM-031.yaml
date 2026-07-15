@@ -1,0 +1,101 @@
+id: VSM-031
+source_system: S1            # synthesis-operator: инфраструктура для автоматизации цикла
+signal_type: gap             # gap — контур «батч → наблюдение → решение» был разорван
+severity: S2                 # бьёт по核心-ценности: A(t) не self-correcting без обратной связи
+target_unit: meta            # vsmlite meta-уровень (scripts/ + eval/ integration)
+
+title: "VSM-cycle automation: детерминистический контур «батч → наблюдение → решение»"
+
+summary: |
+  Замыкает VSM-030: после eval-батча vsmlite (S2–S5) больше не idle —
+  детерминистический цикл (без LLM) автоматически наблюдает батч, классифицирует
+  состояние, принимает решение, при critical создаёт VSM-issue, обновляет A(t)/
+  status/cycle_count, эмитит monitor/data.js. LLM-цикл /vsmlite-cycle остаётся
+  слоем над этим скриптом (глубокий S4/S5 анализ — по требованию).
+
+  Три gap'а, которые закрыты (выявлены Explore-аудитом):
+    1. НЕТ ТРИГГЕРА — eval/modes.py:_run_batch() выходил без вызова vsmlite.
+       ТЕПЕРЬ: после record_run/build_batch_record → subprocess run_cycle.py.
+    2. НЕТ ОРКЕСТРАТОРА — /vsmlite-cycle существовал только как prose-prompt для
+       LLM-сессии. ТЕПЕРЬ: scripts/run_cycle.py — детерминистические шаги.
+    3. cycle_count НЕ ИМЕЛ ВЛАДЕЛЬЦА — 13 упоминаний в коде, все READ; инкремент
+       «поручен» LLM в prose-prompt → застрял на 0. ТЕПЕРЬ: единственный writer
+       — _increment_cycle_count() в run_cycle.py.
+
+  Два режима работы (замечание про интервальные прогоны):
+    - BATCH-TRIGGERED: вызывается из _run_batch после каждого батча.
+    - STATE-TRIGGERED: `make cycle` без батча — наблюдает aggregate dev_metrics
+      (аккумулирует по task_id; интервалы сливаются в один файл сами — см.
+      metrics.record upsert по task_id, без таймстампа).
+
+evidence:
+  - "scripts/run_cycle.py (NEW ~330 строк) — детерминистический оркестратор: A(t) recompute, status sweep, rule-based observations (5 детекторов), decide, auto-issue, enrich batch, cycle_count++, render_data, validate"
+  - "eval/modes.py:_run_batch() — после record_run/build_batch_record → _trigger_cycle(batch_record) (subprocess, non-fatal, флаг no_cycle)"
+  - "eval/modes.py — _build_batch_record + _write_batch_summary: state/batch_summaries/<batch_id>.json с плейсхолдерами observations/decision/issues_raised (заполняет run_cycle)"
+  - "eval/config.py — EvalConfig.no_cycle (default False) + EVAL_NO_CYCLE env в __post_init__"
+  - "eval/__main__.py — CLI --no-cycle (отключить авто-цикл для разовых прогонов)"
+  - "Makefile — make cycle (state-mode: наблюдать aggregate без батча)"
+  - "run_cycle.py:_increment_cycle_count() — ЕДИНСТВЕННЫЙ writer cycle_count в maturation.json (grep 'cycle_count' scripts/ → все READ кроме этого)"
+  - "run_cycle.py:_cycle_trend() — собственная память цикла (state/cycle_history.json), НЕ eval_history: eval_history пишется только из _run_batch daily-snapshot'ом, при интервальных прогонах (harbor trial start) не пишется"
+
+rule_detectors:
+  - "zero_pass — 0/N passed при наличии задач (warn)"
+  - "regression — pass_rate упал >10 п.п. относительно прошлого цикла (CRITICAL)"
+  - "improvement — pass_rate вырос >10 п.п. (info, позитивный)"
+  - "infra_cluster — >30% задач в status=error (warn)"
+  - "low_pass_rate — pass_rate <50% при passed>0 (warn)"
+
+decision_logic:
+  - "critical observations → needs_human_decision + auto-issue VSM-NNN (dedup по batch_id+types)"
+  - "warn (без critical) → ok_with_concerns"
+  - "только info/пусто → ok_no_action"
+
+proposal: |
+  Реализовано (этот issue = фиксация). Контур замкнут детерминистически —
+  без LLM. LLM-агенты S4/S5 не затронуты: /vsmlite-cycle остаётся как слой
+  глубокого анализа поверх. Когда нужен детальный разбор регрессии (а не
+  rule-based детекция) — человек запускает /vsmlite-cycle.
+
+  Дальнейшее (future work, не этот issue):
+  - batches.html UI (таймлайн батчей с развёрткой «что увидел → что решил»);
+  - интеграция observations в cycle_digest.py (S5 REPL-дайджест);
+  - harbor job start (native батчи для полного датасета, см. контекст ниже).
+
+interval_batches_context: |
+  Полный датасет может гоняться интервалами (не одним батчем). Два уровня
+  агрегации — оба работают с этой реализацией:
+    1. dev_metrics аккумулирует по task_id (upsert): прогоны в разные дни
+       сливаются в один dev_metrics.json автоматически. Таймстамп не нужен.
+       `make cycle` (state-mode) наблюдает aggregate в любой момент.
+    2. harbor job resume (native): дописывает trials к существующему job.
+       Пока используем harbor trial start (одиночные) — для полного датасета
+       рекомендуется переход на harbor job start (future work, отдельный issue).
+
+acceptance:
+  - "make cycle работает, инкрементит cycle_count, печатает digest"
+  - "после eval-батча: state/batch_summaries/<id>.json содержит non-empty observations[] и decision"
+  - "при critical observation создаётся issues/VSM-NNN.yaml (monotonic id, needs_human_decision: true)"
+  - "grep 'cycle_count' scripts/ | grep writer → единственный инкремент в run_cycle.py"
+  - "make validate GREEN (run_cycle.py в scripts/ — read-only из ../vsm,../src)"
+  - "state/status.json после цикла: health != unknown для всех систем"
+  - "state/maturation.json: cycle_count > 0 (закрытие gap из VSM-030 evidence)"
+  - "--no-cycle отключает авто-цикл (batch_summary без observations)"
+  - "state/cycle_history.json пишется каждым циклом (trend гранулярность = цикл)"
+
+needs_human_decision: false   # инфраструктура; auto-issue в triage — отдельно
+
+references:
+  - VSM-030   # eval-batch observability gap — этот issue замыкает его детерминистически
+  - VSM-005   # A(t) как индикатор автономности — cycle делает его self-correcting
+  - VSM-024   # harbor pivot — trials в harbor-формате, batch_summaries естественны
+  - VSM-026   # 3-режимная архитектура eval — cycle работает с любым profile
+
+notes:
+  - "LLM-цикл /vsmlite-cycle НЕ затронут — остаётся слоем глубокого S4/S5 анализа поверх детерминистического."
+  - "Trend использует cycle_history (собственная память), не eval_history — потому что eval_history пишется только из _run_batch daily-snapshot'ом и неполон при интервальных прогонах."
+  - "Subprocess (не import) для триггера: scripts/ — плоские модули без __init__.py; изоляция падений."
+  - "auto-issue dedup: сигнатура = sorted critical-types + batch_id; если уже в triage — не плодит дубликаты."
+  - "Запуск с фронта других агентов: cycle не блокирует батч (non-fatal try/except), не мутирует ../vsm,../src."
+
+created: 2026-07-15
+updated: 2026-07-15

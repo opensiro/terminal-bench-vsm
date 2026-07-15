@@ -17,8 +17,10 @@ harbor_run, фасад остаётся рабочим (контракт = run_t
 from __future__ import annotations
 
 import sys
+import subprocess
+from datetime import datetime
 
-from .config import EvalConfig
+from .config import EvalConfig, VSMLITE_ROOT
 from .loader import load_tasks, sample_tasks
 from . import metrics
 
@@ -26,6 +28,102 @@ from . import metrics
 def _log(msg: str) -> None:
     """Прогресс в stderr (stdout чист для машиночитаемых результатов)."""
     print(msg, file=sys.stderr, flush=True)
+
+
+def _trigger_cycle(batch_record: dict) -> None:
+    """VSM-031: запустить детерминистический cycle после батча (non-fatal).
+
+    Замыкает контур «батч → наблюдение → решение»: run_cycle.py наблюдает
+    batch_summary (rule-based observations), решает (decision), при critical
+    создаёт VSM-NNN, обновляет status/A(t)/cycle_count, эмитит monitor/data.js.
+
+    Subprocess (не import): scripts/ — плоские модули без __init__.py, как
+    collect_metrics.py/render_data.py. Изоляция: цикл не завязан на структуру
+    пакетов eval/, падение цикла не валит батч. stdout/stderr цикла → в наш
+    stderr (помечены), stdout батча остаётся машиночитаемым.
+    """
+    import sys as _sys
+    script = VSMLITE_ROOT / "scripts" / "run_cycle.py"
+    if not script.exists():
+        _log(f"  ⚠ cycle skipped: {script.name} not found")
+        return
+    batch_id = batch_record.get("batch_id", "")
+    batch_path = VSMLITE_ROOT / "state" / "batch_summaries" / f"{batch_id}.json"
+    try:
+        r = subprocess.run(
+            [_sys.executable, str(script), "--batch", str(batch_path)],
+            capture_output=True, text=True, timeout=180,
+        )
+        # digest цикла пишем в stderr (последняя строка = decision-строка).
+        if r.stdout:
+            last = [ln for ln in r.stdout.strip().splitlines() if ln.strip()][-1:]
+            for ln in last:
+                _log(f"  cycle: {ln}")
+        if r.returncode != 0 and r.stderr:
+            _log(f"  ⚠ cycle stderr: {r.stderr.strip()[-300:]}")
+    except subprocess.TimeoutExpired:
+        _log("  ⚠ cycle timed out (180s) — batch results intact")
+    except Exception as e:
+        _log(f"  ⚠ cycle failed (non-fatal): {type(e).__name__}: {e}")
+
+
+def _build_batch_record(config: EvalConfig, results: list[dict],
+                        started_at: datetime, finished_at: datetime,
+                        wall_clock: float, summary: dict, trend: dict) -> dict:
+    """VSM-031: собрать rich batch-кортеж для observability (cycle + UI).
+
+    Поля observations/decision/issues_raised — светлые плейсхолдеры; их заполнит
+    run_cycle.py (rule-based наблюдение + decision). Без cycle артефакт всё равно
+    пишется (есть для UI-таймлайна батчей в monitor/).
+    """
+    batch_id = f"{config.profile}__{started_at.strftime('%Y%m%d-%H%M%S')}"
+    per_task = [
+        {
+            "task_id": r.get("task_id"),
+            "status": r.get("status"),
+            "duration_sec": r.get("agent_duration_sec"),
+            "reward": (r.get("harbor") or {}).get("reward"),
+        }
+        for r in results
+    ]
+    return {
+        "batch_id": batch_id,
+        "profile": config.profile,
+        "timestamp": started_at.isoformat(timespec="seconds"),
+        "started_at": started_at.isoformat(timespec="seconds"),
+        "finished_at": finished_at.isoformat(timespec="seconds"),
+        "wall_clock_sec": round(wall_clock, 1),
+        "tasks_total": len(results),
+        "summary": summary,
+        "trend_direction": trend["direction"],
+        "trend_delta": trend["delta"],
+        "per_task": per_task,
+        # VSM-031 плейсхолдеры — заполняются run_cycle.py:
+        "observations": [],
+        "decision": "",
+        "issues_raised": [],
+    }
+
+
+def _write_batch_summary(config: EvalConfig, batch: dict):
+    """VSM-031: atomic-write batch_summary в state/batch_summaries/<id>.json."""
+    import json, os, tempfile
+    out_dir = config.results_dir / "batch_summaries"
+    out_dir.mkdir(parents=True, exist_ok=True)
+    out = out_dir / f"{batch['batch_id']}.json"
+    payload = json.dumps(batch, ensure_ascii=False, indent=2) + "\n"
+    fd, tmp = tempfile.mkstemp(dir=str(out_dir), prefix=out.name + ".", suffix=".tmp")
+    try:
+        with os.fdopen(fd, "w", encoding="utf-8") as f:
+            f.write(payload)
+        os.replace(tmp, out)
+    except BaseException:
+        try:
+            os.unlink(tmp)
+        except OSError:
+            pass
+        raise
+    return out
 
 
 def _run_batch(task_ids: list[str], config: EvalConfig) -> dict:
@@ -42,6 +140,7 @@ def _run_batch(task_ids: list[str], config: EvalConfig) -> dict:
     from .harbor_run import run_trial  # lazy: зона VSM-024
 
     total = len(task_ids)
+    started_at = datetime.now()
     results = []
     for i, tid in enumerate(task_ids, 1):
         _log(f"[{i}/{total}] {tid}")
@@ -51,10 +150,14 @@ def _run_batch(task_ids: list[str], config: EvalConfig) -> dict:
                 results.append(result)
             else:
                 _log(f"  ✗ trial вернул пустой результат (infra error?)")
+                results.append({"task_id": tid, "status": "error",
+                                "error": "empty trial result"})
         except Exception as e:
             _log(f"  ✗ trial failed: {type(e).__name__}: {e}")
             results.append({"task_id": tid, "status": "error",
                             "error": f"{type(e).__name__}: {e}"})
+    finished_at = datetime.now()
+    wall_clock = (finished_at - started_at).total_seconds()
 
     # Итоговый summary (метрики уже записаны harbor_run → metrics_file профиля).
     _log("\n" + "=" * 60)
@@ -70,6 +173,24 @@ def _run_batch(task_ids: list[str], config: EvalConfig) -> dict:
     _log(f"trend: {trend['direction']} (delta={trend['delta']:+.1%})")
     _log(f"→ {config.dev_metrics_file}")
     _log(f"→ {metrics._history_path(config)}")
+
+    # VSM-031: rich batch-артефакт для cycle observability. Пишется в
+    # state/batch_summaries/<batch_id>.json — per-batch саммари со светлыми
+    # полями. observations/decision/issues_raised — плейсхолдеры; их заполнит
+    # run_cycle.py (rule-based наблюдение + decision). Без cycle артефакт всё
+    # равно пишется (есть для UI-таймлайна батчей).
+    batch_record = _build_batch_record(
+        config, results, started_at, finished_at, wall_clock, summary, trend,
+    )
+    batch_path = _write_batch_summary(config, batch_record)
+    _log(f"→ {batch_path}")
+
+    # VSM-031: авто-цикл после батча — замыкает контур «наблюдение → решение».
+    # Флаг no_cycle: отключить для разовых прогонов / CI smoke-тестов.
+    # Non-fatal: цикл — observability слой, не должен валить батч-результаты.
+    if not getattr(config, "no_cycle", False):
+        _trigger_cycle(batch_record)
+
     return data
 
 
