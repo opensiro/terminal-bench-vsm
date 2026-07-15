@@ -44,7 +44,17 @@ def translate(task: TBTask) -> str:
 
     Снимает канарейку + оценочные термины. Возвращает чистый prompt.
     """
-    prompt = task.instruction
+    return translate_from_text(task.instruction)
+
+
+def translate_from_text(instruction: str) -> str:
+    """Raw instruction text → нейтральный task_prompt (без зависимости от TBTask).
+
+    VSM-024: harbour ProductAdapter получает instruction как str (не TBTask), поэтому
+    мембрана принимает текст напрямую. Логика идентична translate(task) — это тот же
+    pipeline (канарейка → термины → схлопывание), вынесенный для переиспользования.
+    """
+    prompt = instruction
 
     # 1. Вырезать канарейку (целиком строки)
     prompt = CANARY_PATTERN.sub("", prompt)

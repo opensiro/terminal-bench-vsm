@@ -1,0 +1,24 @@
+# harbor-config.yaml — TEMPLATE для harbor trial (VSM-024).
+#
+# TrialConfig schema (harbor.models.trial.config): top-level task/agent/environment,
+# trials_dir top-level (НЕ в trial: блоке). Пути <ABS_*> резолвятся скриптом
+# eval/harbor_run.py перед запуском (наш cwd содержит пробел "Opensiro Collections").
+#
+# Не запускайте harbor напрямую с этим файлом — используйте:
+#   python3 -m eval.harbor_run --task <task_id>
+
+task:
+  path: <ABS_TASK>
+
+trials_dir: <ABS_TRIALS>
+
+agent:
+  import_path: "eval.harbor_adapter:ProductAdapter"
+  model_name: null
+
+environment:
+  type: docker
+  mounts:
+    - {type: bind, source: <ABS_SRC>, target: /opt/vsm_src, read_only: true}
+    - {type: bind, source: <ABS_VSM>, target: /opt/vsm_systems, read_only: true}
+    - {type: bind, source: <ABS_EVAL>, target: /opt/eval_shim, read_only: true}
