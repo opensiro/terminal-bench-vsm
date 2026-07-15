@@ -27,6 +27,9 @@
     .status-error  { color:#20180a; background:var(--amber); border-color:var(--amber); }
     .status-unknown { color:var(--muted); }
     .mono { font-family:var(--font-mono, ui-monospace, monospace); font-size:12px; }
+    .pr-good { color:var(--green); font-weight:600; }
+    .pr-mid  { color:var(--amber); }
+    .pr-bad  { color:var(--red); }
   </style>
 </head>
 <body>
@@ -35,6 +38,13 @@
   <section>
     <h2>Раны — per-run саммари eval-прогонов</h2>
     <div id="runs-kpis"></div>
+  </section>
+
+  <section>
+    <h3>По задачам</h3>
+    <div class="card">
+      <table class="runs" id="runs-by-task"></table>
+    </div>
   </section>
 
   <section>
@@ -88,6 +98,23 @@
         if (tk.output != null) parts.push("out " + tk.output.toLocaleString());
         return parts.length ? parts.join(" · ") : "—";
       }
+      function fmtConfig(cfg, key) {
+        if (!cfg) return "—";
+        const v = cfg[key];
+        return v == null || v === "" ? "—" : esc(v);
+      }
+      function fmtConfigMultipliers(cfg) {
+        // показывает timeout-мультипликаторы: agent / verifier (если заданы)
+        if (!cfg) return "—";
+        const a = cfg.agent_timeout_multiplier;
+        const v = cfg.verifier_timeout_multiplier;
+        const base = cfg.timeout_multiplier;
+        const parts = [];
+        if (base != null)  parts.push("base ×" + base);
+        if (a != null)     parts.push("agent ×" + a);
+        if (v != null)     parts.push("verifier ×" + v);
+        return parts.length ? parts.join(" · ") : "—";
+      }
       const statusClass = s => "status-" + (s || "unknown");
 
       // ── KPI tiles ──
@@ -110,6 +137,49 @@
             tile(counts.failed || 0, "failed") +
             tile(counts.error || 0, "error") +
             tile(fmtDur(avgDur), "средняя длительность");
+        }
+      }
+
+      // ── By-task summary (group-by task: runs / passed / pass_rate) ──
+      const byTaskEl = document.getElementById("runs-by-task");
+      if (byTaskEl) {
+        if (!runs.length) {
+          byTaskEl.innerHTML = '<div class="empty">нет ранов</div>';
+        } else {
+          // агрегация per task
+          const agg = {};
+          runs.forEach(r => {
+            const t = r.task_id || "(unknown)";
+            if (!agg[t]) agg[t] = { runs: 0, passed: 0, failed: 0, error: 0, last: "" };
+            agg[t].runs++;
+            if (r.status === "passed") agg[t].passed++;
+            else if (r.status === "failed") agg[t].failed++;
+            else if (r.status === "error") agg[t].error++;
+            if (r.started_at && r.started_at > agg[t].last) agg[t].last = r.started_at;
+          });
+          // сортировка: по числу ранов desc, затем по pass_rate desc
+          const rows = Object.entries(agg)
+            .map(([task, d]) => ({ task, ...d, pass_rate: d.runs ? d.passed / d.runs : 0 }))
+            .sort((a, b) => b.runs - a.runs || b.pass_rate - a.pass_rate);
+          const head = `<thead><tr>
+            <th>task</th><th class="num">runs</th><th class="num">passed</th>
+            <th class="num">failed</th><th class="num">error</th>
+            <th class="num">pass rate</th><th>last run</th>
+          </tr></thead>`;
+          const body = rows.map(d => {
+            const pr = Math.round(d.pass_rate * 1000) / 10;
+            const prCls = d.pass_rate >= 0.5 ? "good" : (d.pass_rate > 0 ? "mid" : "bad");
+            return `<tr>
+              <td class="mono">${esc(d.task)}</td>
+              <td class="num">${d.runs}</td>
+              <td class="num" style="color:var(--green)">${d.passed}</td>
+              <td class="num" style="color:var(--red)">${d.failed}</td>
+              <td class="num">${d.error || "—"}</td>
+              <td class="num pr-${prCls}">${pr}%</td>
+              <td>${fmtTime(d.last)}</td>
+            </tr>`;
+          }).join("");
+          byTaskEl.innerHTML = head + `<tbody>${body}</tbody>`;
         }
       }
 
@@ -169,6 +239,11 @@
                   <dt>finished_at</dt><dd>${esc(r.finished_at) || "—"}</dd>
                   <dt>tokens</dt><dd>${fmtTokens(r.tokens)}</dd>
                   <dt>cost_usd</dt><dd>${r.cost_usd == null ? "—" : "$" + r.cost_usd}</dd>
+                  <dt>adapter</dt><dd class="mono">${fmtConfig(r.config, "adapter")}</dd>
+                  <dt>adapter version</dt><dd>${fmtConfig(r.config, "adapter_version")}</dd>
+                  <dt>model</dt><dd>${fmtConfig(r.config, "model_name")}</dd>
+                  <dt>timeout</dt><dd>${fmtConfigMultipliers(r.config)}</dd>
+                  <dt>environment</dt><dd>${fmtConfig(r.config, "environment_type")}</dd>
                 </dl>
               </td>
             </tr>

@@ -1,6 +1,6 @@
 {
   "_comment": "agent_eval.json — скоринг 0-10 (A-E, D<0.5=FAIL) работы агентов (VSM-025). Пишет export_logs.py из agent_eval.evaluate().",
-  "generated": "2026-07-15T16:40:29",
+  "generated": "2026-07-15T16:48:12",
   "grade_scale": "A≥9.0 | B≥7.5 | C≥5.0 (pass) | D≥2.5 (FAIL) | E<2.5",
   "trace_note": "trace_len info-only (VSM-022 superseded→VSM-024); harbor block — progressive enhancement",
   "token_note": "token-spend deferred→VSM-024 (instrumentation pending)",
@@ -18,7 +18,7 @@
         "penalty_timeout": 0.0,
         "penalty_exit": 0.0
       },
-      "summary": "jsonl-aggregator [2.8/D] file-operations·easy · 156s · trace2 · pytest0/0 · exit0. harbor(terminated_by=no_observations, attempts=1).",
+      "summary": "jsonl-aggregator [2.8/D] file-operations·easy · 20s · trace2 · pytest0/0 · exit0. harbor(terminated_by=task_resolved, attempts=1).",
       "category": "file-operations",
       "difficulty": "easy"
     }

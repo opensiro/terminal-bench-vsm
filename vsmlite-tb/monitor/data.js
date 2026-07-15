@@ -1,5 +1,5 @@
 window.VSM_DATA = {
-  "generated": "2026-07-15T16:40:28",
+  "generated": "2026-07-15T16:48:11",
   "project": "vsmlite-template",
   "operational_mode": "normal",
   "systems": {
@@ -98,6 +98,35 @@ window.VSM_DATA = {
     "history": [],
     "runs": [
       {
+        "trial_name": "jsonl-aggregator__HQtmvCe",
+        "task_id": "jsonl-aggregator",
+        "status": "failed",
+        "verdict": "task_resolved",
+        "reward": 0.0,
+        "terminated_by": "task_resolved",
+        "attempts": 1,
+        "started_at": "2026-07-15T13:40:51.238582Z",
+        "finished_at": "2026-07-15T13:44:15.086395Z",
+        "duration_sec": 203,
+        "tokens": {
+          "input": null,
+          "cache": null,
+          "output": null
+        },
+        "cost_usd": null,
+        "config": {
+          "adapter": "eval.harbor_adapter:ProductAdapter",
+          "adapter_name": "vsm-product",
+          "adapter_version": "0.1.0",
+          "model_name": null,
+          "timeout_multiplier": 1.0,
+          "agent_timeout_multiplier": null,
+          "verifier_timeout_multiplier": null,
+          "environment_type": "docker",
+          "install_only": false
+        }
+      },
+      {
         "trial_name": "jsonl-aggregator__LiGdATB",
         "task_id": "jsonl-aggregator",
         "status": "failed",
@@ -113,7 +142,18 @@ window.VSM_DATA = {
           "cache": null,
           "output": null
         },
-        "cost_usd": null
+        "cost_usd": null,
+        "config": {
+          "adapter": "eval.harbor_adapter:ProductAdapter",
+          "adapter_name": "vsm-product",
+          "adapter_version": "0.1.0",
+          "model_name": null,
+          "timeout_multiplier": 1.0,
+          "agent_timeout_multiplier": null,
+          "verifier_timeout_multiplier": null,
+          "environment_type": "docker",
+          "install_only": false
+        }
       },
       {
         "trial_name": "log-summary__LbjKRpk",
@@ -131,7 +171,18 @@ window.VSM_DATA = {
           "cache": null,
           "output": null
         },
-        "cost_usd": null
+        "cost_usd": null,
+        "config": {
+          "adapter": "eval.harbor_adapter:ProductAdapter",
+          "adapter_name": "vsm-product",
+          "adapter_version": "0.1.0",
+          "model_name": null,
+          "timeout_multiplier": 1.0,
+          "agent_timeout_multiplier": null,
+          "verifier_timeout_multiplier": null,
+          "environment_type": "docker",
+          "install_only": false
+        }
       },
       {
         "trial_name": "jsonl-aggregator__dKkAb3W",
@@ -149,7 +200,18 @@ window.VSM_DATA = {
           "cache": null,
           "output": null
         },
-        "cost_usd": null
+        "cost_usd": null,
+        "config": {
+          "adapter": "eval.harbor_adapter:ProductAdapter",
+          "adapter_name": "vsm-product",
+          "adapter_version": "0.1.0",
+          "model_name": null,
+          "timeout_multiplier": 1.0,
+          "agent_timeout_multiplier": null,
+          "verifier_timeout_multiplier": null,
+          "environment_type": "docker",
+          "install_only": false
+        }
       },
       {
         "trial_name": "log-summary__6ScSYfw",
@@ -167,7 +229,18 @@ window.VSM_DATA = {
           "cache": null,
           "output": null
         },
-        "cost_usd": null
+        "cost_usd": null,
+        "config": {
+          "adapter": "eval.harbor_adapter:ProductAdapter",
+          "adapter_name": "vsm-product",
+          "adapter_version": "0.1.0",
+          "model_name": null,
+          "timeout_multiplier": 1.0,
+          "agent_timeout_multiplier": null,
+          "verifier_timeout_multiplier": null,
+          "environment_type": "docker",
+          "install_only": false
+        }
       },
       {
         "trial_name": "schedule-vacation__5YLmLFa",
@@ -185,7 +258,18 @@ window.VSM_DATA = {
           "cache": null,
           "output": null
         },
-        "cost_usd": null
+        "cost_usd": null,
+        "config": {
+          "adapter": "eval.harbor_adapter:ProductAdapter",
+          "adapter_name": "vsm-product",
+          "adapter_version": "0.1.0",
+          "model_name": null,
+          "timeout_multiplier": 1.0,
+          "agent_timeout_multiplier": null,
+          "verifier_timeout_multiplier": null,
+          "environment_type": "docker",
+          "install_only": false
+        }
       },
       {
         "trial_name": "jsonl-aggregator__qMf54fm",
@@ -203,7 +287,18 @@ window.VSM_DATA = {
           "cache": null,
           "output": null
         },
-        "cost_usd": null
+        "cost_usd": null,
+        "config": {
+          "adapter": "eval.harbor_adapter:ProductAdapter",
+          "adapter_name": "vsm-product",
+          "adapter_version": "0.1.0",
+          "model_name": null,
+          "timeout_multiplier": 1.0,
+          "agent_timeout_multiplier": null,
+          "verifier_timeout_multiplier": null,
+          "environment_type": "docker",
+          "install_only": false
+        }
       },
       {
         "trial_name": "log-summary__BpDJedo",
@@ -221,7 +316,18 @@ window.VSM_DATA = {
           "cache": null,
           "output": null
         },
-        "cost_usd": null
+        "cost_usd": null,
+        "config": {
+          "adapter": "eval.harbor_adapter:ProductAdapter",
+          "adapter_name": "vsm-product",
+          "adapter_version": "0.1.0",
+          "model_name": null,
+          "timeout_multiplier": 1.0,
+          "agent_timeout_multiplier": null,
+          "verifier_timeout_multiplier": null,
+          "environment_type": "docker",
+          "install_only": false
+        }
       },
       {
         "trial_name": "jsonl-aggregator__ShkjUmu",
@@ -239,7 +345,18 @@ window.VSM_DATA = {
           "cache": null,
           "output": null
         },
-        "cost_usd": null
+        "cost_usd": null,
+        "config": {
+          "adapter": "eval.harbor_adapter:ProductAdapter",
+          "adapter_name": null,
+          "adapter_version": null,
+          "model_name": null,
+          "timeout_multiplier": 1.0,
+          "agent_timeout_multiplier": null,
+          "verifier_timeout_multiplier": null,
+          "environment_type": "docker",
+          "install_only": false
+        }
       },
       {
         "trial_name": "schedule-vacation__R43UYf3",
@@ -257,7 +374,18 @@ window.VSM_DATA = {
           "cache": null,
           "output": null
         },
-        "cost_usd": null
+        "cost_usd": null,
+        "config": {
+          "adapter": "eval.harbor_adapter:ProductAdapter",
+          "adapter_name": "vsm-product",
+          "adapter_version": "0.1.0",
+          "model_name": null,
+          "timeout_multiplier": 1.0,
+          "agent_timeout_multiplier": null,
+          "verifier_timeout_multiplier": null,
+          "environment_type": "docker",
+          "install_only": false
+        }
       },
       {
         "trial_name": "log-summary__MYhbTpT",
@@ -275,7 +403,18 @@ window.VSM_DATA = {
           "cache": null,
           "output": null
         },
-        "cost_usd": null
+        "cost_usd": null,
+        "config": {
+          "adapter": "eval.harbor_adapter:ProductAdapter",
+          "adapter_name": "vsm-product",
+          "adapter_version": "0.1.0",
+          "model_name": null,
+          "timeout_multiplier": 1.0,
+          "agent_timeout_multiplier": null,
+          "verifier_timeout_multiplier": null,
+          "environment_type": "docker",
+          "install_only": false
+        }
       },
       {
         "trial_name": "jsonl-aggregator__EYVaxjH",
@@ -293,7 +432,18 @@ window.VSM_DATA = {
           "cache": null,
           "output": null
         },
-        "cost_usd": null
+        "cost_usd": null,
+        "config": {
+          "adapter": "eval.harbor_adapter:ProductAdapter",
+          "adapter_name": "vsm-product",
+          "adapter_version": "0.1.0",
+          "model_name": null,
+          "timeout_multiplier": 1.0,
+          "agent_timeout_multiplier": null,
+          "verifier_timeout_multiplier": null,
+          "environment_type": "docker",
+          "install_only": false
+        }
       },
       {
         "trial_name": "jsonl-aggregator__BhAR8cz",
@@ -311,7 +461,18 @@ window.VSM_DATA = {
           "cache": null,
           "output": null
         },
-        "cost_usd": null
+        "cost_usd": null,
+        "config": {
+          "adapter": "eval.harbor_adapter:ProductAdapter",
+          "adapter_name": "vsm-product",
+          "adapter_version": "0.1.0",
+          "model_name": null,
+          "timeout_multiplier": 1.0,
+          "agent_timeout_multiplier": null,
+          "verifier_timeout_multiplier": null,
+          "environment_type": "docker",
+          "install_only": false
+        }
       },
       {
         "trial_name": "build-merkle-tree-cli-sha512__MNeXTCu",
@@ -329,7 +490,18 @@ window.VSM_DATA = {
           "cache": null,
           "output": null
         },
-        "cost_usd": null
+        "cost_usd": null,
+        "config": {
+          "adapter": "eval.harbor_adapter:ProductAdapter",
+          "adapter_name": "vsm-product",
+          "adapter_version": "0.1.0",
+          "model_name": null,
+          "timeout_multiplier": 1.0,
+          "agent_timeout_multiplier": null,
+          "verifier_timeout_multiplier": null,
+          "environment_type": "docker",
+          "install_only": false
+        }
       },
       {
         "trial_name": "schedule-vacation__5vifATX",
@@ -347,7 +519,18 @@ window.VSM_DATA = {
           "cache": null,
           "output": null
         },
-        "cost_usd": null
+        "cost_usd": null,
+        "config": {
+          "adapter": "eval.harbor_adapter:ProductAdapter",
+          "adapter_name": "vsm-product",
+          "adapter_version": "0.1.0",
+          "model_name": null,
+          "timeout_multiplier": 1.0,
+          "agent_timeout_multiplier": null,
+          "verifier_timeout_multiplier": null,
+          "environment_type": "docker",
+          "install_only": false
+        }
       },
       {
         "trial_name": "log-summary__nhLMfWn",
@@ -365,7 +548,18 @@ window.VSM_DATA = {
           "cache": null,
           "output": null
         },
-        "cost_usd": null
+        "cost_usd": null,
+        "config": {
+          "adapter": "eval.harbor_adapter:ProductAdapter",
+          "adapter_name": "vsm-product",
+          "adapter_version": "0.1.0",
+          "model_name": null,
+          "timeout_multiplier": 1.0,
+          "agent_timeout_multiplier": null,
+          "verifier_timeout_multiplier": null,
+          "environment_type": "docker",
+          "install_only": false
+        }
       },
       {
         "trial_name": "jsonl-aggregator__quS2XPJ",
@@ -383,7 +577,18 @@ window.VSM_DATA = {
           "cache": null,
           "output": null
         },
-        "cost_usd": null
+        "cost_usd": null,
+        "config": {
+          "adapter": "eval.harbor_adapter:ProductAdapter",
+          "adapter_name": "vsm-product",
+          "adapter_version": "0.1.0",
+          "model_name": null,
+          "timeout_multiplier": 1.0,
+          "agent_timeout_multiplier": null,
+          "verifier_timeout_multiplier": null,
+          "environment_type": "docker",
+          "install_only": false
+        }
       },
       {
         "trial_name": "jsonl-aggregator__2M6oFYm",
@@ -401,7 +606,18 @@ window.VSM_DATA = {
           "cache": null,
           "output": null
         },
-        "cost_usd": null
+        "cost_usd": null,
+        "config": {
+          "adapter": "eval.harbor_adapter:ProductAdapter",
+          "adapter_name": "vsm-product",
+          "adapter_version": "0.1.0",
+          "model_name": null,
+          "timeout_multiplier": 1.0,
+          "agent_timeout_multiplier": null,
+          "verifier_timeout_multiplier": null,
+          "environment_type": "docker",
+          "install_only": false
+        }
       },
       {
         "trial_name": "jsonl-aggregator__Hk4nGNf",
@@ -419,7 +635,18 @@ window.VSM_DATA = {
           "cache": null,
           "output": null
         },
-        "cost_usd": null
+        "cost_usd": null,
+        "config": {
+          "adapter": "eval.harbor_adapter:ProductAdapter",
+          "adapter_name": "vsm-product",
+          "adapter_version": "0.1.0",
+          "model_name": null,
+          "timeout_multiplier": 1.0,
+          "agent_timeout_multiplier": null,
+          "verifier_timeout_multiplier": null,
+          "environment_type": "docker",
+          "install_only": false
+        }
       },
       {
         "trial_name": "jsonl-aggregator__DdAXQvj",
@@ -437,7 +664,18 @@ window.VSM_DATA = {
           "cache": null,
           "output": null
         },
-        "cost_usd": null
+        "cost_usd": null,
+        "config": {
+          "adapter": "eval.harbor_adapter:ProductAdapter",
+          "adapter_name": "vsm-product",
+          "adapter_version": "0.1.0",
+          "model_name": null,
+          "timeout_multiplier": 1.0,
+          "agent_timeout_multiplier": null,
+          "verifier_timeout_multiplier": null,
+          "environment_type": "docker",
+          "install_only": false
+        }
       },
       {
         "trial_name": "jsonl-aggregator__orckmyP",
@@ -455,7 +693,18 @@ window.VSM_DATA = {
           "cache": null,
           "output": null
         },
-        "cost_usd": null
+        "cost_usd": null,
+        "config": {
+          "adapter": "eval.harbor_adapter:ProductAdapter",
+          "adapter_name": "vsm-product",
+          "adapter_version": "0.1.0",
+          "model_name": null,
+          "timeout_multiplier": 1.0,
+          "agent_timeout_multiplier": null,
+          "verifier_timeout_multiplier": null,
+          "environment_type": "docker",
+          "install_only": false
+        }
       }
     ]
   },

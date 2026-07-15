@@ -79,6 +79,28 @@ def _read_issues():
     return issues
 
 
+def _run_config(cfg: dict, meta: dict):
+    """VSM-029: светлые конфиг-поля trial'а для деталей в мониторе.
+
+    Whitelist: только известные безопасные поля. agent.env намеренно исключён —
+    там могут быть секреты (API keys, tokens). meta — agent_result.metadata
+    (adapter/adapter_version).
+    """
+    agent = cfg.get("agent") or {}
+    env = cfg.get("environment") or {}
+    return {
+        "adapter": agent.get("import_path"),
+        "adapter_name": meta.get("adapter"),
+        "adapter_version": meta.get("adapter_version"),
+        "model_name": agent.get("model_name"),
+        "timeout_multiplier": cfg.get("timeout_multiplier"),
+        "agent_timeout_multiplier": cfg.get("agent_timeout_multiplier"),
+        "verifier_timeout_multiplier": cfg.get("verifier_timeout_multiplier"),
+        "environment_type": env.get("type"),
+        "install_only": cfg.get("install_only"),
+    }
+
+
 def _collect_runs(trials_dir: Path, limit: int = 50):
     """VSM-029: per-run саммари из state/harbor-trials/ для раздела Runs в мониторе.
 
@@ -140,6 +162,9 @@ def _collect_runs(trials_dir: Path, limit: int = 50):
                     "output": ar.get("n_output_tokens"),
                 },
                 "cost_usd": ar.get("cost_usd"),
+                # VSM-029 follow-up: светлые конфиг-поля из result.json:config.
+                # agent.env намеренно НЕ поднимаем (там секреты: API keys и т.п.).
+                "config": _run_config(r.get("config") or {}, meta),
             })
         except Exception:
             continue
