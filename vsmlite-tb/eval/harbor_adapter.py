@@ -148,11 +148,28 @@ class ProductAdapter(BaseAgent):
             timeout_sec=15,
         )
 
-        # 3. Launch orchestrator_runner inside the container. PYTHONPATH makes the
+        # 3. Ensure goose is available. setup() installs it, but harbor may spin a
+        # fresh container between trials without re-running setup (image cached,
+        # container recreated). If goose is missing, the triad silently falls back
+        # to in-process stubs (2s "task_resolved" with no real work). Install here
+        # so every run() is self-contained. No-op if goose is already present.
+        goose_check = await environment.exec(
+            command='export PATH="$HOME/.local/bin:$PATH" && goose --version',
+            timeout_sec=15,
+        )
+        if goose_check.return_code != 0:
+            await environment.exec(
+                command=(
+                    'GOOSE_DISABLE_KEYRING=true '
+                    'curl -fsSL https://github.com/block/goose/releases/download/stable/download_cli.sh | bash'
+                ),
+                timeout_sec=180,
+            )
+
+        # 4. Launch orchestrator_runner inside the container. PYTHONPATH makes the
         #    product importable; WORKSPACE_ROOT is the task workspace (/app). The
         #    shim writes its recovery-cycle summary to /logs/agent/product-trace.json.
-        # PATH includes ~/.local/bin so the triad's goose sub-agents (installed in
-        # setup()) are found by goose_runner.resolve_binary().
+        # PATH includes ~/.local/bin so the triad's goose sub-agents are found.
         command = (
             f'export PATH="$HOME/.local/bin:$PATH" && '
             f"PYTHONPATH=/opt/vsm_src WORKSPACE_ROOT=/app "
