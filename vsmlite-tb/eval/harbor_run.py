@@ -153,9 +153,12 @@ def run_trial(task_id: str, config: EvalConfig, keep_config: bool = False) -> di
         if proc.stdout:
             print(proc.stdout, file=sys.stderr)
         if proc.returncode != 0:
-            print(f"✗ harbor trial failed (exit {proc.returncode})", file=sys.stderr)
+            # Trial failed (timeout, infra error), but harbor still writes a trial
+            # dir with partial result.json (exception_info, timing). Don't bail —
+            # fall through to parse_trial so the failure is recorded in metrics
+            # instead of silently dropped.
+            print(f"⚠ harbor trial non-zero exit {proc.returncode} (parsing partial trial)", file=sys.stderr)
             print(proc.stderr, file=sys.stderr)
-            return {}
 
         if keep_config:
             kept = trials_dir / f"{task_id}-last-config.yaml"

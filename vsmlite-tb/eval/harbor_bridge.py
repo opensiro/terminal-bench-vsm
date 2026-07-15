@@ -40,16 +40,16 @@ def parse_trial(trial_dir: Path) -> dict:
     Fields mirror runner._base_result + the extras set in run_single, so the
     downstream summary/by_category/by_difficulty aggregation works identically.
     """
-    result_json = _read_json(trial_dir / "result.json")
-    trajectory = _read_json(trial_dir / "agent" / "trajectory.json")
+    result_json = _read_json(trial_dir / "result.json") or {}
+    trajectory = _read_json(trial_dir / "agent" / "trajectory.json") or {}
     reward_txt = _read_text(trial_dir / "verifier" / "reward.txt")
 
     # Harbor reward: 1.0 = pass, 0.0 = fail. reward.txt may be absent if the
-    # verifier didn't run (e.g. infra error before verification).
+    # verifier didn't run (e.g. infra error/timeout before verification).
     reward_value = _parse_reward(reward_txt, result_json)
     passed = reward_value >= 1.0
 
-    task_id = (result_json or {}).get("task_name") or trial_dir.name.split("__")[0]
+    task_id = result_json.get("task_name") or trial_dir.name.split("__")[0]
 
     # Trace length: count ATIF steps (agent + tool-call granularity). trajectory
     # may be absent if the adapter failed before writing it.
@@ -81,9 +81,17 @@ def parse_trial(trial_dir: Path) -> dict:
 
     # Stash harbor-specific fields (adapter metadata, terminated_by) for richer
     # analysis; metrics.record ignores unknown keys (upsert only reads known ones).
-    agent_meta = (result_json or {}).get("agent_result", {}).get("metadata") or {}
+    # Guard against missing/partial result.json (timeout/infra error mid-trial).
+    agent_result = result_json.get("agent_result") or {}
+    agent_meta = agent_result.get("metadata") or {} if isinstance(agent_result, dict) else {}
+    # If the trial errored (exception_info present), surface it as an error status.
+    exception_info = result_json.get("exception_info") or {}
+    if exception_info and not passed:
+        task_result["status"] = "error"
+        task_result["passed"] = False
+        task_result["error"] = f"{exception_info.get('type', 'unknown')}: {exception_info.get('message', '')}"
     task_result["harbor"] = {
-        "trial_name": (result_json or {}).get("trial_name", trial_dir.name),
+        "trial_name": result_json.get("trial_name", trial_dir.name),
         "terminated_by": agent_meta.get("terminated_by"),
         "verdict": agent_meta.get("verdict"),
         "attempts": agent_meta.get("total_attempts"),

@@ -96,7 +96,7 @@ class ProductAdapter(BaseAgent):
                 "DEBIAN_FRONTEND=noninteractive apt-get install -y -qq python3 "
                 "python3-pip curl bzip2 libxcb1 libgomp1 > /dev/null 2>&1"
             ),
-            timeout_sec=240,
+            timeout_sec=300,
         )
 
         # 2. Python deps: PyYAML (product taxonomy loader).
