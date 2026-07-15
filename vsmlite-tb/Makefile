@@ -4,7 +4,7 @@ SHELL := /usr/bin/env bash
 
 MODE ?= normal
 
-.PHONY: help prompt-% run-% all-prompts validate telemetry autonomy digest init-check eval-list eval-run eval-all eval-summary
+.PHONY: help prompt-% run-% all-prompts validate telemetry autonomy digest init-check eval-list eval-run eval-all eval-summary logs
 
 help: ## показать это сообщение
 	@grep -E '^[a-zA-Z_-]+:.*?## ' $(MAKEFILE_LIST) | awk 'BEGIN{FS=":.*?## "}{printf "  \033[36m%-18s\033[0m %s\n", $$1, $$2}'
@@ -33,6 +33,9 @@ autonomy: ## посчитать A(t) и вердикт из state/ + ../vsm/
 
 digest: ## дайджест изменений цикла для REPL-юзера
 	@python3 scripts/cycle_digest.py
+
+logs: ## последние события процесса (tail logs/process.log)
+	@tail -n 50 logs/process.log 2>/dev/null || echo "лог пуст — запусти make telemetry"
 
 init-check: ## структурная проверка init-состояния (без flip meta.initialized)
 	@scripts/validate.sh --init-check

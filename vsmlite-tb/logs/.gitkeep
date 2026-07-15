@@ -1,0 +1,3 @@
+# placeholder — logs/ хранит process.log (regenerable from state/events.json).
+# Сам process.log gitignored (runtime-only); state/events.json + state/agent_eval.json
+# коммитятся как источник правды. `make logs` печатает tail.

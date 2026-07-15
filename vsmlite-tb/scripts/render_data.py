@@ -173,6 +173,19 @@ def main():
     # (опц.) снэпшот дня в history.json для S4 trend
     _maybe_snapshot(history, data["metrics"])
 
+    # VSM-025: process log + agent eval (авто-детект дельт state + скоринг 0-10).
+    # Единственная точка интеграции: render_data вызывается в конце каждого
+    # cycle/eval/mature/init. Read-only из state/, пишет events.json + agent_eval.json
+    # + logs/process.log. Ноль правок в агентах/командах.
+    try:
+        from export_logs import detect_and_log
+        log_report = detect_and_log()
+        events_str = "seed" if log_report["seeded"] else f"{log_report['events']} events"
+        data["_export_logs"] = log_report
+    except Exception as e:  # лог не должен валировать телеметрию
+        print(f"  ⚠ export_logs skipped: {e}")
+        log_report = None
+
     print(f"── render_data ──")
     print(f"  project: {project}")
     print(f"  A(t): {data['metrics']['autonomy_score']} | phase: {data['metrics']['maturation_phase']}")
@@ -180,6 +193,8 @@ def main():
     eval_str = f"{pr:.0%}" if pr is not None else "—"
     print(f"  eval: {eval_str} pass-rate ({data['eval']['trend']['direction']})")
     print(f"  issues: {len(data['issues'])} | units: {len(data['units'])} | activity days: {len(data['activity'])}")
+    if log_report:
+        print(f"  logs: {events_str} | agents: {log_report['product_agents']} product, {log_report['system_agents']} system (active)")
     print(f"  → {target.relative_to(ROOT)}")
 
 

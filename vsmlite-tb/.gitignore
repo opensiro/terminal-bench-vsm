@@ -31,3 +31,7 @@ state/domain_draft.local.yaml
 
 # ── eval/: артефакты прогонов (если будут вне state/) ──
 eval/runs/
+
+# ── process log (VSM-025): regenerable from state/events.json, runtime-only ──
+logs/process.log
+state/_events_snapshot.json

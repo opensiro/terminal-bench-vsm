@@ -1,0 +1,87 @@
+id: VSM-025
+source_system: S5            # observability primitive — структурное дополнение родителя
+signal_type: gap             # gap — нет слоя таймлайна/оценки агентов (пробел в transparency)
+severity: S3                 # не ломает viability, но тормозит калибровку циклов
+target_unit: meta            # сам vsmlite (родительский observability-слой)
+
+title: "process log + agent eval: таймлайн структурных дельт и скоринг 0-10 работы агентов"
+summary: |
+  vsmlite эмитит точечную телеметрию (monitor/data.js) и snapshot-хранилища
+  (history.json по дням, eval_history.json по прогонам, interventions.json,
+  issues/VSM-NNN.yaml), но не имеет единого слоя (а) таймлайна структурных
+  событий и (б) оценки качества работы агентов. Человек и S5 не видят «что
+  изменилось в этом цикле» одной лентой и не имеют числового вердикта по
+  работе каждого агента (продуктового TB-агента и системного S1-S5).
+
+  Решение (запрошено пользователем в сессии, средний уровень логов): два слоя
+  в одной точке интеграции (render_data.py — вызывается в конце каждого
+  cycle/eval/mature/init), чистый авто-детект дельт state/, ноль правок в
+  агентах/командах/eval/.
+
+  Слой 1 — process log: scripts/export_logs.py сравнивает key-path'и state/
+  с прошлым прогоном (state/_events_snapshot.json) и эмитит события только при
+  реальной дельте → state/events.json (machine, cap 500) + logs/process.log
+  (human append-only, cap 1000 строк). События: autonomy.changed/verdict,
+  phase.transition, cycle.completed, eval.run, metrics.drift,
+  intervention.added, issue.changed.
+
+  Слой 2 — agent eval: scripts/agent_eval.py — scoring engine 0-10 (<5 = FAIL)
+  + буквенный A/B/C/D/E (D < 0.5). Два контура: продуктовые агенты (per TB-task,
+  read-only из dev_metrics.json#tasks[] — формат стабилен по контракту VSM-024:59)
+  и системные S1-S5 (per cycle, атрибуция по owner state-файла). Per-agent
+  summary ≤ 500 символов (детерминированные шаблоны, без LLM). Breakdown по
+  difficulty/category. → state/agent_eval.json + сводная секция в process.log.
+
+  trace_len — info-only в числовом скоринге (VSM-022 superseded→VSM-024: harbor
+  управляет tool-surface, trace_len больше не индикатор обхода). harbor-блок
+  (task["harbor"]={terminated_by, attempts, reward}, появляющийся post-VSM-024
+  smoke) подхватывается оппортунистически как progressive enhancement — base
+  scoring работает и без него. Token-spend → deferred до instrumentation в VSM-024.
+
+evidence:
+  - "issues/VSM-022.yaml (superseded→VSM-024): trace_len=0 был индикатором harness-bypass; VSM-024 делает harbor управляющим tool-surface"
+  - "issues/VSM-024.yaml:59 — harbour_bridge.parse_trial() → state/dev_metrics.json, формат summary/by_*/tasks[] сохранён (контракт стабилен)"
+  - "eval/harbor_bridge.py:85-91 — task_result['harbor']={trial_name, terminated_by, verdict, attempts, reward} (progressive enhancement для agent_eval)"
+  - "eval/harbor_bridge.py:57-59 — trace_len = len(trajectory['steps']) (post-smoke будет > 0)"
+  - "scripts/render_data.py:171-174 — единственная точка: вызывается в конце cycle/eval/mature/init (хук detect_and_log)"
+  - "state/history.json + state/eval_history.json — существующий cap-паттерн [-90:], переиспользуется (events: [-500:], process.log: 1000 строк)"
+  - "scripts/autonomy.py:35-43 — tunable пороги как образец для весов скоринга"
+  - ".claude/settings.json:27 — Write(state/**) уже разрешён; logs/ пишется внутри Bash(python3 scripts/render_data.py*) — правок permissions не нужно"
+
+proposal: |
+  Реализовать в порядке: VSM-025.yaml → scripts/agent_eval.py →
+  scripts/export_logs.py → хук в render_data.py → logs/.gitkeep + .gitignore
+  + Makefile target logs:. Read-only из dev_metrics.json (defensive fallback на
+  empty-skeleton как eval/metrics.py:30-41 при пустом/битом/transit файле).
+  Ноль касаний eval/, агентов, слэш-команд, settings.json, validate.sh.
+
+acceptance:
+  - "scripts/export_logs.py эмитит события в state/events.json только при реальной дельте (первый прогон = seed, 0 событий)"
+  - "logs/process.log — human-readable append-only tail, cap 1000 строк"
+  - "scripts/agent_eval.py: score_task + score_system → {score 0-10, grade A-E, summary ≤500 символов}"
+  - "trace_len НЕ входит в числовой скоринг (info-only в summary; VSM-022 superseded→VSM-024)"
+  - "breakdown по difficulty/category в process.log + state/agent_eval.json"
+  - "token-spend: null, пометка deferred→VSM-024; task['harbor'] подхватывается оппортунистически когда есть"
+  - "defensive fallback при пустом/битом dev_metrics.json (graceful skip секции продуктовых агентов)"
+  - "make logs печатает tail; make telemetry прогоняет детект и пишет все 3 артефакта"
+  - "make validate GREEN (инвариант VSM-002/005 не нарушен — MUT_RE касается только ../vsm|../src)"
+
+needs_human_decision: false   # запрошено пользователем напрямую в сессии
+
+status: accepted
+decision: "requested by user in-session: средний уровень логов процесса + агентский скоринг 0-10 (A-E, D<0.5=FAIL), per-agent summary ≤500 символов, оба контура (продуктовые TB + системные S1-S5). trace_len info-only (VSM-022 superseded); harbor block — progressive enhancement."
+selected_options: []
+
+references:
+  - VSM-024   # eval pivot на harbor — источник task["harbor"] блока + стабилен формат dev_metrics
+  - VSM-022   # superseded→VSM-024 — причина info-only для trace_len
+  - VSM-005   # parent isolation — лог живёт в vsmlite-tb/state, не в продукте
+  - VSM-002   # мембрана — продукт не знает про оценку; read-only из dev_metrics безопасен
+
+notes:
+  - "ID VSM-025: 023 (goose --allowedTools gap) и 024 (harbour pivot) заняты другим агентом в этой сессии."
+  - "harbor 0.18.0 установлен (/home/alex/.local/bin/harbor), но smoke-прогонов нет — task['harbor'] блока в dev_metrics пока нет. Оппортунистическое чтение."
+  - "Точка интеграции единственная: render_data.py вызывается в конце каждого /vsmlite-cycle, /vsmlite-mature, /vsmlite-eval, /vsmlite-init, make telemetry."
+
+created: 2026-07-15
+updated: 2026-07-15
