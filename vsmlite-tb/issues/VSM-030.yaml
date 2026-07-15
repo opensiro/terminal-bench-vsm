@@ -99,9 +99,9 @@ options:
     label: "Defer"
     hint: "Не сейчас. Eval-батчи идут, но vsmlite на них не реагирует (системы idle). Принять как known-gap."
 
-status: triage                # ждёт решения по scope
-decision: ""
-selected_options: []
+status: done                 # full-s4-auto реализован: детерминистический контур (VSM-031) + UI/дайджест (этот follow-up)
+decision: "accept — выбран option full-s4-auto. Контур «батч → S4-наблюдение → S5-решение» замкнут ДЕТЕРМИНИСТИЧЕСКИ через scripts/run_cycle.py (VSM-031): после каждого батча rule-based детекторы классифицируют состояние (regression/zero_pass/infra_cluster/low_pass_rate/improvement → observations[]), decision logic выносит needs_human_decision|ok_with_concerns|ok_no_action, при critical автоматически создаётся VSM-NNN (triage, dedup). Это слой 2 (наблюдение) + слой 3 (решение) без LLM. LLM-агенты S4/S5 (/vsmlite-cycle) остаются слоем ГЛУБОКОГО анализа поверх — когда rule-based детекции недостаточно и нужен семантический разбор регрессии. Слой 1 (batch артефакт) — metrics.record_batch → state/batch_summaries/. UI-таймлайн (monitor/batches.html) + cycle_digest enrichment — closed этим follow-up. Полный self-correcting контур A(t) работает без ручного запуска."
+selected_options: ["full-s4-auto"]
 
 references:
   - VSM-031   # parallel trials — заложил batch_summary seam (record_batch → state/batch_summaries/), частично закрывает слой 1
