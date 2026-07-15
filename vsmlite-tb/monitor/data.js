@@ -1,5 +1,5 @@
 window.VSM_DATA = {
-  "generated": "2026-07-15T16:48:11",
+  "generated": "2026-07-15T17:20:28",
   "project": "vsmlite-template",
   "operational_mode": "normal",
   "systems": {
@@ -67,28 +67,16 @@ window.VSM_DATA = {
   "eval": {
     "dataset": "open-thoughts/OpenThoughts-TB-dev-v2",
     "harness": "claude-code",
-    "generated": "2026-07-15",
+    "generated": null,
     "summary": {
-      "total": 1,
+      "total": 0,
       "passed": 0,
-      "failed": 1,
+      "failed": 0,
       "error": 0,
       "pass_rate": 0.0
     },
-    "by_difficulty": {
-      "easy": {
-        "total": 1,
-        "passed": 0,
-        "pass_rate": 0.0
-      }
-    },
-    "by_category": {
-      "file-operations": {
-        "total": 1,
-        "passed": 0,
-        "pass_rate": 0.0
-      }
-    },
+    "by_difficulty": {},
+    "by_category": {},
     "trend": {
       "current": 0.0,
       "previous": null,
@@ -97,6 +85,64 @@ window.VSM_DATA = {
     },
     "history": [],
     "runs": [
+      {
+        "trial_name": "jsonl-aggregator__i5wrmdo",
+        "task_id": "jsonl-aggregator",
+        "status": "error",
+        "verdict": null,
+        "reward": null,
+        "terminated_by": null,
+        "attempts": null,
+        "started_at": "2026-07-15T14:10:16.473196Z",
+        "finished_at": "2026-07-15T14:15:18.423352Z",
+        "duration_sec": 301,
+        "tokens": {
+          "input": null,
+          "cache": null,
+          "output": null
+        },
+        "cost_usd": null,
+        "config": {
+          "adapter": "eval.harbor_adapter:ProductAdapter",
+          "adapter_name": null,
+          "adapter_version": null,
+          "model_name": null,
+          "timeout_multiplier": 1.0,
+          "agent_timeout_multiplier": null,
+          "verifier_timeout_multiplier": null,
+          "environment_type": "docker",
+          "install_only": false
+        }
+      },
+      {
+        "trial_name": "jsonl-aggregator__Nmo2oR7",
+        "task_id": "jsonl-aggregator",
+        "status": "failed",
+        "verdict": "task_resolved",
+        "reward": 0.0,
+        "terminated_by": "task_resolved",
+        "attempts": 1,
+        "started_at": "2026-07-15T13:51:28.982327Z",
+        "finished_at": "2026-07-15T13:56:55.604193Z",
+        "duration_sec": 326,
+        "tokens": {
+          "input": null,
+          "cache": null,
+          "output": null
+        },
+        "cost_usd": null,
+        "config": {
+          "adapter": "eval.harbor_adapter:ProductAdapter",
+          "adapter_name": "vsm-product",
+          "adapter_version": "0.1.0",
+          "model_name": null,
+          "timeout_multiplier": 1.0,
+          "agent_timeout_multiplier": null,
+          "verifier_timeout_multiplier": null,
+          "environment_type": "docker",
+          "install_only": false
+        }
+      },
       {
         "trial_name": "jsonl-aggregator__HQtmvCe",
         "task_id": "jsonl-aggregator",
@@ -2297,6 +2343,148 @@ window.VSM_DATA = {
         "Обрыв цепочки: harbor_run.py пишет trial, но eval/metrics.py не поднимает tasks[]/eval_history → render_data видит пустоту. Возможен отдельный mini-fix.",
         "Ортогонален VSM-028: Runs (наши прогоны) vs public-report (чужие, read-only); не смешиваются.",
         "static-HTML constraint (monitor/index.html:44-53): данные через data.js, без fetch/backend —Runs должен ему соответствовать."
+      ],
+      "created": "2026-07-15",
+      "updated": "2026-07-15"
+    },
+    {
+      "id": "VSM-030",
+      "source_system": "S5",
+      "signal_type": "gap",
+      "severity": "S2",
+      "target_unit": "meta",
+      "title": "Eval-batch observability: vsmlite не наблюдает результаты батчей и не решает",
+      "summary": "После eval-батча (make eval-all / run_train, напр. 21 trial) vsmlite НЕ\nреагирует: системы S2-S5 idle, наблюдения/решения по результатам батча не\nфиксируются. Пользователь хочет видеть «что vsmlite увидел в логах батча и\nкакое решение принял» — для human-оценки работы самого vsmlite (не продукта).\n\nКонтур «батч → наблюдение → решение» сейчас РАЗОРВАН:\n  - eval/modes.py (_run_batch) пишет dev_metrics.json + harbor-trials, НО не\n    триггерит vsmlite-цикл (grep cycle/intel/s4/s5/maturation/decision → пусто).\n  - state/intel.json (S4 — «глаза» vsmlite) → signals: [] (пусто).\n  - state/interventions.json (S5 решения) → interventions: [] (пусто).\n  - state/maturation.json → cycle_count: 0, autonomy.signs.s4_sign.value: 0.\n  - agent_eval: «6 системных агентов idle — не оценивались».\n  - process.log → есть product-scoring (agent eval), НЕТ vsmlite-decision блоков.\n\nЧто должно быть (контур):\n  1. ТРИГГЕР: после _run_batch (modes.py:31) vsmlite видит summary батча\n     (pass_rate, per-task results, score, trend vs previous).\n  2. НАБЛЮДЕНИЕ (S4-scout): классификация — напр. «продукт не справляется с\n     easy 0/X», «регрессия на category Y», «infra_error у Z%».\n  3. РЕШЕНИЕ (S5-guardian / S3-optimizer): одно из — создать VSM-issue (gap),\n     изменить phase readiness, отметить algedonic signal, или «ok, no action».\n  4. АРТЕФАКТ: state/batch_summaries/<id>.json — per-batch human-readable\n     отчёт {batch_id, timestamp, tasks, pass_rate, score, observations[],\n     decision, rationale, issues_raised[]}.\n  5. UI: monitor/batches.html — таймлайн батчей с развёрткой «что увидел →\n     что решил». Отдельно от runs.html (runs = per-task; batches = per-eval-run).\n\nОтделяется от существующего:\n  - VSM-025 (process log + agent eval) — скоринг ПРОДУКТА (TB-агента в\n    контейнере). Это — скоринг VSMLITE (meta-уровень над продуктом).\n  - VSM-029 (runs.html) — per-task детали. Это — per-batch мета-саммари.\n  - runs.html блок «по задачам» — статичная агрегация, НЕ observability\n    решений vsmlite (пользователь пометил как «не в тему»).\n",
+      "evidence": [
+        "eval/modes.py:31 _run_batch() — пишет dev_metrics + harbor-trials, не триггерит vsmlite-цикл",
+        "eval/modes.py grep 'cycle|intel|s4|s5|maturation|decision|digest' → ПУСТО (нет связи batch→cycle)",
+        "state/intel.json → signals: [] (S4 «глаза» vsmlite пусты после 21 trial)",
+        "state/interventions.json → interventions: [] (S5 не принимал решений по батчам)",
+        "state/maturation.json → cycle_count: 0, autonomy.signs.s4_sign.value: 0 (meets: false)",
+        "state/agent_eval.json → systems: [] (6 системных агентов idle — не оценивались)",
+        "logs/process.log — есть 'agent eval' блоки (product scoring), НЕТ 'vsmlite decision' блоков"
+      ],
+      "proposal": "Future work. Реализация по слоям (когда берётся в работу):\n\nСлой 1 — BATCH ARTEFACT (минимум, без vsmlite-цикла):\n  - eval/metrics.py: после _run_batch пишет state/batch_summaries/<ts>.json\n    со светлыми полями (batch_id, profile, timestamp, tasks[], pass_rate,\n    score_avg, trend_delta).\n  - render_data.py поднимает batch_summaries → data.js eval.batches[].\n  - monitor/batches.html — таймлайн батчей (пока без observations/decision).\n\nСлой 2 — OBSERVATION (S4-scout триггерится батчем):\n  - После _run_batch вызывается S4-scout → читает batch_summary → классифицирует\n    (regression/cluster/infra), пишет в batch_summary.observations[] + intel.json.\n  - S4 SKILL.md: добавить «batch-обзор» как новую scan-модальность.\n\nСлой 3 — DECISION (S5-guardian / S3-optimizer реагируют):\n  - S5 читает observations → одно из: VSM-issue / phase-readiness / algedonic /\n    no-action. Запись в batch_summary.decision + rationale.\n  - Это замыкает A(t) как self-correcting: плохой батч → решение → коррекция.\n\nMVP = слой 1 (без vsmlite-цикла, но артефакт есть для UI). Слои 2-3 —\nполноценный контур наблюдения/решения.\n",
+      "acceptance": [
+        "после eval-батча создаётся state/batch_summaries/<id>.json с pass_rate + tasks + score",
+        "monitor/batches.html отображает таймлайн батчей",
+        "(слой 2) batch_summary содержит observations[] от S4 (non-empty после батча)",
+        "(слой 3) batch_summary содержит decision + rationale от S5",
+        "контур разорван более: grep modes.py → есть триггер vsmlite-цикла после батча"
+      ],
+      "needs_human_decision": true,
+      "policy_question": "Какой scope для eval-batch observability и кто должен «наблюдать»?\n",
+      "options": [
+        {
+          "id": "mvp-artifact",
+          "label": "MVP: только batch-артефакт + batches.html",
+          "hint": "Слой 1. После батча пишется batch_summary.json, в мониторе — таймлайн. Без vsmlite-цикла. Быстро, но наблюдения/решения пока пустые."
+        },
+        {
+          "id": "full-s4-auto",
+          "label": "Полный: S4 авто-наблюдение + S5 решение",
+          "hint": "Слои 1-3. После батча S4-scout классифицирует, S5 решает (issue/phase/algedonic/no-action). Полный self-correcting контур A(t)."
+        },
+        {
+          "id": "full-s4-manual",
+          "label": "Полный, но S4 по триггеру человека",
+          "hint": "Слои 1-3, но наблюдение запускается явно (make batch-review), не auto после каждого батча. Контроль частоты."
+        },
+        {
+          "id": "defer",
+          "label": "Defer",
+          "hint": "Не сейчас. Eval-батчи идут, но vsmlite на них не реагирует (системы idle). Принять как known-gap."
+        }
+      ],
+      "status": "triage",
+      "decision": "",
+      "selected_options": [],
+      "references": [
+        "VSM-031",
+        "VSM-029",
+        "VSM-025",
+        "VSM-005",
+        "VSM-004"
+      ],
+      "notes": [
+        "21 trial в harbor-trials/ прогнан, но vsmlite (S2-S5) на них не реагировал — системы idle по agent_eval.",
+        "runs.html блок «по задачам» — статичная агрегация, НЕ observability решений; пользователь пометил «не в тему». Возможна замена на batches.html (слой 1).",
+        "Ортогонален VSM-025: тот скорит продукт (TB-агента в контейнере), это — мета-скоринг vsmlite над батчем.",
+        "cycle_count: 0 в maturation.json — формально циклы вообще не выполнялись после eval, только product-scoring.",
+        "VSM-031 (parallel trials) заложил seam: _run_batch возвращает rich batch-кортеж + metrics.record_batch пишет state/batch_summaries/<id>.json со светлыми плейсхолдерами observations/decision/issues_raised. Слой 1 (артефакт) начат; layer-2 (S4-наблюдение) и layer-3 (S5-решение) — будущие заходы."
+      ],
+      "created": "2026-07-15",
+      "updated": "2026-07-15"
+    },
+    {
+      "id": "VSM-031",
+      "source_system": "S3",
+      "signal_type": "gap",
+      "severity": "S2",
+      "target_unit": "meta",
+      "title": "Parallel trial runs in _run_batch (ThreadPoolExecutor over harbor trials)",
+      "summary": "Eval-батч (make eval-test / eval-all / eval-dataset) гоняет задачи строго\nпоследовательно — plain `for` в eval/modes.py:46. При медиане ~280s/trial (21\nrecorded trial) батч из 20 сэмплов ≈ 90+ min wall-clock. Контейнерная изоляция\nуже безопасна для параллелизма (каждый trial = свой Docker + свой\nstate/harbor-trials/<task>__<random-id>/, бинд-маунты read-only), но два\nблокера мешают распараллелить «в лоб»:\n\n  1. metrics.record (eval/metrics.py:57) — non-atomic read-modify-rewrite\n     (load → mutate tasks[] → _write перезаписывает весь файл). Гонка тихо\n     теряет результаты даже РАЗНЫХ задач (last-writer-wins). Нет flock, нет\n     os.replace. Эталон безопасной записи уже есть: src/agent_runtime/state_bus.\n  2. Нет workers-cap / CLI-флага — некуда повесить степень параллелизма.\n\nРеальный потолок = rate-limit Z.AI, не CPU/RAM: каждый trial крутит 3 goose-\nсабпроцесса (триада) × workers × GOOSE_THINKING_EFFORT=max (glm-5.2).\n\nOrthogonal к VSM-030 (batch observability): параллелизм naturally производит\nbatch-данные (workers, wall_clock, per-task durations) — это ровно то, что\nlayer-1 VSM-030 хочет в state/batch_summaries/<id>.json. VSM-031 закладывает\nseam (rich batch-кортеж + record_batch), частично закрывая acceptance VSM-030.\n",
+      "evidence": [
+        "eval/modes.py:46 — plain sequential `for tid in task_ids` (нет concurrency)",
+        "eval/metrics.py:57-83 record() — load→mutate→_write, перезапись всего tasks[] без лока",
+        "eval/metrics.py:206 _write() — path.write_text без tempfile+os.replace (нет atomicity)",
+        "eval/harbor_run.py:100 run_trial() — blocking subprocess.run (GIL освобождается на I/O → threads подходят)",
+        "state/harbor-trials/ — 21 trial, рандомный __<id> суффикс → разные task_id не интерферируют",
+        "src/agent_runtime/state_bus.py:218-245 — эталон flock + os.replace (переиспользуем)",
+        "21 trial timing: median 280s, max 406s → 5-way parallelism ≈ 90min → ~20min"
+      ],
+      "proposal": "1. Блокер: flock + atomic write в metrics.record/record_run/_write (эталон —\n   state_bus.py). Читатели остаются lock-free (видят цельный old/new файл).\n2. workers-поле (config.py, env EVAL_WORKERS, default 1 = zero-risk regression)\n   + CLI --workers/-W.\n3. ThreadPoolExecutor в _run_batch (threads ок — работа = blocking I/O). После\n   executor.shutdown — существующие post-batch вызовы (record_run/compute_trend)\n   однопоточные, как есть.\n4. Rich batch-кортеж из _run_batch + record_batch → state/batch_summaries/\n   (seam для VSM-030 layer-2/3: observations/decision — светлые плейсхолдеры).\n5. Не трогать схему dev_metrics.json (upsert по task_id достаточен для разных\n   задач), run_trial signature (контракт VSM-024), harbor_bridge.\n",
+      "acceptance": [
+        "--workers N гоняет N задач одновременно (stderr показывает перекрытие start/done)",
+        "после parallel-батча dev_metrics.json содержит все N результатов (ни один не потерян — проверка блокера)",
+        "state/batch_summaries/<id>.json создаётся с pass_rate + tasks + workers + wall_clock_sec",
+        "--workers 1 бит-идентичен текущему sequential поведению (regression-safe)",
+        "make validate GREEN"
+      ],
+      "needs_human_decision": true,
+      "policy_question": "Какой workers-cap по умолчанию (потолок = rate-limit Z.AI, 3 goose-сабпроцесса × N)?\n",
+      "options": [
+        {
+          "id": "cap-3",
+          "label": "cap=3 (консервативно)",
+          "hint": "3 параллельных trial = 9 goose-сессий одновременно. Безопасный старт, почти наверняка ниже rate-limit."
+        },
+        {
+          "id": "cap-5",
+          "label": "cap=5 (recommended)",
+          "hint": "5 параллельных = 15 goose-сессий. ~5× speedup на батче (90min→~20min). Подобрать под tier Z.AI."
+        },
+        {
+          "id": "cap-10",
+          "label": "cap=10 (агрессивно)",
+          "hint": "10 параллельных = 30 goose-сессий. Может упереться в rate-limit/429. drvfs-нагрузка на /mnt/e."
+        },
+        {
+          "id": "auto",
+          "label": "auto из rate-limit (future)",
+          "hint": "Читать лимит из ответов API (429 backoff) и адаптировать workers динамически. Сложнее, отдельный заход."
+        },
+        {
+          "id": "defer",
+          "label": "Defer",
+          "hint": "Не сейчас. Оставить workers=1 (sequential). Реализация block'а (flock) уже закоммичена как фундамент."
+        }
+      ],
+      "status": "triage",
+      "decision": "",
+      "selected_options": [],
+      "references": [
+        "VSM-030",
+        "VSM-029",
+        "VSM-026",
+        "VSM-024"
+      ],
+      "notes": [
+        "Контейнерная изоляция уже безопасна: каждый trial = свой Docker-контейнер + свой harbor-trials/ dir (рандомный __<id>). Бинд-маунты src/vsm/eval — read-only.",
+        "Блокер №1 — metrics.record гонка (теряет результаты разных задач). Чинится flock+os.replace, эталон в src/agent_runtime/state_bus.py.",
+        "Реальный потолок — rate-limit Z.AI (api.z.ai), не CPU/RAM. Подбирается экспериментально под tier.",
+        "Secondary: drvfs /mnt/e (WSL2) — 5-10 контейнеров читают бинд-маунты через 9P, многие-мелкие-файлы = bottleneck.",
+        "Orthogonal VSM-030: закладывает batch_summary seam (rich return из _run_batch + record_batch), не трогая layer-2/3 (S4/S5 observability)."
       ],
       "created": "2026-07-15",
       "updated": "2026-07-15"

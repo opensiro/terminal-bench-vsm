@@ -51,17 +51,17 @@ eval-run: ## прогнать одну задачу: make eval-run TASK=<task_id
 	@test -n "$(TASK)" || { echo "укажите TASK=<task_id> (см. make eval-list)"; exit 2; }
 	@python3 -m eval run --task $(TASK)
 
-eval-all: ## прогнать все задачи (по фильтру: FILTER=difficulty=medium LIMIT=5)
-	@python3 -m eval run-all $(if $(FILTER),--filter $(FILTER)) $(if $(LIMIT),--limit $(LIMIT))
+eval-all: ## прогнать все задачи (по фильтру: FILTER=difficulty=medium LIMIT=5 WORKERS=3)
+	@python3 -m eval run-all $(if $(FILTER),--filter $(FILTER)) $(if $(LIMIT),--limit $(LIMIT)) $(if $(WORKERS),--workers $(WORKERS))
 
 eval-summary: ## вывести pass-rate (PROFILE=train|eval-test|eval-dataset)
 	@python3 -m eval $(if $(PROFILE),--profile $(PROFILE)) summary
 
-eval-test: ## TB-2.1 verified: N сэмплов для оценки репрезентативности (SAMPLE=5)
-	@python3 -m eval --profile eval-test eval-test $(if $(SAMPLE),--sample $(SAMPLE))
+eval-test: ## TB-2.1 verified: N сэмплов для оценки репрезентативности (SAMPLE=5 WORKERS=3)
+	@python3 -m eval --profile eval-test eval-test $(if $(SAMPLE),--sample $(SAMPLE)) $(if $(WORKERS),--workers $(WORKERS))
 
-eval-dataset: ## TB-2.1 verified: все 89 задач (финальный test)
-	@python3 -m eval --profile eval-dataset eval-dataset
+eval-dataset: ## TB-2.1 verified: все 89 задач (финальный test) (WORKERS=3)
+	@python3 -m eval --profile eval-dataset eval-dataset $(if $(WORKERS),--workers $(WORKERS))
 
 eval-sanity: ## структурная проверка датасета (PROFILE=train|eval-test|eval-dataset)
 	@python3 -m eval $(if $(PROFILE),--profile $(PROFILE)) sanity

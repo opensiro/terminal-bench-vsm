@@ -6,5 +6,37 @@
     "from": 21,
     "to": 29,
     "detail": "+VSM-018,VSM-019,VSM-020,VSM-021,VSM-026,VSM-027,VSM-028,VSM-029"
+  },
+  {
+    "ts": "2026-07-15T17:10:02",
+    "type": "issue.changed",
+    "field": "issues.count",
+    "from": 29,
+    "to": 30,
+    "detail": "+VSM-030"
+  },
+  {
+    "ts": "2026-07-15T18:00:00",
+    "type": "issue.changed",
+    "field": "issues.count",
+    "from": 30,
+    "to": 31,
+    "detail": "+VSM-031"
+  },
+  {
+    "ts": "2026-07-15T17:20:28",
+    "type": "eval.run",
+    "field": "summary.pass_rate",
+    "from": 0.0,
+    "to": 0.0,
+    "detail": "0% (0 tasks)"
+  },
+  {
+    "ts": "2026-07-15T17:20:28",
+    "type": "issue.changed",
+    "field": "issues.count",
+    "from": 30,
+    "to": 31,
+    "detail": "+VSM-031"
   }
 ]

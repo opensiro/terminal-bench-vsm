@@ -18,6 +18,7 @@ from __future__ import annotations
 
 import sys
 import subprocess
+import concurrent.futures
 from datetime import datetime
 
 from .config import EvalConfig, VSMLITE_ROOT
@@ -67,15 +68,89 @@ def _trigger_cycle(batch_record: dict) -> None:
         _log(f"  ⚠ cycle failed (non-fatal): {type(e).__name__}: {e}")
 
 
-def _build_batch_record(config: EvalConfig, results: list[dict],
-                        started_at: datetime, finished_at: datetime,
-                        wall_clock: float, summary: dict, trend: dict) -> dict:
-    """VSM-031: собрать rich batch-кортеж для observability (cycle + UI).
+def _run_batch(task_ids: list[str], config: EvalConfig) -> dict:
+    """Прогнать список task_id через harbor_run.run_trial, изолируя ошибки.
 
-    Поля observations/decision/issues_raised — светлые плейсхолдеры; их заполнит
-    run_cycle.py (rule-based наблюдение + decision). Без cycle артефакт всё равно
-    пишется (есть для UI-таймлайна батчей в monitor/).
+    Каждый trial → task_result dict (записывается harbor_run в metrics_file
+    профиля). Ошибка одной задачи логируется, но не валит батч. В конце —
+    snapshot trend + summary.
+
+    VSM-031: батч идёт параллельно через ThreadPoolExecutor (config.workers,
+    default 1 = sequential, zero-risk regression). Потолок — rate-limit Z.AI
+    (3 goose-сабпроцесса × workers), не CPU/RAM. После executor.shutdown —
+    post-batch шаги (record_run/compute_trend) однопоточные, как раньше.
+    run_trial signature не меняется (контракт VSM-024).
+
+    Lazy import harbor_run: он живёт в зоне VSM-024; импортируем здесь, чтобы
+    modes.py не падал при import-time если harbor-зависимости недоступны
+    (sanity/list не нуждаются в harbor).
+
+    Возвращает rich batch-кортеж (seam для VSM-030 observability): summary +
+    batch_id/workers/wall_clock/per_task. record_batch пишет его в
+    state/batch_summaries/<batch_id>.json (layer-1 VSM-030).
     """
+    from .harbor_run import run_trial  # lazy: зона VSM-024
+
+    total = len(task_ids)
+    workers = max(1, getattr(config, "workers", 1) or 1)
+    started_at = datetime.now()
+    results: list[dict] = []
+
+    def _run_one(tid: str) -> dict:
+        """Один trial → task_result (или error-запись). Изолирует исключения."""
+        try:
+            result = run_trial(tid, config)
+            if result:
+                return result
+            _log(f"  ✗ {tid}: trial вернул пустой результат (infra error?)")
+            return {"task_id": tid, "status": "error", "error": "empty trial result"}
+        except Exception as e:
+            _log(f"  ✗ {tid}: trial failed: {type(e).__name__}: {e}")
+            return {"task_id": tid, "status": "error",
+                    "error": f"{type(e).__name__}: {e}"}
+
+    if workers == 1:
+        # Sequential path — бит-эквивалентен предыдущему поведению (regression-safe).
+        for i, tid in enumerate(task_ids, 1):
+            _log(f"[{i}/{total}] {tid}")
+            results.append(_run_one(tid))
+    else:
+        # Parallel path (VSM-031): threads ок — работа это blocking subprocess.run
+        # + I/O, GIL освобождается. EvalConfig шарится только на чтение.
+        _log(f"── parallel: workers={workers}, tasks={total} ──")
+        with concurrent.futures.ThreadPoolExecutor(max_workers=workers) as ex:
+            future_to_tid = {ex.submit(_run_one, tid): tid for tid in task_ids}
+            done = 0
+            for fut in concurrent.futures.as_completed(future_to_tid):
+                tid = future_to_tid[fut]
+                # as_completed уже поднял бы исключение; _run_one ловит своё.
+                res = fut.result()
+                results.append(res)
+                done += 1
+                status = res.get("status", "?")
+                _log(f"[{done}/{total}] {tid} → {status}")
+
+    finished_at = datetime.now()
+    wall_clock = (finished_at - started_at).total_seconds()
+
+    # Итоговый summary (метрики уже записаны harbor_run → metrics_file профиля).
+    _log("\n" + "=" * 60)
+    data = metrics.load(config)
+    summary = data.get("summary", {})
+    _log(f"batch [{config.profile}] pass-rate: "
+         f"{summary.get('passed', 0)}/{summary.get('total', 0)} = "
+         f"{summary.get('pass_rate', 0.0):.1%}  "
+         f"(wall={wall_clock:.0f}s, workers={workers})")
+
+    # Snapshot trend (один в день per-режима).
+    snapshot = metrics.record_run(config)
+    trend = metrics.compute_trend(config)
+    _log(f"trend: {trend['direction']} (delta={trend['delta']:+.1%})")
+    _log(f"→ {config.dev_metrics_file}")
+    _log(f"→ {metrics._history_path(config)}")
+
+    # Rich batch-кортеж (seam для VSM-030). record_batch пишет артефакт; поля
+    # observations/decision/issues_raised — светлые плейсхолдеры для layer-2/3.
     batch_id = f"{config.profile}__{started_at.strftime('%Y%m%d-%H%M%S')}"
     per_task = [
         {
@@ -86,103 +161,25 @@ def _build_batch_record(config: EvalConfig, results: list[dict],
         }
         for r in results
     ]
-    return {
+    batch_record = {
         "batch_id": batch_id,
         "profile": config.profile,
         "timestamp": started_at.isoformat(timespec="seconds"),
         "started_at": started_at.isoformat(timespec="seconds"),
         "finished_at": finished_at.isoformat(timespec="seconds"),
         "wall_clock_sec": round(wall_clock, 1),
-        "tasks_total": len(results),
+        "workers": workers,
+        "tasks_total": total,
         "summary": summary,
         "trend_direction": trend["direction"],
         "trend_delta": trend["delta"],
         "per_task": per_task,
-        # VSM-031 плейсхолдеры — заполняются run_cycle.py:
+        # VSM-030 layer-2/3 плейсхолдеры (заполнятся будущими S4/S5 заходами):
         "observations": [],
         "decision": "",
         "issues_raised": [],
     }
-
-
-def _write_batch_summary(config: EvalConfig, batch: dict):
-    """VSM-031: atomic-write batch_summary в state/batch_summaries/<id>.json."""
-    import json, os, tempfile
-    out_dir = config.results_dir / "batch_summaries"
-    out_dir.mkdir(parents=True, exist_ok=True)
-    out = out_dir / f"{batch['batch_id']}.json"
-    payload = json.dumps(batch, ensure_ascii=False, indent=2) + "\n"
-    fd, tmp = tempfile.mkstemp(dir=str(out_dir), prefix=out.name + ".", suffix=".tmp")
-    try:
-        with os.fdopen(fd, "w", encoding="utf-8") as f:
-            f.write(payload)
-        os.replace(tmp, out)
-    except BaseException:
-        try:
-            os.unlink(tmp)
-        except OSError:
-            pass
-        raise
-    return out
-
-
-def _run_batch(task_ids: list[str], config: EvalConfig) -> dict:
-    """Прогнать список task_id через harbor_run.run_trial, изолируя ошибки.
-
-    Каждый trial → task_result dict (записывается harbor_run в metrics_file
-    профиля). Ошибка одной задачи логируется, но не валит батч. В конце —
-    snapshot trend + summary.
-
-    Lazy import harbor_run: он живёт в зоне VSM-024; импортируем здесь, чтобы
-    modes.py не падал при import-time если harbor-зависимости недоступны
-    (sanity/list не нуждаются в harbor).
-    """
-    from .harbor_run import run_trial  # lazy: зона VSM-024
-
-    total = len(task_ids)
-    started_at = datetime.now()
-    results = []
-    for i, tid in enumerate(task_ids, 1):
-        _log(f"[{i}/{total}] {tid}")
-        try:
-            result = run_trial(tid, config)
-            if result:
-                results.append(result)
-            else:
-                _log(f"  ✗ trial вернул пустой результат (infra error?)")
-                results.append({"task_id": tid, "status": "error",
-                                "error": "empty trial result"})
-        except Exception as e:
-            _log(f"  ✗ trial failed: {type(e).__name__}: {e}")
-            results.append({"task_id": tid, "status": "error",
-                            "error": f"{type(e).__name__}: {e}"})
-    finished_at = datetime.now()
-    wall_clock = (finished_at - started_at).total_seconds()
-
-    # Итоговый summary (метрики уже записаны harbor_run → metrics_file профиля).
-    _log("\n" + "=" * 60)
-    data = metrics.load(config)
-    summary = data.get("summary", {})
-    _log(f"batch [{config.profile}] pass-rate: "
-         f"{summary.get('passed', 0)}/{summary.get('total', 0)} = "
-         f"{summary.get('pass_rate', 0.0):.1%}")
-
-    # Snapshot trend (один в день per-режима).
-    snapshot = metrics.record_run(config)
-    trend = metrics.compute_trend(config)
-    _log(f"trend: {trend['direction']} (delta={trend['delta']:+.1%})")
-    _log(f"→ {config.dev_metrics_file}")
-    _log(f"→ {metrics._history_path(config)}")
-
-    # VSM-031: rich batch-артефакт для cycle observability. Пишется в
-    # state/batch_summaries/<batch_id>.json — per-batch саммари со светлыми
-    # полями. observations/decision/issues_raised — плейсхолдеры; их заполнит
-    # run_cycle.py (rule-based наблюдение + decision). Без cycle артефакт всё
-    # равно пишется (есть для UI-таймлайна батчей).
-    batch_record = _build_batch_record(
-        config, results, started_at, finished_at, wall_clock, summary, trend,
-    )
-    batch_path = _write_batch_summary(config, batch_record)
+    batch_path = metrics.record_batch(config, batch_record)
     _log(f"→ {batch_path}")
 
     # VSM-031: авто-цикл после батча — замыкает контур «наблюдение → решение».
@@ -191,7 +188,8 @@ def _run_batch(task_ids: list[str], config: EvalConfig) -> dict:
     if not getattr(config, "no_cycle", False):
         _trigger_cycle(batch_record)
 
-    return data
+    # Возвращаем rich batch (data + batch-метаданные для вызывающих режимов).
+    return {**data, "batch": batch_record}
 
 
 def run_eval_test(config: EvalConfig, sample_size: int | None = None) -> dict:

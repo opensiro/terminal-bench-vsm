@@ -130,6 +130,12 @@ class EvalConfig:
     # Масштабирование прогонов
     limit: int | None = None          # максимум задач в батче (None = все)
 
+    # Параллелизм батча (VSM-031): N задач одновременно через ThreadPoolExecutor.
+    # 1 = sequential (zero-risk regression). Потолок — rate-limit Z.AI
+    # (3 goose-сабпроцесса × workers × GOOSE_THINKING_EFFORT=max), не CPU/RAM.
+    workers: int = field(default_factory=lambda: max(1, int(os.environ.get(
+        "EVAL_WORKERS", "1"))))
+
     # eval-test сэмплинг (VSM-026): N задач из TB-2.1 verified, random seed=42.
     # Детерминированный random → точки сравнимы между итерациями.
     eval_test_sample_size: int = 20
@@ -197,4 +203,6 @@ class EvalConfig:
             parts.append(f"ids={len(self.filter_task_ids)}")
         if self.limit:
             parts.append(f"limit={self.limit}")
+        if self.workers and self.workers != 1:
+            parts.append(f"workers={self.workers}")
         return ", ".join(parts)

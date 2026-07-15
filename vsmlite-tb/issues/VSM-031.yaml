@@ -90,6 +90,16 @@ references:
   - VSM-024   # harbor pivot — trials в harbor-формате, batch_summaries естественны
   - VSM-026   # 3-режимная архитектура eval — cycle работает с любым profile
 
+merge_note: |
+  Этот issue объединяет две комплементарные работы над VSM-031 (слиты в main):
+    1. cycle automation (scripts/run_cycle.py) — observability-слой: наблюдает
+       batch_summaries, решает, создаёт VSM-issue при critical, обновляет A(t).
+    2. parallel trials (eval/modes.py ThreadPoolExecutor + eval/metrics.py
+       record_batch + flock-safe writes + EvalConfig.workers) — production-слой:
+       параллельные батчи + безопасный seam batch_summaries для cycle.
+  Cycle потребляет артефакты parallel-слоя. Обе работы самодостаточны, но вместе
+  дают полный контур: parallel eval → batch_summary seam → cycle observe/decide.
+
 notes:
   - "LLM-цикл /vsmlite-cycle НЕ затронут — остаётся слоем глубокого S4/S5 анализа поверх детерминистического."
   - "Trend использует cycle_history (собственная память), не eval_history — потому что eval_history пишется только из _run_batch daily-snapshot'ом и неполон при интервальных прогонах."
