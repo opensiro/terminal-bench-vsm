@@ -1,0 +1,115 @@
+id: VSM-029
+source_system: S4            # intelligence: нет обзора того, что происходит в eval-ранах
+signal_type: gap             # gap — per-run данные есть, но не доходят до монитора
+severity: S3                 # не ломает viability; enhances observability
+target_unit: meta            # monitor/ + render_data.py (артефактный слой vsmlite-tb)
+
+title: "Раздел Runs в monitor/: саммари eval-прогонов (harbor-trials → UI)"
+
+summary: |
+  Монитор показывает АГРЕГАТЫ (A(t), pass_rate сводно в metrics.html), но НЕ
+  показывает per-run саммари: какие задачи прогонялись, когда, вердикт,
+  длительность, число шагов, награда. Раздел "Runs" в навигации отсутствует.
+
+  Gap не в "нет данных" — per-run артефакты УЖЕ есть на диске, но не доходят до
+  монитора:
+    - state/harbor-trials/*/ — 21 trial, каждый с богатым result.json
+      (started_at/finished_at, agent_execution, verifier, step_results),
+      agent/trajectory.json, verifier/reward.txt.
+    - state/dev_metrics.json → tasks[].harbor {trial_name, terminated_by,
+      verdict, attempts, reward} — агрегированный вердикт per-task.
+    - state/eval_history.json — ПУСТОЙ (мост eval→history не пишет).
+
+  Цепочка обрыва: harbor_run.py пишет trial → eval/metrics.py Должен писать
+  tasks[] + eval_history.json → render_data.py поднимает в data.js → UI рендерит.
+  Сейчас tasks[]=0 и eval_history=[] при 21 trial на диске. Значит либо metrics.py
+  не вызывается/не пишет, либо render_data читает не оттуда.
+
+  Что нужно (scope issue):
+    1. Мост: render_data.py поднимает harbor-trials (или dev_metrics.tasks) в
+       data.js как eval.runs[] (светлые поля: task, verdict, reward, duration,
+       steps, timestamp, trial_name).
+    2. UI: monitor/runs.html — таблица ранов с фильтром (passed/failed/error) +
+       детализация по клику. Навигация: +1 ссылка в header (app.js:103-106).
+    3. Интеграция с public-report/ (VSM-028): внешние baseline-карточки — отдельный
+       столбец контекста "frontier-якорь" рядом с A(t) продукта, НЕ смешивается.
+
+evidence:
+  - "monitor/assets/app.js:102-107 — навигация: 4 ссылки (Системы, Метрики, Issues, Памятка); раздела Runs НЕТ"
+  - "monitor/data.js → eval.summary={total,passed,failed,error,pass_rate} есть, но tasks[] пустые, eval.history=[] (0 снэпшотов)"
+  - "state/dev_metrics.json → tasks: [] (0) — последний прогон (jsonl-aggregator, reward=1.0) записал только summary без детализации"
+  - "state/harbor-trials/ — 21 trial, каждый содержит result.json (19 ключей incl. started_at/finished_at/agent_execution/verifier/step_results), agent/trajectory.json, verifier/reward.txt"
+  - "state/eval_history.json — ПУСТОЙ (мост eval→history не пишет, _eval_trend() в render_data.py:216 возвращает none)"
+  - "scripts/render_data.py:134-143 — eval-блок читает dev_metrics + eval_history, но НЕ читает harbor-trials напрямую"
+  - "monitor/metrics.html — есть сводка A(t) + история снэпшотов (state/history.json), но НЕТ per-task/per-run таблицы"
+
+proposal: |
+  Минимально-viable Runs-раздел (MVP), 3 слоя:
+
+  Слой 1 — ДАННЫЕ (render_data.py):
+    - Новая функция _collect_runs(): проходит state/harbor-trials/*/, читает
+      result.json + verifier/reward.txt, собирает светлые поля:
+      {trial_name, task_id, verdict, reward, started_at, duration_sec,
+       step_count, terminated_by}.
+    - Не тянем тяжёлые trajectory.json/step_results в data.js (это МБ) —
+      только саммари. Детали по клику → открытый файл (static, no backend).
+    - eval.runs[] в data.js, последние N (напр. 50).
+
+  Слой 2 — UI (monitor/runs.html + app.js):
+    - Таблица: task | verdict | reward | duration | steps | timestamp | trial.
+    - Фильтр: all / passed / failed / error. Сортировка по timestamp (desc).
+    - Детализация по клику → развёртка строки (trial_name → ссылка на артефакт).
+    - +1 в навигацию (app.js:103-106): "Раны (${D.eval.runs?.length||0})".
+
+  Слой 3 — ИНТЕГРАЦИЯ:
+    - eval_history.json заполняется (fix моста eval→history) — для trend-графика.
+    - dev_metrics.tasks[] заполняется (fix metrics.py) — для by_difficulty/by_category.
+    - public-report/ baseline-и (VSM-028) — отдельный блок-контекст, не в runs.
+
+  Не-blocker для VSM-026/028: ортогонален. Runs = наши прогоны;
+  public-report = чужие (read-only reference).
+
+acceptance:
+  - "monitor/runs.html существует и рендерит таблицу из data.js (без fetch, static)"
+  - "data.js содержит eval.runs[] со светлыми полями (task, verdict, reward, duration, steps, timestamp)"
+  - "навигация (app.js header) содержит ссылку на runs.html"
+  - "хотя бы 1 реальный trial из harbor-trials/ отображается (не пустая таблица)"
+  - "make validate GREEN (validate.sh не затронут, но регрессии нет)"
+
+needs_human_decision: true   # scope MVP vs full + источник данных (trials vs metrics.tasks)
+
+policy_question: |
+  Какой scope и источник данных для раздела Runs?
+
+options:
+  - id: mvp-trials
+    label: "MVP: harbor-trials → runs.html"
+    hint: "render_data читает 21 trial напрямую, таблица саммари + фильтр. Быстро, данные уже есть. (Рекоменд.)"
+  - id: mvp-fix-bridge
+    label: "MVP: fix eval→history мост, потом UI"
+    hint: "Сначала чиним metrics.py (tasks[] + eval_history.json), потом UI на готовых данных. Чище, но больше работы."
+  - id: full
+    label: "Full: trials + trend-график + by_category + frontier-якорь"
+    hint: "MVP + trend во времени + разбивка по категориям + блок public-report (VSM-028). Максимум observability."
+  - id: defer
+    label: "Defer"
+    hint: "Не сейчас; монитор показывает агрегаты, per-run через make eval-summary в CLI."
+
+status: done                 # mvp-trials реализован: render_data читает harbor-trials, runs.html + навигация
+decision: "accept — выбран option mvp-trials. render_data.py читает harbor-trials напрямую в data.js eval.runs[], runs.html рендерит таблицу с фильтром. fix-bridge (metrics.py tasks[]/eval_history) отложен — данные идут напрямую из trials."
+selected_options: ["mvp-trials"]
+
+references:
+  - VSM-028   # public-report — frontier-якорь; Runs = наши прогоны, ортогонален
+  - VSM-026   # 3-режимная архитектура eval — runs来自 train/eval-test/eval-dataset
+  - VSM-005   # eval pass-rate как индикатор автономности — Runs даёт per-run детали
+  - VSM-024   # harbor pivot — trials уже в harbor-формате, мост естественен
+
+notes:
+  - "21 trial в harbor-trials/ — богаты (result.json с 19 ключами), но шаг_results/trajectory МБ-тяжёлые; в data.js только светлые поля."
+  - "Обрыв цепочки: harbor_run.py пишет trial, но eval/metrics.py не поднимает tasks[]/eval_history → render_data видит пустоту. Возможен отдельный mini-fix."
+  - "Ортогонален VSM-028: Runs (наши прогоны) vs public-report (чужие, read-only); не смешиваются."
+  - "static-HTML constraint (monitor/index.html:44-53): данные через data.js, без fetch/backend —Runs должен ему соответствовать."
+
+created: 2026-07-15
+updated: 2026-07-15

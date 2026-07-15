@@ -79,6 +79,87 @@ def _read_issues():
     return issues
 
 
+def _collect_runs(trials_dir: Path, limit: int = 50):
+    """VSM-029: per-run саммари из state/harbor-trials/ для раздела Runs в мониторе.
+
+    Проходит state/harbor-trials/*/, читает result.json каждого trial'а и
+    собирает светлые поля (без тяжёлых trajectory.json/step_results). Источник
+    полей установлен по реальной структуре harbor result.json (19 ключей):
+      - trial_name/task_name — на верхнем уровне
+      - verdict/terminated_by/total_attempts — agent_result.metadata
+      - reward — verifier_result.rewards.reward
+      - started_at/finished_at — на верхнем уровне (ISO Z)
+      - tokens — agent_result.n_{input,cache,output}_tokens (часто None)
+
+    Возвращает список runs, отсортированный по started_at (desc), обрезанный до
+    limit. Один битый trial не валилит весь сбор (skip + continue).
+    """
+    if not trials_dir.exists():
+        return []
+    runs = []
+    for tdir in sorted(trials_dir.iterdir(), reverse=True):
+        if not tdir.is_dir():
+            continue
+        rpath = tdir / "result.json"
+        try:
+            r = json.loads(rpath.read_text(encoding="utf-8"))
+        except (FileNotFoundError, json.JSONDecodeError):
+            continue
+        if not isinstance(r, dict):
+            continue
+        try:
+            meta = (r.get("agent_result") or {}).get("metadata") or {}
+            rewards = ((r.get("verifier_result") or {}).get("rewards") or {})
+            reward = rewards.get("reward")
+            started = r.get("started_at")
+            finished = r.get("finished_at")
+            duration = _duration_sec(started, finished)
+            exc = r.get("exception_info")
+            # status: exception → error; reward 1.0 → passed; 0.0 → failed; иначе unknown
+            if exc:
+                status = "error"
+            elif reward is None:
+                status = "unknown"
+            else:
+                status = "passed" if reward >= 1.0 else "failed"
+            ar = r.get("agent_result") or {}
+            runs.append({
+                "trial_name": r.get("trial_name") or tdir.name,
+                "task_id": r.get("task_name") or tdir.name.split("__")[0],
+                "status": status,
+                "verdict": meta.get("verdict"),
+                "reward": reward,
+                "terminated_by": meta.get("terminated_by"),
+                "attempts": meta.get("total_attempts"),
+                "started_at": started,
+                "finished_at": finished,
+                "duration_sec": duration,
+                "tokens": {
+                    "input": ar.get("n_input_tokens"),
+                    "cache": ar.get("n_cache_tokens"),
+                    "output": ar.get("n_output_tokens"),
+                },
+                "cost_usd": ar.get("cost_usd"),
+            })
+        except Exception:
+            continue
+    # сортировка по started_at desc (None — в конец)
+    runs.sort(key=lambda x: x.get("started_at") or "", reverse=True)
+    return runs[:limit]
+
+
+def _duration_sec(started, finished):
+    """Парсит ISO-Z таймстампы, возвращает разницу в секундах (int) или None."""
+    if not started or not finished:
+        return None
+    try:
+        s = datetime.fromisoformat(str(started).replace("Z", "+00:00"))
+        f = datetime.fromisoformat(str(finished).replace("Z", "+00:00"))
+        return int((f - s).total_seconds())
+    except (ValueError, TypeError):
+        return None
+
+
 def main():
     project = ROOT.name
     try:
@@ -110,6 +191,8 @@ def main():
     # eval (Terminal-Bench Dev Set v2) — VSM-005 входной индикатор автономности
     eval_summary = dev_metrics.get("summary", {}) if isinstance(dev_metrics, dict) else {}
     eval_trend = _eval_trend(eval_history)
+    # VSM-029: per-run саммари из harbor-trials/ для раздела Runs в мониторе
+    runs = _collect_runs(STATE / "harbor-trials")
 
     data = {
         "generated": datetime.now().isoformat(timespec="seconds"),
@@ -140,6 +223,7 @@ def main():
             "by_category": dev_metrics.get("by_category", {}) if isinstance(dev_metrics, dict) else {},
             "trend": eval_trend,   # {current, previous, delta, direction} для S4/UI
             "history": eval_history[-30:] if isinstance(eval_history, list) else [],  # последние 30 прогонов
+            "runs": runs,   # VSM-029: per-run саммари из harbor-trials/ (последние 50)
         },
         "maturation": {
             "state": maturation.get("maturation_state", "Initial State"),

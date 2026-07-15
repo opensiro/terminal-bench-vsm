@@ -102,6 +102,7 @@ function renderHeader(active) {
     <nav class="top">
       <a href="index.html"   class="${active==='index'?'active':''}">Системы / maturation</a>
       <a href="metrics.html" class="${active==='metrics'?'active':''}">Метрики по датам</a>
+      <a href="runs.html"    class="${active==='runs'?'active':''}">Раны (${(((D.eval||{}).runs)||[]).length})</a>
       <a href="issues.html"  class="${active==='issues'?'active':''}">Запросы корректировки (${(D.issues||[]).length})</a>
       <a href="reference.html" class="${active==='reference'?'active':''}">Памятка VSM↔vsmlite</a>
     </nav>`;
@@ -376,6 +377,9 @@ function renderMetricsPage() {
   renderHeader("metrics");
   if (window.renderMetricsHistory) window.renderMetricsHistory();
 }
+function renderRunsPage() {   // VSM-029: хедер + навигация для runs.html; таблицу рисует inline-скрипт страницы
+  renderHeader("runs");
+}
 
 // ════════════════════════ Памятка VSM ↔ vsmlite (reference.html) ════════════════════════
 // Статичный reference-контент + живая таблица систем из window.VSM_DATA.
@@ -391,7 +395,7 @@ function renderReference() {
   // ── живая таблица систем: имена агентов и health — из data.js, остальное — канон ──
   const SYS = [
     { k:"S1",  horizon:"now",             canon:"Реальная работа. Может состоять из множества автономных операционных единиц.",
-      lite:"<code>synthesis-operator</code> (планирует) + <code>child-dispatcher</code> (единственный исполнитель, трогает <code>../vsm/</code> и <code>../src/</code>). S1 = <b>синтез</b> дочернего VSM.",
+      lite:"<code>synthesis-operator</code> (планирует) + <code>child-dispatcher</code> (единственный исполнитель, трогает <code>../vsm/</code> и <code>../src/</code>). S1 = <b>синтез</b> дочернего VSM. Продукт после <b>VSM-007 Split</b> = мульти-агент (<code>planner</code>+<code>executor</code>+<code>verifier</code>).",
       shift:"переинтерпретация" },
     { k:"S2",  horizon:"now",             canon:"Анти-осцилляция: гасит конфликты между S1-единицами, синхронизирует, изолирует.",
       lite:"<code>s2-coordinator</code> — anti-looping, изоляция, маршрутизация; статус дочернего VSM → <code>state/status.json</code>.",
@@ -406,8 +410,8 @@ function renderReference() {
       lite:"<code>s4-scout</code> — среда прикладного домена child: пробелы, дрейф child-vs-seed, weak signals → <code>state/intel.json</code>. <b>≠ QA.</b>",
       shift:"аналог" },
     { k:"S5",  horizon:"meta",            canon:"«Кто мы»; ценности; балансирует гомеостаз S3↔S4; решения на уровне идентичности.",
-      lite:"<code>s5-guardian</code> + <code>CLAUDE.md</code> (конституция). <b>Готовит, но не принимает</b> решения за человека.",
-      shift:"аналог + basta" },
+      lite:"<code>s5-guardian</code> + <code>CLAUDE.md</code> (конституция). <b>Архитектор (VSM-005)</b>: вмешивается в child при алгедонике от S3/S3*/S4, рутинно бездействует; каждое вмешательство = +1 к <code>interventions.json</code>. <code>prepare_only</code> — только для родительских решений человека.",
+      shift:"аналог + архитектор" },
   ];
   const sysRows = SYS.map(s => {
     const live = (D.systems || {})[s.k] || {};
@@ -432,6 +436,35 @@ function renderReference() {
   </div>
 
   <section>
+    <h2>Dual-layer: родитель-оценщик ↔ продукт-agnostic</h2>
+    <div class="card" style="padding:0;overflow-x:auto">
+      <table>
+        <thead><tr><th>Слой</th><th>Что знает про Terminal Bench</th><th>Файлы</th><th>Роль</th></tr></thead>
+        <tbody>
+          <tr>
+            <td><b>Родитель</b> <code>vsmlite-tb/</code></td>
+            <td><span class="badge phase">знает</span> — это оценочный стенд</td>
+            <td><code>vsmlite.yaml</code>, <code>eval/</code>, <code>state/dev_metrics.json</code>, <code>state/interventions.json</code></td>
+            <td>Выращивает + оценивает продукт. Мембрана (VSM-002) снимает TB-фрейминг на границе.</td>
+          </tr>
+          <tr>
+            <td><b>Продукт</b> <code>../vsm/</code> + <code>../src/</code></td>
+            <td><span class="badge warn">НЕ знает</span> — benchmark-agnostic failure-aware coding harness</td>
+            <td><code>../vsm/vsm.yaml</code>, <code>../src/runtime/</code> (multi-agent solver: planner+executor+verifier)</td>
+            <td>Решает generic coding tasks. Не имеет пути к родителю (parent isolation, VSM-005).</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="note" style="margin-top:10px">
+      <b>Мембрана (VSM-002)</b> = структурная, не фильтр. Три механизма (VSM-005):
+      <b>(1)</b> MCP tool surface продукта не включает eval-access (отсутствие инструмента);
+      <b>(2)</b> <code>vsm/</code> и <code>src/</code> не ссылаются на <code>../../vsmlite-tb/</code>;
+      <b>(3)</b> в <code>eval/membrane.py</code> TB-инструкция транслируется в нейтральный <code>task_prompt</code> + <code>verify_neutrality()</code> бросает ошибку при утечке. Проверяется <code>scripts/validate.sh §2c</code>.
+    </div>
+  </section>
+
+  <section>
     <h2>Системы — постолбцовое сравнение</h2>
     <div class="card" style="padding:0;overflow-x:auto">
       <table>
@@ -447,13 +480,15 @@ function renderReference() {
       <table>
         <thead><tr><th>В VSM (эталон opensiro-arctic/vsm)</th><th>В vsmlite</th><th>Что изменилось</th></tr></thead>
         <tbody>
-          <tr><td>Управляет 6 S1-репо (флот)</td><td>Управляет <b>одним</b> дочерним VSM</td><td>Фокус на синтезе одного домена</td></tr>
+          <tr><td>Управляет 6 S1-репо (флот)</td><td>Управляет <b>одним</b> дочерним VSM + оценивает его</td><td>Фокус на синтезе+оценке одного домена</td></tr>
           <tr><td><code>s1-dispatcher</code> (boundary в <code>../&lt;repo&gt;</code>)</td><td><code>child-dispatcher</code> (в <code>../vsm/</code> + <code>../src/</code>)</td><td>Та же идея, другой target</td></tr>
+          <tr><td>Mono-agent S1 (single solver)</td><td>Продукт S1 = <b>multi-agent</b> (planner+executor+verifier, VSM-007 Split)</td><td>OSM Split: session sync активирован, verifier ловит failure раньше recovery</td></tr>
           <tr><td><code>issue-liaison</code> → Gitea</td><td><span class="badge warn">убран</span></td><td>Решения в REPL-дайджесте + <code>issues/VSM-NNN.yaml</code></td></tr>
           <tr><td>HTML-дашборд (<code>monitor/*.html</code>)</td><td>только телеметрия <code>monitor/data.js</code></td><td>UX — терминальный; UI — этот самый монитор (lite)</td></tr>
           <tr><td>Heartbeats как основной режим</td><td>On-demand (<code>/vsmlite-cycle</code>)</td><td>Юзер запускает цикл; heartbeats опциональны</td></tr>
-          <tr><td>Доменные скрипты (<code>bench_match.py</code>…)</td><td>Свои: <code>autonomy.py</code>, <code>collect_metrics.py</code>, <code>cycle_digest.py</code></td><td>Паттерн сохранён, скрипты свои</td></tr>
+          <tr><td>Доменные скрипты (<code>bench_match.py</code>…)</td><td>Свои: <code>autonomy.py</code>, <code>collect_metrics.py</code>, <code>cycle_digest.py</code>, <code>render_data.py</code></td><td>Паттерн сохранён, скрипты свои</td></tr>
           <tr><td>Алгедонический → Gitea</td><td>Алгедонический → <code>VSM-NNN</code> + REPL</td><td>Gitea → forward-контракт vsmforge</td></tr>
+          <tr><td>Без оценочного слоя</td><td><code>eval/</code> — Terminal-Bench Dev Set v2 пайплайн (VSM-008)</td><td>docker-exec MCP bridge + <code>state/dev_metrics.json</code> как ВХОДНОЙ индикатор A(t)</td></tr>
         </tbody>
       </table>
     </div>
@@ -490,12 +525,46 @@ function renderReference() {
             <tr><td><b>S3</b></td><td>A(t) / бюджет, готовность к фазе</td><td><code>state/metrics.json</code></td></tr>
             <tr><td><b>S3*</b></td><td>независимый аудит (ДРУГАЯ модель)</td><td><code>state/audit.json</code></td></tr>
             <tr><td><b>S4</b></td><td>среда домена: weak signals, дрейф</td><td><code>state/intel.json</code></td></tr>
-            <tr><td><b>S5</b></td><td>дайджест → REPL-вопрос</td><td><code>issues/VSM-NNN.yaml</code></td></tr>
+            <tr><td><b>S5</b></td><td>архитектор: дайджест → REPL-вопрос; при алгедонике — структурное изменение</td><td><code>issues/VSM-NNN.yaml</code> + <code>state/interventions.json</code></td></tr>
+            <tr><td><b>eval</b> <span class="muted">(VSM-008)</span></td><td>прогон продукта на TB Dev Set v2 (docker-exec MCP bridge)</td><td><code>state/dev_metrics.json</code> (pass_rate по категориям/сложности)</td></tr>
           </tbody>
         </table>
       </div>
+      <div class="note" style="margin-top:10px">
+        <b>Recovery cycle продукта</b> (multi-agent S1, VSM-007):
+        <code>S1 (executor) → verifier → S3 (classify) → S3* (audit) → recovery executor → S2 (isolate) → retry</code>.
+        Verifier ловит failure раньше, чем он станет observation для S3; session sync связывает sub-agents per-task.
+      </div>
     </section>
   </div>
+
+  <section>
+    <h2>A(t) — двойной индикатор автономности (VSM-004/005)</h2>
+    <div class="card" style="padding:0;overflow-x:auto">
+      <table>
+        <thead><tr><th>Индикатор</th><th>Направление</th><th>Что измеряет</th><th>Источник</th><th>Рост автономии</th></tr></thead>
+        <tbody>
+          <tr>
+            <td><b>pass_rate</b> (Dev Set)</td>
+            <td><span class="badge phase">ВХОДНОЙ</span></td>
+            <td>Продукт справляется с задачами сам</td>
+            <td><code>state/dev_metrics.json</code> ← <code>eval/</code></td>
+            <td>↑ к 1.0</td>
+          </tr>
+          <tr>
+            <td><b>intervention count</b></td>
+            <td><span class="badge warn">ОБРАТНЫЙ</span></td>
+            <td>Сколько раз S5 пришлось вмешаться (автономии не хватило)</td>
+            <td><code>state/interventions.json</code> ← S5</td>
+            <td>↓ к 0</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="muted" style="font-size:12px;margin-top:6px">
+      <code>pass_rate ↑</code> + <code>interventions ↓</code> = автономность растёт. Показывается в dashboard (публично), НЕ владеется S5.
+    </div>
+  </section>
 
   <section>
     <h2>Ключевой инвариант (сохранён в обеих)</h2>
@@ -516,11 +585,14 @@ function renderReference() {
       <a href="../CLAUDE.md">CLAUDE.md</a> ·
       <a href="../vsmlite.yaml">vsmlite.yaml</a> ·
       <a href="../synthesis/phases.yaml">synthesis/phases.yaml</a> ·
+      <a href="../synthesis/primitives.yaml">synthesis/primitives.yaml</a> ·
+      <a href="../eval/README.md">eval/README.md</a> ·
       <a href="../note.md">note.md</a>
       <br><br>
       Эта страница — статичный HTML (как весь <code>monitor/</code>). Живые данные (имена агентов, health)
       берутся из <code>monitor/data.js</code> → <code>window.VSM_DATA.systems</code>. Регенерация:
-      <code>python3 scripts/render_data.py</code>.
+      <code>python3 scripts/render_data.py</code>. Текущий контекст: VSM-008 <span class="badge phase">done</span>,
+      VSM-007 Split S1 <span class="badge phase">approved</span>, продукт = benchmark-agnostic (VSM-002), S5 = архитектор (VSM-005).
     </div>
   </section>
   `;

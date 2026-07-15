@@ -1,0 +1,10 @@
+[
+  {
+    "ts": "2026-07-15T16:38:37",
+    "type": "issue.changed",
+    "field": "issues.count",
+    "from": 21,
+    "to": 29,
+    "detail": "+VSM-018,VSM-019,VSM-020,VSM-021,VSM-026,VSM-027,VSM-028,VSM-029"
+  }
+]

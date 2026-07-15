@@ -1,5 +1,5 @@
 window.VSM_DATA = {
-  "generated": "2026-07-15T13:45:36",
+  "generated": "2026-07-15T16:40:28",
   "project": "vsmlite-template",
   "operational_mode": "normal",
   "systems": {
@@ -95,7 +95,369 @@ window.VSM_DATA = {
       "delta": 0.0,
       "direction": "none"
     },
-    "history": []
+    "history": [],
+    "runs": [
+      {
+        "trial_name": "jsonl-aggregator__LiGdATB",
+        "task_id": "jsonl-aggregator",
+        "status": "failed",
+        "verdict": "task_failed",
+        "reward": 0.0,
+        "terminated_by": "no_observations",
+        "attempts": 1,
+        "started_at": "2026-07-15T13:31:42.633976Z",
+        "finished_at": "2026-07-15T13:37:52.316336Z",
+        "duration_sec": 369,
+        "tokens": {
+          "input": null,
+          "cache": null,
+          "output": null
+        },
+        "cost_usd": null
+      },
+      {
+        "trial_name": "log-summary__LbjKRpk",
+        "task_id": "log-summary",
+        "status": "failed",
+        "verdict": "unknown",
+        "reward": 0.0,
+        "terminated_by": "infra_error",
+        "attempts": 0,
+        "started_at": "2026-07-15T13:09:42.020402Z",
+        "finished_at": "2026-07-15T13:14:43.150652Z",
+        "duration_sec": 301,
+        "tokens": {
+          "input": null,
+          "cache": null,
+          "output": null
+        },
+        "cost_usd": null
+      },
+      {
+        "trial_name": "jsonl-aggregator__dKkAb3W",
+        "task_id": "jsonl-aggregator",
+        "status": "failed",
+        "verdict": "task_failed",
+        "reward": 0.0,
+        "terminated_by": "no_observations",
+        "attempts": 1,
+        "started_at": "2026-07-15T13:03:03.281354Z",
+        "finished_at": "2026-07-15T13:09:39.414432Z",
+        "duration_sec": 396,
+        "tokens": {
+          "input": null,
+          "cache": null,
+          "output": null
+        },
+        "cost_usd": null
+      },
+      {
+        "trial_name": "log-summary__6ScSYfw",
+        "task_id": "log-summary",
+        "status": "failed",
+        "verdict": "unknown",
+        "reward": 0.0,
+        "terminated_by": "infra_error",
+        "attempts": 0,
+        "started_at": "2026-07-15T12:58:01.064586Z",
+        "finished_at": "2026-07-15T13:04:37.701768Z",
+        "duration_sec": 396,
+        "tokens": {
+          "input": null,
+          "cache": null,
+          "output": null
+        },
+        "cost_usd": null
+      },
+      {
+        "trial_name": "schedule-vacation__5YLmLFa",
+        "task_id": "schedule-vacation",
+        "status": "failed",
+        "verdict": "task_resolved",
+        "reward": 0.0,
+        "terminated_by": "task_resolved",
+        "attempts": 1,
+        "started_at": "2026-07-15T12:51:56.580739Z",
+        "finished_at": "2026-07-15T12:57:00.655257Z",
+        "duration_sec": 304,
+        "tokens": {
+          "input": null,
+          "cache": null,
+          "output": null
+        },
+        "cost_usd": null
+      },
+      {
+        "trial_name": "jsonl-aggregator__qMf54fm",
+        "task_id": "jsonl-aggregator",
+        "status": "failed",
+        "verdict": "task_failed",
+        "reward": 0.0,
+        "terminated_by": "no_observations",
+        "attempts": 1,
+        "started_at": "2026-07-15T12:51:16.973569Z",
+        "finished_at": "2026-07-15T12:57:58.535223Z",
+        "duration_sec": 401,
+        "tokens": {
+          "input": null,
+          "cache": null,
+          "output": null
+        },
+        "cost_usd": null
+      },
+      {
+        "trial_name": "log-summary__BpDJedo",
+        "task_id": "log-summary",
+        "status": "failed",
+        "verdict": "unknown",
+        "reward": 0.0,
+        "terminated_by": "infra_error",
+        "attempts": 0,
+        "started_at": "2026-07-15T12:46:55.746726Z",
+        "finished_at": "2026-07-15T12:51:54.847658Z",
+        "duration_sec": 299,
+        "tokens": {
+          "input": null,
+          "cache": null,
+          "output": null
+        },
+        "cost_usd": null
+      },
+      {
+        "trial_name": "jsonl-aggregator__ShkjUmu",
+        "task_id": "jsonl-aggregator",
+        "status": "error",
+        "verdict": null,
+        "reward": null,
+        "terminated_by": null,
+        "attempts": null,
+        "started_at": "2026-07-15T12:42:44.967612Z",
+        "finished_at": "2026-07-15T12:46:53.320148Z",
+        "duration_sec": 248,
+        "tokens": {
+          "input": null,
+          "cache": null,
+          "output": null
+        },
+        "cost_usd": null
+      },
+      {
+        "trial_name": "schedule-vacation__R43UYf3",
+        "task_id": "schedule-vacation",
+        "status": "failed",
+        "verdict": "task_resolved",
+        "reward": 0.0,
+        "terminated_by": "task_resolved",
+        "attempts": 1,
+        "started_at": "2026-07-15T12:39:34.264733Z",
+        "finished_at": "2026-07-15T12:44:45.600117Z",
+        "duration_sec": 311,
+        "tokens": {
+          "input": null,
+          "cache": null,
+          "output": null
+        },
+        "cost_usd": null
+      },
+      {
+        "trial_name": "log-summary__MYhbTpT",
+        "task_id": "log-summary",
+        "status": "failed",
+        "verdict": "unknown",
+        "reward": 0.0,
+        "terminated_by": "infra_error",
+        "attempts": 0,
+        "started_at": "2026-07-15T12:35:47.081457Z",
+        "finished_at": "2026-07-15T12:39:32.347231Z",
+        "duration_sec": 225,
+        "tokens": {
+          "input": null,
+          "cache": null,
+          "output": null
+        },
+        "cost_usd": null
+      },
+      {
+        "trial_name": "jsonl-aggregator__EYVaxjH",
+        "task_id": "jsonl-aggregator",
+        "status": "passed",
+        "verdict": "task_resolved",
+        "reward": 1.0,
+        "terminated_by": "task_resolved",
+        "attempts": 1,
+        "started_at": "2026-07-15T12:31:04.799407Z",
+        "finished_at": "2026-07-15T12:35:44.849352Z",
+        "duration_sec": 280,
+        "tokens": {
+          "input": null,
+          "cache": null,
+          "output": null
+        },
+        "cost_usd": null
+      },
+      {
+        "trial_name": "jsonl-aggregator__BhAR8cz",
+        "task_id": "jsonl-aggregator",
+        "status": "failed",
+        "verdict": "task_resolved",
+        "reward": 0.0,
+        "terminated_by": "task_resolved",
+        "attempts": 1,
+        "started_at": "2026-07-15T12:26:24.288638Z",
+        "finished_at": "2026-07-15T12:29:17.584101Z",
+        "duration_sec": 173,
+        "tokens": {
+          "input": null,
+          "cache": null,
+          "output": null
+        },
+        "cost_usd": null
+      },
+      {
+        "trial_name": "build-merkle-tree-cli-sha512__MNeXTCu",
+        "task_id": "build-merkle-tree-cli-sha512",
+        "status": "failed",
+        "verdict": "task_failed",
+        "reward": 0.0,
+        "terminated_by": "no_observations",
+        "attempts": 1,
+        "started_at": "2026-07-15T12:22:08.138610Z",
+        "finished_at": "2026-07-15T12:28:54.272498Z",
+        "duration_sec": 406,
+        "tokens": {
+          "input": null,
+          "cache": null,
+          "output": null
+        },
+        "cost_usd": null
+      },
+      {
+        "trial_name": "schedule-vacation__5vifATX",
+        "task_id": "schedule-vacation",
+        "status": "failed",
+        "verdict": "task_resolved",
+        "reward": 0.0,
+        "terminated_by": "task_resolved",
+        "attempts": 1,
+        "started_at": "2026-07-15T12:19:11.083174Z",
+        "finished_at": "2026-07-15T12:22:04.983897Z",
+        "duration_sec": 173,
+        "tokens": {
+          "input": null,
+          "cache": null,
+          "output": null
+        },
+        "cost_usd": null
+      },
+      {
+        "trial_name": "log-summary__nhLMfWn",
+        "task_id": "log-summary",
+        "status": "failed",
+        "verdict": "unknown",
+        "reward": 0.0,
+        "terminated_by": "infra_error",
+        "attempts": 0,
+        "started_at": "2026-07-15T12:15:54.347227Z",
+        "finished_at": "2026-07-15T12:19:07.060097Z",
+        "duration_sec": 192,
+        "tokens": {
+          "input": null,
+          "cache": null,
+          "output": null
+        },
+        "cost_usd": null
+      },
+      {
+        "trial_name": "jsonl-aggregator__quS2XPJ",
+        "task_id": "jsonl-aggregator",
+        "status": "failed",
+        "verdict": "task_resolved",
+        "reward": 0.0,
+        "terminated_by": "task_resolved",
+        "attempts": 1,
+        "started_at": "2026-07-15T12:13:51.192890Z",
+        "finished_at": "2026-07-15T12:15:51.860477Z",
+        "duration_sec": 120,
+        "tokens": {
+          "input": null,
+          "cache": null,
+          "output": null
+        },
+        "cost_usd": null
+      },
+      {
+        "trial_name": "jsonl-aggregator__2M6oFYm",
+        "task_id": "jsonl-aggregator",
+        "status": "passed",
+        "verdict": "task_resolved",
+        "reward": 1.0,
+        "terminated_by": "task_resolved",
+        "attempts": 1,
+        "started_at": "2026-07-15T11:59:58.417992Z",
+        "finished_at": "2026-07-15T12:06:00.066939Z",
+        "duration_sec": 361,
+        "tokens": {
+          "input": null,
+          "cache": null,
+          "output": null
+        },
+        "cost_usd": null
+      },
+      {
+        "trial_name": "jsonl-aggregator__Hk4nGNf",
+        "task_id": "jsonl-aggregator",
+        "status": "failed",
+        "verdict": "unknown",
+        "reward": 0.0,
+        "terminated_by": "no_observations",
+        "attempts": 1,
+        "started_at": "2026-07-15T10:35:00.051044Z",
+        "finished_at": "2026-07-15T10:36:09.981509Z",
+        "duration_sec": 69,
+        "tokens": {
+          "input": null,
+          "cache": null,
+          "output": null
+        },
+        "cost_usd": null
+      },
+      {
+        "trial_name": "jsonl-aggregator__DdAXQvj",
+        "task_id": "jsonl-aggregator",
+        "status": "failed",
+        "verdict": "unknown",
+        "reward": 0.0,
+        "terminated_by": "infra_error",
+        "attempts": 0,
+        "started_at": "2026-07-15T10:32:05.201241Z",
+        "finished_at": "2026-07-15T10:34:07.895870Z",
+        "duration_sec": 122,
+        "tokens": {
+          "input": null,
+          "cache": null,
+          "output": null
+        },
+        "cost_usd": null
+      },
+      {
+        "trial_name": "jsonl-aggregator__orckmyP",
+        "task_id": "jsonl-aggregator",
+        "status": "failed",
+        "verdict": "unknown",
+        "reward": 0.0,
+        "terminated_by": "infra_error",
+        "attempts": 0,
+        "started_at": "2026-07-15T10:27:17.183517Z",
+        "finished_at": "2026-07-15T10:29:20.240503Z",
+        "duration_sec": 123,
+        "tokens": {
+          "input": null,
+          "cache": null,
+          "output": null
+        },
+        "cost_usd": null
+      }
+    ]
   },
   "maturation": {
     "state": "Phase 4",
@@ -1058,6 +1420,186 @@ window.VSM_DATA = {
       "options": []
     },
     {
+      "id": "VSM-018",
+      "source_system": "S4",
+      "signal_type": "gap",
+      "severity": "S2",
+      "target_unit": "child",
+      "title": "SHEPHERD как S1 state-control substrate — отложено (alpha); native triad вместо",
+      "summary": "SHEPHERD (shepherd-agents.ai, pip `shepherd-ai` v0.3.0) рассматривался как substrate\nдля контроля состояния ВНУТРИ S1: reversible execution trace (commit/revert/fork/select),\nгде «harness, супервизящий агентов — это просто ещё один агент». Идея — сделать\nexecution S1 первоклассным реверсивным Git-подобным trace'ом: «решил → зафиксировал\nсостояние → проконтролировал тестами → если упали, откатился».\n\nРЕШЕНИЕ: отложить внешнюю зависимость. SHEPHERD v0.3.0 — alpha (авторы прямо пишут\n«не использовать в production»). Для коммерческого продукта load-bearing alpha-зависимость\nв recovery-цикле — неприемлемый риск (API будут ломаться).\n\nВМЕСТО: реализовать идею in-invocation reversibility нативно, как S1-внутреннюю\nструктуру — триаду подагентов «solver → test-controller → verify» с git-based\ncheckpoint/revert (VSM-019 поправка CONTRACT §5.1, VSM-020 TriadSolver, VSM-021\nagentизация через GooseRunner). Это лежит в плоскости S1 (operational state control),\nа не S5 (governance/identity) — SHEPHERD ≠ S5.\n",
+      "evidence": [
+        "https://shepherd-agents.ai/ — Programmable Meta-Agents via Reversible Execution Traces",
+        "https://docs.shepherd-agents.ai/ — alpha v0.3.0, 'early development preview'",
+        "vsm/systems/s1-dispatcher/CONTRACT.md §5 — stateless fresh-per-invocation (in-invocation ось не описана)",
+        "src/runtime/multi_agent.py — MultiAgentSolver (VSM-007): planner→executor→verifier, linear, без revert/branching",
+        "src/runtime/artifacts.py::snapshot — read-only mtime diff (не content-restore)",
+        "src/recovery_policies/reset_and_replay.py — единственный существующий git-revert (destructive --hard + clean -fd)"
+      ],
+      "proposal": "Не добавлять `shepherd-ai` в requirements.txt. Реализовать native in-invocation\nreversibility:\n  - WS1 (VSM-019): CONTRACT §5.1 amendment — явно разделить cross-invocation\n    statelessness (memory axis, без изменений) и in-invocation state control\n    (operational axis, РАЗРЕШЁН). Git checkpoint/revert primitive.\n  - WS2 (VSM-020): TriadSolver — state machine SOLVING→CONTROLLING→{REVERT→SOLVING |\n    VERIFYING}→DONE, in-process stubs.\n  - WS3 (VSM-021): agentизация триады через GooseRunner (s1-planner /\n    s1-test-controller / s1-verifier) + фикс workspace-binding в goose_runner.\n\nВернуться к SHEPHERD когда: выйдет из alpha; либо если native triad покажет\nфундаментальные ограничения (тогда SHEPHERD как drop-in substrate — architecture\nуже совместима).\n",
+      "acceptance": [
+        "shepherd-ai ОТСУТСТВУЕТ в requirements.txt / любых import",
+        "VSM-019 (CONTRACT §5.1 amendment) — done",
+        "VSM-020 (TriadSolver structure) — done",
+        "VSM-021 (S1 triad agentization) — done",
+        "make validate GREEN; native triad проходит capability_report"
+      ],
+      "needs_human_decision": true,
+      "status": "wontfix",
+      "decision": "deferred — SHEPHERD v0.3.0 alpha неприемлем как load-bearing зависимость коммерческого продукта. Реализована native in-invocation reversibility (VSM-019/020/021): git checkpoint/revert primitive + S1 triad solver→test-controller→verify. SHEPHERD пересмотреть при выходе из alpha или если native triad упрётся в фундаментальные ограничения.",
+      "selected_options": [],
+      "references": [
+        "VSM-019",
+        "VSM-020",
+        "VSM-021",
+        "VSM-007"
+      ],
+      "notes": [
+        "SHEPHERD ≠ S5: это substrate для контроля состояния ВНУТРИ S1 (operations), не governance.",
+        "Ключевой insight: CONTRACT §5 запрещает checkpoint *между* invocation'ами (memory axis); in-invocation checkpoint — другая ось (operational), не нарушает statelessness при явной поправке.",
+        "Аналог SHEPHERD commit/revert нативно: git add -A + commit на temp-ref → reset --hard + clean -fd.",
+        "Аналог SHEPHERD held-proposal: checkpoint diff_before/diff_after наблюдаем в trace (auditability сохранена)."
+      ],
+      "created": "2026-07-15",
+      "updated": "2026-07-15",
+      "options": []
+    },
+    {
+      "id": "VSM-019",
+      "source_system": "S1",
+      "signal_type": "policy",
+      "severity": "S1",
+      "target_unit": "child",
+      "title": "CONTRACT §5.1: in-invocation checkpoints — operational axis amendment",
+      "summary": "Поправка к `vsm/systems/s1-dispatcher/CONTRACT.md §5` (stateless retry). §5\nрегулирует memory axis (что S1 помнит МЕЖДУ invocation'ами = ничего). Эта\nпоправка вводит ВТОРУЮ, независимую ось — operational axis: контроль\nсостояния ВНУТРИ одного invoke().\n\nРАЗРЕШЕНО: S1 (его внутренняя triada, VSM-020) может создавать in-invocation\ngit checkpoints и откатываться к ним внутри одного invoke() — для цикла\n«решил → проконтролировал тестами → если упали, откатился → пересоздал».\n\nНЕ ОТМЕНЯЕТ statelessness: checkpoints — ephemeral temp-refs, не переживают\ninvocation. Anti-oscillation guard (max_reverts). Auditability сохранена — все\ncheckpoint-операции логируются в trace.\n\nРеализация: `src/runtime/checkpoint.py::CheckpointManager` + git MCP-инструменты\n`git.stash_push`/`git.rev_parse`/`git.reset_hard`. Native аналог SHEPHERD\ncommit/revert (VSM-018 deferral).\n",
+      "evidence": [
+        "vsm/systems/s1-dispatcher/CONTRACT.md §5.1 — amendment текст (in-invocation operational axis)",
+        "src/runtime/checkpoint.py — CheckpointManager (create/revert/diff_since)",
+        "src/mcp_server/tools/git.py — git.stash_push, git.rev_parse, git.reset_hard (VSM-019)",
+        "src/tests/test_checkpoint.py — 7 tests PASS (create/revert/diff/idempotent/non-git)",
+        "src/recovery_policies/reset_and_replay.py — реused паттерн git reset --hard + clean -fd"
+      ],
+      "proposal": "Принять CONTRACT §5.1 как additive поправку: memory axis (stateless between\ninvocations) — без изменений; operational axis (in-invocation checkpoints) —\nразрешён с рамками (ephemeral, max_reverts, auditable). Это фундамент для\nTriadSolver (VSM-020) и agentизации (VSM-021).\n",
+      "acceptance": [
+        "CONTRACT.md §5.1 — текст добавлен, явно разделяет memory/operational axes",
+        "checkpoint.py — CheckpointManager.create/revert/diff_since реализованы",
+        "git.py — 3 новых MCP-инструмента (stash_push, rev_parse, reset_hard)",
+        "test_checkpoint.py — 7 tests PASS",
+        "non-git workspace graceful degradation (ref='none', revert=False)",
+        "make validate GREEN"
+      ],
+      "needs_human_decision": true,
+      "status": "accepted",
+      "decision": "accepted — CONTRACT §5.1 amendment: operational axis (in-invocation checkpoints) разрешён, memory axis (stateless) без изменений. CheckpointManager + git primitives реализованы (7 tests PASS). Фундамент для VSM-020 TriadSolver.",
+      "selected_options": [],
+      "references": [
+        "VSM-018",
+        "VSM-020",
+        "VSM-007"
+      ],
+      "notes": [
+        "Две оси разделены явно: memory axis (cross-invocation, stateless) vs operational axis (in-invocation, checkpoint/revert).",
+        "Anti-oscillation: max_reverts (default 2) — превышение → verify решает финальный verdict.",
+        "Auditability: checkpoint/revert ops логируются в trace как git.commit/git.reset_hard TraceEntry."
+      ],
+      "created": "2026-07-15",
+      "updated": "2026-07-15",
+      "options": []
+    },
+    {
+      "id": "VSM-020",
+      "source_system": "S1",
+      "signal_type": "quality",
+      "severity": "S2",
+      "target_unit": "child",
+      "title": "S1 TriadSolver: solve → control-by-tests → verify (in-invocation checkpoint/revert)",
+      "summary": "Эволюция MultiAgentSolver (VSM-007). S1 теперь имеет внутреннюю триаду\nподагентов `solver → test-controller → verifier` с in-invocation git\ncheckpoint/revert (CONTRACT §5.1, VSM-019).\n\nState machine: SOLVING → CONTROLLING → {REVERT→SOLVING | VERIFYING} → DONE.\n  - SOLVING: planner → executor (tool calls via MCP). Checkpoint captures\n    workspace state before solving (CONTRACT §5.1 operational axis).\n  - CONTROLLING: test-controller evaluates the latest test run. PASS → verify.\n    FAIL + reverts left → revert to checkpoint + re-solve. FAIL + limit →\n    verify decides (anti-oscillation, max_reverts guard).\n  - VERIFYING: verifier checks trace since last checkpoint → final verdict.\n\nNative реализация идеи SHEPHERD reversibility (VSM-018 deferral) средствами\nпродукта. Sub-agent seams (planner_fn, test_controller_fn, verifier_fn) —\nrule-based stubs в WS2 (тестируемые), GooseRunner-backed в WS3 (VSM-021).\n\nStatelessness сохранён (CONTRACT §5 memory axis): checkpoint state живёт только\nв рамках одного invoke(), не переживает invocation.\n",
+      "evidence": [
+        "src/runtime/triad_solver.py — TriadSolver (state machine + stubs)",
+        "src/runtime/types.py — ControlVerdict, ControlResult, VerifyResult, S1Output.control_results/verify_result",
+        "src/runtime/dispatcher.py — solver_mode='triad' wiring + S1Output enrichment",
+        "src/runtime/agent_loop.py — duck-typed get_control_results() enrichment",
+        "src/tests/test_triad_solver.py — 6 tests PASS (happy/revert/limit/non-git/stateless/dispatcher)",
+        "src/runtime/checkpoint.py — CheckpointManager (create/revert/diff_since)"
+      ],
+      "proposal": "TriadSolver как новая S1 internal structure (в пределах Phase 1). Эволюция\nVSM-007 Split (linear → revert-capable). Sub-agent seams готовы для agentизации\n(VSM-021): planner_fn/test_controller_fn/verifier_fn заменяются на\nGooseRunner-backed callables без изменения state machine.\n",
+      "acceptance": [
+        "TriadSolver реализует SolverProtocol (decide_next_action)",
+        "State machine: SOLVING→CONTROLLING→{REVERT→SOLVING|VERIFYING}→DONE",
+        "Anti-oscillation: max_reverts guard (default 2)",
+        "trace_cursor: reverted failure не реридится control/verify (семантика)",
+        "S1Output.control_results/verify_result — additive, backward-compatible",
+        "test_triad_solver.py — 6 tests PASS",
+        "make validate GREEN; capability_report без регрессий"
+      ],
+      "needs_human_decision": false,
+      "status": "done",
+      "decision": "done — TriadSolver реализован: solve→control-by-tests→verify state machine с in-invocation checkpoint/revert. 6 tests PASS, regression-clean (orchestrator 6/6, checkpoint 7/7, capability_report PASS). Sub-agent seams готовы для VSM-021 agentизации.",
+      "selected_options": [],
+      "references": [
+        "VSM-019",
+        "VSM-018",
+        "VSM-007"
+      ],
+      "notes": [
+        "trace_cursor: control и verify inspect только trace с момента последнего SOLVING-start — reverted failed attempt не вредит финальному verdict (но остаётся в полном trace для S3* audit).",
+        "Anti-oscillation: max_reverts (default 2) — превышение → verify решает финальный verdict без дальнейших rollback'ов.",
+        "AgentLoop enrichment duck-typed: get_control_results() если есть — не ломает RuleBasedSolver/MultiAgentSolver (у них метода нет, getattr возвращает None)."
+      ],
+      "created": "2026-07-15",
+      "updated": "2026-07-15",
+      "options": []
+    },
+    {
+      "id": "VSM-021",
+      "source_system": "S1",
+      "signal_type": "quality",
+      "severity": "S2",
+      "target_unit": "child",
+      "title": "S1 triad agentизация: s1-planner / s1-test-controller / s1-verifier (GooseRunner)",
+      "summary": "Agentизация S1-триады (VSM-020). Sub-agents planner/test-controller/verifier\nпереходят с rule-based stubs на настоящие goose-агенты через GooseRunner.\n\nТри новых S1-internal роли (НЕ standalone VSM-системы — internal sub-agents):\n  - s1-planner: декомпозиция задачи в plan (fs, shell)\n  - s1-test-controller: контроль тестами + checkpoint/revert decision (fs, shell, git)\n  - s1-verifier: финальная проверка post-checkpoint solve-pass (fs, shell)\n\nКлючевой фикс архитектуры: AgentConfig.workspace (VSM-021) — GooseRunner теперь\nможет bind'ить MCP к task workspace, не только к vsm/ (legacy default для S2-S5).\nЭто позволило S1 sub-agents оперировать на реальной задаче.\n\nGraceful degradation: если goose недоступен (tests, CI без goose), фабрики\n(make_goose_planner / make_goose_test_controller / make_goose_verifier) fall back\nна rule-based stubs — триада остаётся функциональной. Dispatcher детектит goose\nчерез shutil.which и выбирает путь автоматически.\n\nCross-provider constraint (VSM-001) сохранён: все три sub-agents используют\ns1_provider (zai) — они часть S1; S3* остаётся anthropic.\n",
+      "evidence": [
+        "src/agent_runtime/goose_runner.py — AgentConfig.workspace field + GooseRunner.run() binding",
+        "src/agent_runtime/goose_runner.py — _output_contract для s1-planner/test-controller/verifier",
+        "src/agent_runtime/protocol.py — ROLE_CONFIGS + _agent_config provider override для S1 sub-agents",
+        "vsm/systems/s1-planner/{SOUL,SKILL,TASK}.md — planner role",
+        "vsm/systems/s1-test-controller/{SOUL,SKILL,TASK}.md — control + revert role",
+        "vsm/systems/s1-verifier/{SOUL,SKILL,TASK}.md — final verify role",
+        "src/runtime/triad_solver.py — make_goose_planner/make_goose_test_controller/make_goose_verifier + make_triad_with_goose",
+        "src/runtime/dispatcher.py — goose detection (shutil.which) + make_triad_with_goose wiring",
+        "src/runtime/verify.py — triad_solver_invoke + triad_agentization_config checks PASS"
+      ],
+      "proposal": "S1 triad полностью агентизирована. Структура (VSM-020 state machine) неизменна —\nagentизация касается только sub-agent backing (stub → goose). Это завершает\nnative in-invocation reversibility (VSM-018 SHEPHERD deferral): commit/revert\nтеперь управляется настоящим test-controller агентом, не rule-based заглушкой.\n",
+      "acceptance": [
+        "AgentConfig.workspace field добавлен (backward-compatible: None → vsm/ default)",
+        "3 новых system dirs: vsm/systems/s1-{planner,test-controller,verifier}/",
+        "ROLE_CONFIGS содержит 9 ролей (6 + 3 S1 sub-agents)",
+        "_output_contract содержит entries для 3 triad roles",
+        "make_triad_with_goose + 3 фабрики реализованы с graceful fallback",
+        "dispatcher: goose detection + автоматический выбор goose/stub path",
+        "capability_report: triad_solver_invoke + triad_agentization_config PASS",
+        "make validate GREEN; regression-clean (orchestrator 6/6, checkpoint 7/7, triad 6/6)"
+      ],
+      "needs_human_decision": false,
+      "status": "done",
+      "decision": "done — S1 triad agentизирована: s1-planner / s1-test-controller / s1-verifier как goose-агенты через GooseRunner. AgentConfig.workspace fix — ключевой разблокер. Graceful fallback на stubs когда goose недоступен. capability_report PASS (5 S1 checks). Native in-invocation reversibility (VSM-018) завершена.",
+      "selected_options": [],
+      "references": [
+        "VSM-020",
+        "VSM-019",
+        "VSM-018",
+        "VSM-013"
+      ],
+      "notes": [
+        "AgentConfig.workspace = ключевой фикс: ранее GooseRunner жёстко bind'ил MCP к vsm/ (для S2-S5 state readers); S1 sub-agents нуждаются в task workspace.",
+        "Graceful degradation: shutil.which('goose') проверяет доступность; если нет — stubs. Тесты/CI без goose работают.",
+        "Cross-provider preserved: S1 sub-agents = s1_provider (zai); S3* = anthropic. Constraint VSM-001 не нарушен.",
+        "triad_agentization_config check — OFFLINE: проверяет ROLE_CONFIGS + build_prompt + workspace field без запуска goose (быстрый, детерминированный)."
+      ],
+      "created": "2026-07-15",
+      "updated": "2026-07-15",
+      "options": []
+    },
+    {
       "id": "VSM-022",
       "source_system": "S3",
       "signal_type": "drift",
@@ -1279,6 +1821,236 @@ window.VSM_DATA = {
       "created": "2026-07-15",
       "updated": "2026-07-15",
       "options": []
+    },
+    {
+      "id": "VSM-026",
+      "source_system": "S4",
+      "signal_type": "gap",
+      "severity": "S2",
+      "target_unit": "meta",
+      "title": "eval: 3-режимная архитектура train/eval-test/eval-dataset + TB-2.1 verified профиль",
+      "summary": "До VSM-026 eval-пайплайн знал один источник данных (TB Dev Set v2, 100 задач)\nи один файл метрик (dev_metrics.json). Не было режима для финальной оценки на\nполном TB-2.1 verified (89 задач, zai-org/terminal-bench-2-verified, релиз\n2026-05-08) без смешивания с train-метрикой A(t). Также не было встроенной\nструктурной проверки датасета «из-под коробки» перед дорогим agent-прогоном.\n\nРешение (запрошено пользователем): 3 режима через DATASET_PROFILES в\nconfig.py — профиль задаёт источник данных + файл метрик, ортогонально\nраннеру (VSM-024 harbour). Метрики изолированы по файлам, A(t) не смешивается:\n  train        dev-v2 (100)               → dev_metrics.json         (A(t))\n  eval-test    TB-2.1 verified N=20       → eval_test_metrics.json   (seed=42)\n  eval-dataset TB-2.1 verified все 89     → eval_dataset_metrics.json (финал)\n\neval-test = random seed=42 (детерминированный, точки T0/T1 сравнимы) — оценка\nрепрезентативности A(t) на новых сэмплах. eval-dataset = полный прогон для\nфинальной метрики. Sanity (eval/sanity.py) — встроенная локальная проверка\nструктуры (5 hard checks: instruction/Dockerfile/task.toml/tests/solution),\nбез Docker-build; запускается перед агентом и отдельно через `eval sanity`.\n",
+      "evidence": [
+        "eval/config.py: DATASET_PROFILES (train/eval-test/eval-dataset), EvalConfig.profile + __post_init__ resolution",
+        "eval/loader.py: sample_tasks(tasks, n, seed=42) — детерминированный random для eval-test",
+        "eval/sanity.py: sanity_check_task (5 hard checks) + sanity_check_dataset + print_sanity_report",
+        "eval/metrics.py: _empty_skeleton/record/record_run — profile в skeleton + history per-режима (eval_history[_<profile>].json)",
+        "eval/modes.py: batch-фасад (run_eval_test/run_eval_dataset) поверх harbor_run.run_trial (VSM-024, НЕ модифицируется)",
+        "eval/__main__.py: --profile/-P global + subcommands eval-test/eval-dataset/sanity; list/run/run-all/summary backward-compat",
+        "TB-2.1 verified sanity: 89/89 runnable, 0 fail, 0 warnings (все метаданные заполнены)",
+        "dev-v2 sanity: 100/100 runnable, 0 fail, 11 warnings (category gaps — non-blocking)"
+      ],
+      "proposal": "Реализовано в этой сессии (user-requested). Профили ортогональны раннеру —\nпитают оба пайплайна (VSM-024 harbour + superseded runner.py) через EvalConfig.\nbatch-фасад modes.py зависит только от публичного API harbor_run.run_trial\n(signature), не трогая internals VSM-024. Когда VSM-024 Phase 3 cleanup удалит\nrunner.py, train переключится на _run_batch (harbour) — modes.run_train уже\nизолирует эту точку переключения.\n",
+      "acceptance": [
+        "DATASET_PROFILES в config.py: train/eval-test/eval-dataset (источник + metrics_filename)",
+        "EvalConfig.profile вычисляет dataset_repo/dir/dev_metrics_file; env override backward-compat",
+        "sample_tasks(n, seed=42) детерминирован и воспроизводим",
+        "eval/sanity.py: 5 hard checks (runnable) + warnings (metadata gaps non-blocking)",
+        "метрики изолированы: dev_metrics.json / eval_test_metrics.json / eval_dataset_metrics.json",
+        "history per-режима: eval_history.json (train) / eval_history_eval-test.json / eval_history_eval-dataset.json",
+        "CLI: --profile global + eval-test/eval-dataset/sanity subcommands; backward-compat list/run/run-all/summary",
+        "make eval-test / eval-dataset / eval-sanity targets",
+        "make validate GREEN (мембрана VSM-002 + parent isolation VSM-005 не нарушены)",
+        "harbor_*.py / orchestrator_runner.py / membrane.py / agent_phase.py НЕ модифицированы (изоляция VSM-024)"
+      ],
+      "needs_human_decision": false,
+      "status": "accepted",
+      "decision": "requested by user in-session: 3 режима (train=dev-v2 для батчей/обучения, eval-test=TB-2.1 N сэмплов seed=42 для оценки репрезентативности A(t), eval-dataset=TB-2.1 полный для финального test). Раздельные файлы метрик. Sanity встроенная (из-под коробки ок). CLI: 3 subcommand'а.",
+      "selected_options": [],
+      "references": [
+        "VSM-024",
+        "VSM-004",
+        "VSM-005",
+        "VSM-002",
+        "VSM-008"
+      ],
+      "notes": [
+        "TB-2.1 = zai-org/terminal-bench-2-verified (релиз 2026-05-08, коллаборация с официальной TB-командой). Folder-based Harbor format, идентичен dev-v2; новые поля [environment] docker_image/cpus/memory/storage.",
+        "eval-test N=20 default (config.eval_test_sample_size); override через --sample или env EVAL_TEST_SAMPLE_SIZE.",
+        "ID VSM-026: 023 (goose gap), 024 (harbour pivot), 025 (observability) — заняты другим агентом в параллельной сессии.",
+        "ID VSM-027 (Harbor-Index future work) заведён в той же сессии — separate-verifier + subject-filtration."
+      ],
+      "created": "2026-07-15",
+      "updated": "2026-07-15",
+      "options": []
+    },
+    {
+      "id": "VSM-027",
+      "source_system": "S4",
+      "signal_type": "gap",
+      "severity": "S3",
+      "target_unit": "meta",
+      "title": "Harbor-Index 1.0 как 4-й eval-профиль (future work): separate-verifier + subject-filtration",
+      "summary": "Harbor-Index 1.0 (harbor-framework/harbor-index, 80 задач) — компактный\nhigh-signal бенчмарк: 80 задач отобраны из 6627 кандидатов по 54 бенчмаркам\nчерез automated audit + human reviewer fixes. Frontier-агенты не превышают\n30% — ceiling-метрика для сравнения продукта с SOTA. Источник:\nhttps://harbor-index.org, github.com/harbor-framework/harbor-index.\n\nDomain-fit вердикт (исследован в сессии):\n  - МОДАЛЬНОСТЬ: ✅ все 80 terminal/CLI (Linux-контейнер, shell+файлы, /app +\n    /logs/artifacts). НОЛЬ GUI/OSWorld/computer-use сигналов.\n  - ПРЕДМЕТ: ⚠️ шире coding — ~30/80 SWE/coding (SWE-bench*, GSO, FeatureBench,\n    SWT-bench, +3 Terminal-Bench), ~50/80 science/math/QA/bioinformatics\n    (HLE, ARC-AGI, GAIA, OmniMath, Bix, LabBench).\n\nРешение пользователя: брать ВСЕ 80 задач; не-terminal (science/QA/...) пометить\nв отдельную category + отдельную метрику (не смешивать с coding pass_rate).\n\nДва blocker'а для интеграции (почему future work, не сейчас):\n1. separate-verifier: Harbor-Index использует environment_mode=\"separate\" —\n   verifier работает в ОТДЕЛЬНОМ контейнере (свой tests/Dockerfile), не в том\n   где работал агент. Текущий grader.py копирует tests/ в рабочий контейнер.\n   Требует правок grader.py + container.py (или harbour-config под separate).\n2. subject-filtration: ~50/80 не coding — нужна category-разметка\n   (по name-prefix: hle/arcagi2/gaia/... → \"science-qa\"; swebench*/gso/... →\n   \"coding\") + отдельный metrics-файл или by_category изоляция.\n\nСкачивание: git clone github.com/harbor-framework/harbor-index (HF-зеркало\nимеет ошибки загрузки). Формат — Harbor schema 1.3 (надмножество TB-2.1,\nloader толерантен к лишним ключам [verifier.collect]/environment_mode).\n",
+      "evidence": [
+        "harbor-index.org: 80 задач, distilled from 6000+ candidates across 54 benchmarks, frontier ≤30%",
+        "github.com/harbor-framework/harbor-index: 80 task dirs, task.toml schema_version 1.3, environment_mode=separate",
+        "domain-fit исследование: 0 GUI сигналов в 79/80 instruction.md; terminal-модальность подтверждена",
+        "subject breakdown по name-prefix: ~30 coding, ~50 science/QA/bioinformatics",
+        "grader.py:64-75 копирует tests/ в рабочий контейнер (НЕ separate-verifier) — blocker для Harbor-Index",
+        "config.py DATASET_PROFILES (VSM-026): Harbour-Index добавится как 4-й профиль 'harbor-index'"
+      ],
+      "proposal": "Future work. План реализации (когда берётся в работу):\n1. Профиль 'harbor-index' в DATASET_PROFILES (config.py) → harbor-index_metrics.json.\n   Источник: git clone (не snapshot_download — HF-зеркало битое).\n2. Category-разметка по name-prefix в loader (hle/arcagi2/gaia/... →\n   \"science-qa\"; swebench*/gso/featurebench/... → \"coding\") — для изоляции\n   метрики. Или отдельный metrics-file per subject.\n3. Адаптация grader/container под environment_mode=\"separate\" (verifier в\n   отдельном контейнере) — либо через harbour-config, либо extend grader.py.\n4. CLI subcommand `harbor-index` (или --profile harbor-index eval-dataset).\n",
+      "acceptance": [
+        "профиль 'harbor-index' в DATASET_PROFILES, git-clone источник",
+        "category-разметка (coding vs science-qa) + изолированная метрика",
+        "separate-verifier поддержан (grader/container или harbour-config)",
+        "sanity 80/80 runnable (hard checks)",
+        "make validate GREEN"
+      ],
+      "needs_human_decision": false,
+      "status": "triage",
+      "decision": "",
+      "selected_options": [],
+      "references": [
+        "VSM-026",
+        "VSM-024"
+      ],
+      "notes": [
+        "Harbor-Index 1.0 = github.com/harbor-framework/harbor-index (80 задач, schema 1.3).",
+        "Alex Shaw announcement: x.com/alexgshaw — '82 high-signal tasks' (репо сейчас 80 после PR #47).",
+        "3 задачи явно Terminal-Bench-derived: tb-dna-insert, tb-make-doom-for-mips, tb-train-fasttext.",
+        "Coding subject (~30/80): swebenchverified/swebenchpro/gso/featurebench/swtbenchverified/swesmith/build + 3 tb-*. Science/QA (~50/80): hle/arcagi2/gaia/gaia2/omnimath/bix/labbench/scicode/...",
+        "Не блокирует VSM-026 (3 режима train/eval-test/eval-dataset) — отдельный scope."
+      ],
+      "created": "2026-07-15",
+      "updated": "2026-07-15",
+      "options": []
+    },
+    {
+      "id": "VSM-028",
+      "source_system": "S4",
+      "signal_type": "gap",
+      "severity": "S3",
+      "target_unit": "meta",
+      "title": "public-report/: конвенция внешних baseline-карточек как якорь A(t)",
+      "summary": "Появилась первая baseline-карточка внешнего community-результата:\npublic-report/GLM-5.2-FP8_TB-2.1_mini-swe-agent.md — GLM-5.2 (FP8 weights +\nFP8 KV cache) на Terminal-Bench 2.1 через mini-swe-agent harness = 79.8%\n(71/89 passed, 17 failed, 1 errored). Карточка создана ad-hoc; конвенция пока\nНЕ зафиксирована.\n\nGap: vsmlite-tb хранит только СОБСТВЕННЫЕ прогоны (state/dev_metrics.json →\nA(t), VSM-004/005) и не имеет механизма фиксации ВНЕШНИХ baseline-результатов.\nБез них A(t) — число в вакууме: нет frontier-якоря, относительно которого\nоценивать «хорошо/плохо» pass_rate продукта. public-report/ закрывает этот gap\nкак референс-слой (read-only, community-reported, явно отделённый от A(t)).\n\nЧто уже есть в карточке (рабочий черновик конвенции):\n  - metadata-таблица (модель, квантизация, harness, датасет, pass_rate, дата, source-ссылка)\n  - headline-блок (TOTAL/PASSED/FAILED/ERRORED)\n  - token budget (input/cache/new/output + cache hit rate, с arithmetic-sanity)\n  - sampling/runtime config (помечен unknown — Reddit-источник был не machine-fetchable)\n  - полный список failed + кластеризация; errored с пометкой \"not re-run\"\n  - caveats (single harness, no re-run, config gap, external result)\n\nНезакрытый вопрос (→ options): формат потребления vsmlite'ом. Сейчас только\nmarkdown (человекочитаемый, хорошо для нарратива fail-анализа). Для автомати-\nческого сравнения с A(t) нужен либо _template.md (фиксация полей), либо\nyaml/json sidecar (machine-readable), либо оба.\n",
+      "evidence": [
+        "public-report/GLM-5.2-FP8_TB-2.1_mini-swe-agent.md — 79.8% (71/89), 17 failed, 1 errored, cache hit 98.8%",
+        "state/dev_metrics.json → только СОБСТВЕННЫЕ прогоны (A(t)), external baselines не фиксируются",
+        "eval/README.md:172 — summary.pass_rate = входной индикатор автономности A(t) (VSM-004/005); frontier-якоря нет",
+        "источник карточки: r/LocalLLaMA/comments/1uofoej (GLM-5.2 FP8+FP8 KV, mini-swe-agent, 79.8%) — Reddit anti-bot блокировал fetch; sampling-config помечен unknown",
+        "issues/template.yaml + vsmlite-issue.schema.json — конвенция для алгедонических сигналов; для public-report аналогичной schema НЕТ"
+      ],
+      "proposal": "Зафиксировать public-report/ как конвенцию (3 уровня, см. options):\n\nМинимально (независимо от решения):\n1. README в public-report/ — назначение папки, отличие от state/ (A(t), внутр.)\n   и issues/ (алгедоника). Явный invariant: external = read-only reference,\n   НЕ смешивается с A(t).\n2. Конвенция именования: <MODEL>_<BENCH>_<HARNESS>.md (как первая карточка).\n3. Ссылка из eval/README.md (секция Baselines/frontier-references).\n\nЕсли выбран template/yaml — добавить:\n- public-report/_template.md (фиксированный набор полей) ИЛИ\n- <card>.yaml sidecar (machine-readable: model, bench, harness, pass_rate,\n  tokens, failed[]) для автоматического diff с A(t).\n",
+      "acceptance": [
+        "public-report/README.md описывает назначение + invariant external≠A(t) (минимум 5 символов)",
+        "конвенция именования <MODEL>_<BENCH>_<HARNESS>.md задокументирована",
+        "eval/README.md ссылается на public-report/ как frontier-reference",
+        "make validate GREEN (если валидатор затрагивает новые файлы)",
+        "первая карточка (GLM-5.2) приведена к выбранному шаблону"
+      ],
+      "needs_human_decision": true,
+      "policy_question": "Какой формат public-report/ для frontier-калибровки A(t)?\n",
+      "options": [
+        {
+          "id": "md-only",
+          "label": "Только markdown",
+          "hint": "Минимум. Человекочитаемые карточки, без template/yaml. Быстро, но поля плавают между карточками."
+        },
+        {
+          "id": "md-template",
+          "label": "Markdown + _template.md",
+          "hint": "Фиксирует набор полей через шаблон. Нарратив сохраняется, сравнимость ручная. (Рекоменд.)"
+        },
+        {
+          "id": "yaml-sidecar",
+          "label": "Markdown + YAML sidecar",
+          "hint": "Каждая карточка = .md (нарратив) + .yaml (machine-readable). Автоматический diff с A(t), но двойное ведение."
+        },
+        {
+          "id": "defer",
+          "label": "Defer",
+          "hint": "Оставить как есть (одна карточка ad-hoc); конвенцию зафиксировать когда появится 2-я модель."
+        }
+      ],
+      "status": "done",
+      "decision": "accept — выбран option md-template (Markdown + _template.md). Нарратив сохраняется, поля фиксированы шаблоном, ручная сравнимость. yaml-sidecar отложен до потребности в автоматическом diff с A(t).",
+      "selected_options": [
+        "md-template"
+      ],
+      "references": [
+        "VSM-027",
+        "VSM-004",
+        "VSM-026"
+      ],
+      "notes": [
+        "Карточка явно помечена community-reported + NOT re-verified, чтобы не спутать с внутренними прогонами A(t).",
+        "sampling/runtime config помечен unknown: Reddit (www/old/json API/mobile UA) отдал anti-bot HTML во всех попытках.",
+        "GLM-5.2 datasheet заявляет TB 2.1 = 81.0 (Terminus-2, temp=1.0, top_p=1.0, timeout=4h); 79.8% mini-swe-agent — на ~1.2 п.п. ниже (harness-эффект).",
+        "Ортогонален VSM-027: Harbor-Index = новый eval-профиль (наши прогоны); public-report = внешние baseline (read-only reference)."
+      ],
+      "created": "2026-07-15",
+      "updated": "2026-07-15"
+    },
+    {
+      "id": "VSM-029",
+      "source_system": "S4",
+      "signal_type": "gap",
+      "severity": "S3",
+      "target_unit": "meta",
+      "title": "Раздел Runs в monitor/: саммари eval-прогонов (harbor-trials → UI)",
+      "summary": "Монитор показывает АГРЕГАТЫ (A(t), pass_rate сводно в metrics.html), но НЕ\nпоказывает per-run саммари: какие задачи прогонялись, когда, вердикт,\nдлительность, число шагов, награда. Раздел \"Runs\" в навигации отсутствует.\n\nGap не в \"нет данных\" — per-run артефакты УЖЕ есть на диске, но не доходят до\nмонитора:\n  - state/harbor-trials/*/ — 21 trial, каждый с богатым result.json\n    (started_at/finished_at, agent_execution, verifier, step_results),\n    agent/trajectory.json, verifier/reward.txt.\n  - state/dev_metrics.json → tasks[].harbor {trial_name, terminated_by,\n    verdict, attempts, reward} — агрегированный вердикт per-task.\n  - state/eval_history.json — ПУСТОЙ (мост eval→history не пишет).\n\nЦепочка обрыва: harbor_run.py пишет trial → eval/metrics.py Должен писать\ntasks[] + eval_history.json → render_data.py поднимает в data.js → UI рендерит.\nСейчас tasks[]=0 и eval_history=[] при 21 trial на диске. Значит либо metrics.py\nне вызывается/не пишет, либо render_data читает не оттуда.\n\nЧто нужно (scope issue):\n  1. Мост: render_data.py поднимает harbor-trials (или dev_metrics.tasks) в\n     data.js как eval.runs[] (светлые поля: task, verdict, reward, duration,\n     steps, timestamp, trial_name).\n  2. UI: monitor/runs.html — таблица ранов с фильтром (passed/failed/error) +\n     детализация по клику. Навигация: +1 ссылка в header (app.js:103-106).\n  3. Интеграция с public-report/ (VSM-028): внешние baseline-карточки — отдельный\n     столбец контекста \"frontier-якорь\" рядом с A(t) продукта, НЕ смешивается.\n",
+      "evidence": [
+        "monitor/assets/app.js:102-107 — навигация: 4 ссылки (Системы, Метрики, Issues, Памятка); раздела Runs НЕТ",
+        "monitor/data.js → eval.summary={total,passed,failed,error,pass_rate} есть, но tasks[] пустые, eval.history=[] (0 снэпшотов)",
+        "state/dev_metrics.json → tasks: [] (0) — последний прогон (jsonl-aggregator, reward=1.0) записал только summary без детализации",
+        "state/harbor-trials/ — 21 trial, каждый содержит result.json (19 ключей incl. started_at/finished_at/agent_execution/verifier/step_results), agent/trajectory.json, verifier/reward.txt",
+        "state/eval_history.json — ПУСТОЙ (мост eval→history не пишет, _eval_trend() в render_data.py:216 возвращает none)",
+        "scripts/render_data.py:134-143 — eval-блок читает dev_metrics + eval_history, но НЕ читает harbor-trials напрямую",
+        "monitor/metrics.html — есть сводка A(t) + история снэпшотов (state/history.json), но НЕТ per-task/per-run таблицы"
+      ],
+      "proposal": "Минимально-viable Runs-раздел (MVP), 3 слоя:\n\nСлой 1 — ДАННЫЕ (render_data.py):\n  - Новая функция _collect_runs(): проходит state/harbor-trials/*/, читает\n    result.json + verifier/reward.txt, собирает светлые поля:\n    {trial_name, task_id, verdict, reward, started_at, duration_sec,\n     step_count, terminated_by}.\n  - Не тянем тяжёлые trajectory.json/step_results в data.js (это МБ) —\n    только саммари. Детали по клику → открытый файл (static, no backend).\n  - eval.runs[] в data.js, последние N (напр. 50).\n\nСлой 2 — UI (monitor/runs.html + app.js):\n  - Таблица: task | verdict | reward | duration | steps | timestamp | trial.\n  - Фильтр: all / passed / failed / error. Сортировка по timestamp (desc).\n  - Детализация по клику → развёртка строки (trial_name → ссылка на артефакт).\n  - +1 в навигацию (app.js:103-106): \"Раны (${D.eval.runs?.length||0})\".\n\nСлой 3 — ИНТЕГРАЦИЯ:\n  - eval_history.json заполняется (fix моста eval→history) — для trend-графика.\n  - dev_metrics.tasks[] заполняется (fix metrics.py) — для by_difficulty/by_category.\n  - public-report/ baseline-и (VSM-028) — отдельный блок-контекст, не в runs.\n\nНе-blocker для VSM-026/028: ортогонален. Runs = наши прогоны;\npublic-report = чужие (read-only reference).\n",
+      "acceptance": [
+        "monitor/runs.html существует и рендерит таблицу из data.js (без fetch, static)",
+        "data.js содержит eval.runs[] со светлыми полями (task, verdict, reward, duration, steps, timestamp)",
+        "навигация (app.js header) содержит ссылку на runs.html",
+        "хотя бы 1 реальный trial из harbor-trials/ отображается (не пустая таблица)",
+        "make validate GREEN (validate.sh не затронут, но регрессии нет)"
+      ],
+      "needs_human_decision": true,
+      "policy_question": "Какой scope и источник данных для раздела Runs?\n",
+      "options": [
+        {
+          "id": "mvp-trials",
+          "label": "MVP: harbor-trials → runs.html",
+          "hint": "render_data читает 21 trial напрямую, таблица саммари + фильтр. Быстро, данные уже есть. (Рекоменд.)"
+        },
+        {
+          "id": "mvp-fix-bridge",
+          "label": "MVP: fix eval→history мост, потом UI",
+          "hint": "Сначала чиним metrics.py (tasks[] + eval_history.json), потом UI на готовых данных. Чище, но больше работы."
+        },
+        {
+          "id": "full",
+          "label": "Full: trials + trend-график + by_category + frontier-якорь",
+          "hint": "MVP + trend во времени + разбивка по категориям + блок public-report (VSM-028). Максимум observability."
+        },
+        {
+          "id": "defer",
+          "label": "Defer",
+          "hint": "Не сейчас; монитор показывает агрегаты, per-run через make eval-summary в CLI."
+        }
+      ],
+      "status": "done",
+      "decision": "accept — выбран option mvp-trials. render_data.py читает harbor-trials напрямую в data.js eval.runs[], runs.html рендерит таблицу с фильтром. fix-bridge (metrics.py tasks[]/eval_history) отложен — данные идут напрямую из trials.",
+      "selected_options": [
+        "mvp-trials"
+      ],
+      "references": [
+        "VSM-028",
+        "VSM-026",
+        "VSM-005",
+        "VSM-024"
+      ],
+      "notes": [
+        "21 trial в harbor-trials/ — богаты (result.json с 19 ключами), но шаг_results/trajectory МБ-тяжёлые; в data.js только светлые поля.",
+        "Обрыв цепочки: harbor_run.py пишет trial, но eval/metrics.py не поднимает tasks[]/eval_history → render_data видит пустоту. Возможен отдельный mini-fix.",
+        "Ортогонален VSM-028: Runs (наши прогоны) vs public-report (чужие, read-only); не смешиваются.",
+        "static-HTML constraint (monitor/index.html:44-53): данные через data.js, без fetch/backend —Runs должен ему соответствовать."
+      ],
+      "created": "2026-07-15",
+      "updated": "2026-07-15"
     }
   ],
   "history": [
