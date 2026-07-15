@@ -68,6 +68,25 @@ ROLE_CONFIGS: dict[str, dict[str, Any]] = {
         "provider": "zai",
         "max_turns": 15,
     },
+    # ── S1 triad sub-agents (VSM-021). Internal S1 roles, NOT standalone VSM
+    # systems. Same provider as s1-dispatcher (zai) — they are part of S1, so
+    # the cross-provider constraint (s1↔s3*) is unaffected. Workspace is bound
+    # to the task workspace (set at runtime by the triad callables), not vsm/.
+    "s1-planner": {
+        "tools": ["fs", "shell"],
+        "provider": "zai",
+        "max_turns": 12,
+    },
+    "s1-test-controller": {
+        "tools": ["fs", "shell", "git"],
+        "provider": "zai",
+        "max_turns": 15,
+    },
+    "s1-verifier": {
+        "tools": ["fs", "shell"],
+        "provider": "zai",
+        "max_turns": 10,
+    },
 }
 
 
@@ -92,8 +111,9 @@ class ProtocolConfig:
     def _agent_config(self, role: str) -> AgentConfig:
         """Build AgentConfig for a role, applying provider overrides."""
         cfg = dict(ROLE_CONFIGS.get(role, {}))
-        # Apply cross-provider constraint
-        if role == "s1-dispatcher":
+        # Apply cross-provider constraint. S1 sub-agents (VSM-021 triad) are part
+        # of S1 → use s1_provider, same as s1-dispatcher.
+        if role in ("s1-dispatcher", "s1-planner", "s1-test-controller", "s1-verifier"):
             cfg["provider"] = self.s1_provider
         elif role == "s3-star-auditor":
             cfg["provider"] = self.s3star_provider
