@@ -102,8 +102,13 @@ def main() -> None:
     p_run = sub.add_parser("run", help="прогнать задачи (train по умолчанию)")
     p_run.add_argument("--task", default=None, action="append",
                        help="task_id (можно повторять); без --task — все по фильтру")
+    p_run.add_argument("--sample", type=int, default=None,
+                       help="детерминированный random сэмпл N задач (seed=42, как eval-test); "
+                            "только для run без --task")
 
-    sub.add_parser("run-all", help="прогнать все задачи по фильтру (train)")
+    p_runall = sub.add_parser("run-all", help="прогнать все задачи по фильтру (train)")
+    p_runall.add_argument("--sample", type=int, default=None,
+                          help="детерминированный random сэмпл N задач (seed=42, как eval-test)")
 
     p_et = sub.add_parser("eval-test",
                           help="TB-2.1 verified: N сэмплов (seed=42) для оценки репрезентативности")
@@ -141,7 +146,12 @@ def main() -> None:
         from .modes import run_train
         if args.command == "run" and args.task:
             config.filter_task_ids = args.task
-        run_train(config)
+        sample = getattr(args, "sample", None)
+        # --sample взаимоисключающе с --task (whitelist фиксирует список).
+        if sample and config.filter_task_ids:
+            print("--sample игнорируется: задан явный --task whitelist", file=sys.stderr)
+            sample = None
+        run_train(config, sample_size=sample)
     else:  # unreachable — argparse required=True
         parser.error(f"неизвестная команда: {args.command}")
 

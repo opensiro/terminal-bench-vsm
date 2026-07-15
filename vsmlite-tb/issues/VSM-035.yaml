@@ -1,0 +1,112 @@
+# dedup_signature: regression@train__20260716-002958
+# (auto-created by run_cycle.py, enriched by S1 manual analysis with root cause)
+id: VSM-035
+source_system: S1            # synthesis-operator: eval infrastructure blocker для train
+signal_type: gap             # gap — eval полностью неработоспособен на train (0/15)
+severity: S1                 # бьёт по核心: eval 100% infra-error, продукт не запускается
+target_unit: meta            # eval/harbor_run.py overlay Dockerfile (eval infrastructure)
+
+title: "Train overlay Dockerfile: 100% infra-error (pip/uv network flaky, no retry, broken-python intent conflict)"
+
+summary: |
+  Round 1 train-batch (seed=42, 15 задач × 5 workers) провалился ПОЛНОСТЬЮ на
+  infra: 0/15 passed, все terminated_by=error, trace_len=0, duration=0.0s.
+  Продукт (vsm-product triad) ни разу не запустился — все падения на Docker
+  build overlay (eval/harbor_run.py:_prepare_overlay_task), ДО старта агента.
+
+  Cycle (run_cycle.py) зафиксировал это как regression (pass_rate 33.3% → 0.0%,
+  delta -33.3%) — СИМПТОМ. Ручной анализ (S1) нашёл ROOT CAUSE: overlay
+  Dockerfile для train падает на сетевых RUN (pip/uv/curl), retry-wrapper есть
+  только для goose; uv/pip беззащитны перед transient SSL/DNS.
+
+  Четыре класса infra-ошибок, все в overlay Dockerfile:
+    A. No module named pip — broken-python (задача-ловушка, intent = сломанный
+       python; overlay pip-install ломается об это).
+    B. SSL_ERROR_SYSCALL на uv download (application-debug, california-housing,
+       ...) — flaky network на release-assets.githubusercontent.com; НЕТ
+       retry-wrapper для uv (есть только для goose).
+    C. DNS resolution failure (git-repo-forensics, multi-labeller) — harbor-build
+       network не резолвит pypi.org через VPN-TUN (198.18.0.x); ручной docker
+       build работает (DNS 172.22.160.1) → harbour использует иной network context.
+    D. EnvironmentStartTimeoutError (task-xxe-exploit) — build превысил timeout.
+
+  КОНТРАСТ с TB-2.1 (VSM-033): TB-2.1 решён prebuild-образами (docker_image
+  patch, deps вшиты заранее). Train = build-context: overlay Dockerfile строится
+  harbor'ом при каждом trial, и сетевые RUN (pip/uv/curl) падают на flaky
+  DNS/SSL. Retry-wrapper есть только для goose — uv/pip беззащитны.
+
+evidence:
+  - "state/batch_summaries/train__20260716-002958.json: 0/15 passed, 100% error, pass_rate=0.0"
+  - "state/harbor-trials/broken-python__dmbUHn6/exception.txt → No module named pip (overlay pip-install в intent-сломанный python)"
+  - "state/harbor-trials/application-debug__3GG9D69/exception.txt → SSL_ERROR_SYSCALL на uv download (release-assets.githubusercontent.com)"
+  - "state/harbor-trials/git-repo-forensics__wzDRg5n/exception.txt → Temporary failure in name resolution для pypi.org (DNS fail в harbor-build)"
+  - "state/harbor-trials/multi-labeller/exception.txt → Failed to resolve 'pypi.org' (numpy==2.1.3)"
+  - "state/harbor-trials/task-xxe-exploit/exception.txt → EnvironmentStartTimeoutError (build timeout)"
+  - "eval/harbor_run.py:210 — RUN python3 -m pip install (no retry, no fallback)"
+  - "eval/harbor_run.py:218 — RUN curl uv install.sh (no retry-wrapper, в отличие от goose строки 227-237)"
+  - "meta/train-batch-round1-analysis.md — полный каталог 4 классов ошибок"
+  - "Ручной тест: docker build python:3.13-slim + pip pyyaml = OK (DNS 172.22.160.1 работает); harbour-build тех же задач = DNS fail → network context различается"
+
+error_classes:
+  A_no_pip: "broken-python: overlay pip-install в intent-сломанный python (задача-ловушка)"
+  B_uv_ssl: "SSL_ERROR_SYSCALL на uv download — flaky network, no retry-wrapper"
+  C_dns: "DNS resolution failure для pypi.org — harbor-build network ≠ host docker network"
+  D_timeout: "EnvironmentStartTimeoutError — build превысил build_timeout_sec"
+
+root_cause: |
+  Overlay Dockerfile (eval/harbor_run.py:_prepare_overlay_task) делает сетевые
+  RUN в build: pip install (deps), curl uv-installer, curl goose. Retry-wrapper
+  есть ТОЛЬКО для goose (3 попытки, строки 227-237). uv-install (строка 218) и
+  pip-install (строка 210) — без retry, один transient network/DNS fail = весь
+  trial потерян. Для train-датасета (build-context, overlay строится каждый
+  раз) это фатально: 15/15 упали.
+
+  Дополнительно: broken-python-класс — структурный конфликт. Overlay pip-install
+  несовместим с задачами, где сломанный python — часть intent (продукт должен
+  починить pip сам, это задача). Overlay ломает intent ещё до старта продукта.
+
+proposal: |
+  Non-binding. S5 (basta: prepare_only) готовит, не постановляет. Возможные
+  направления (решает человек):
+  - Retry-wrapper для uv-install (как для goose): 5 попыток с backoff, transient
+    SSL/TLS ошибки — норма для docker build network.
+  - Retry/fallback для pip-install: retry + fallback на pre-bundled wheel или
+    --no-deps продолжение (deps могут стоять в base).
+  - --network=host для harbor-build если поддерживается — обойти DNS-проблемы
+    VPN-TUN (host docker build работает, harbor-build — нет).
+  - broken-python-class: detect intent-сломанный python (или skip-overlay-deps
+    для задач где python должен быть сломан) — overlay не должен чинить то, что
+    задача просит сломать.
+  - prebuild для train тоже (как VSM-033 для TB-2.1): build patched-образ с deps
+    заранее, обойти flaky build-network полностью.
+
+acceptance:
+  - "Round 2 (повтор тех же 15): >50% задач доходят до запуска продукта (trace_len > 0, terminated_by != error)"
+  - "uv/pip-install в overlay имеют retry-wrapper (не падают на transient SSL/DNS)"
+  - "broken-python-class: overlay либо skip-deps, либо продукт запускается в intent-сломанном python и сам чинит pip"
+
+needs_human_decision: true   # выбор стратегии фикса — решение человека (retry vs prebuild vs network)
+
+references:
+  - VSM-033   # prebuild для TB-2.1 — аналогичный подход применим к train (этот issue)
+  - VSM-034   # продуктовый empty-workspace surrender — НЕ подтверждён для train (нет данных, eval упал на infra)
+  - VSM-031   # cycle automation — cycle корректно зафиксировал 0/15 как error (infra_cluster детектор)
+  - meta/train-batch-round1-analysis.md   # полный анализ round 1
+
+notes:
+  - "Round 1 = чистый infra-noise: продуктовая оценка (VSM-034 и frontier-baselines сравнение) невозможна без фикса. Это блокер для всего train-обучения VSM."
+  - "DNS-проблема (класс C) — intermittent: ручной docker build работает, harbour-build падает. Различие в network context harbor vs docker-cli. Требует расследования (docker compose network? extra_allowed_hosts?)"
+  - "broken-python — единственная задача где ошибку МОЖНО считать 'expected' (intent = сломанный python). Остальные 14 — чистый infra-regression."
+  - "trace_len=0 у всех 15 — это маркер 'product never started', не 'product failed'. Важно отличать при future-анализе."
+
+# Observations (авто-классификация run_cycle.py; полные детали — в batch_summary):
+#   [warn] zero_pass: 0/1 passed — no task resolved (rule:zero_pass)
+#   [critical] regression: pass_rate 33.3% → 0.0% (delta -33.3%) (rule:trend_delta)
+#   [warn] infra_cluster: 15/1 (1500%) tasks errored — likely infra (rule:infra_share)
+
+status: triage
+decision: ""
+selected_options: []
+
+created: 2026-07-16
+updated: 2026-07-16

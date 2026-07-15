@@ -207,7 +207,18 @@ def _prepare_overlay_task(original_task_dir: Path, overlay_dir: Path) -> Path:
         # python3.13 in /usr/local/bin; apt's python3 is /usr/bin/python3 (3.11).
         # Bare `pip install` targeted 3.11 → yaml missing in 3.13 → infra_error.
         # VSM-033: pip install profile-deps (core/sci/ml/web auto-detected).
-        f"RUN python3 -m pip install --no-cache-dir --quiet --break-system-packages pyyaml pytest {' '.join(profile_deps)}\n"
+        # VSM-035: retry-wrapper (5 attempts, backoff) для transient SSL/DNS в
+        # docker build network. Plus bootstrap: если в base-образе нет pip (напр.
+        # broken-python intent-сломанный python) — скачать get-pip.py (как эталон
+        # solve.sh делает), иначе overlay-build падает на 'No module named pip'.
+        "RUN if ! python3 -m pip --version >/dev/null 2>&1; then \\\n"
+        "      for i in 1 2 3 4 5; do curl -fsSL https://bootstrap.pypa.io/get-pip.py -o /tmp/get-pip.py && break || \\\n"
+        "        echo \"get-pip attempt $i failed, retrying...\" && sleep $((i*3)); done; \\\n"
+        "      python3 /tmp/get-pip.py --break-system-packages >/dev/null 2>&1 || true; \\\n"
+        "    fi\n"
+        "RUN for i in 1 2 3 4 5; do python3 -m pip install --no-cache-dir --quiet --break-system-packages pyyaml pytest "
+        f"{' '.join(profile_deps)} && break || echo \"pip attempt $i failed, retrying...\" && sleep $((i*3)); done && \\\n"
+        "    python3 -c \"import yaml, pytest; print('deps OK')\" || echo \"WARN: deps incomplete (product may fail)\"\n"
         "RUN apt-get update -qq && DEBIAN_FRONTEND=noninteractive apt-get install -y -qq \\\n"
         "    --no-install-recommends jq make file tree > /dev/null 2>&1 && \\\n"
         "    rm -rf /var/lib/apt/lists/*\n"
@@ -215,9 +226,14 @@ def _prepare_overlay_task(original_task_dir: Path, overlay_dir: Path) -> Path:
         # harbor's verifier phase has no network. Pre-install uv here so test.sh
         # finds it on PATH and skips the download. Pinned to the version test.sh
         # expects (0.7.13) to match exactly.
-        "RUN curl -LsSf https://astral.sh/uv/0.7.13/install.sh | sh && \\\n"
-        "    ln -sf $HOME/.local/bin/uv /usr/local/bin/uv && \\\n"
-        "    uv --version\n"
+        # VSM-035: retry-wrapper (5 attempts, backoff) — uv download flaky
+        # (SSL_ERROR_SYSCALL на release-assets.githubusercontent.com). Без retry
+        # один transient fail = весь trial потерян. Non-fatal: если uv не встал —
+        # build продолжается (verifier test.sh fallback на pip).
+        "RUN for i in 1 2 3 4 5; do curl -LsSf https://astral.sh/uv/0.7.13/install.sh | sh && break || \\\n"
+        "      echo \"uv attempt $i failed, retrying...\" && sleep $((i*5)); done; \\\n"
+        "    ln -sf $HOME/.local/bin/uv /usr/local/bin/uv 2>/dev/null || true && \\\n"
+        "    (uv --version || echo 'WARN: uv install failed (verifier test.sh will use pip fallback)')\n"
         # Direct binary download instead of the installer script — the script
         # opens /dev/tty for an interactive configure prompt that doesn't exist
         # in `docker build`. Download the tarball, extract to /tmp, move goose

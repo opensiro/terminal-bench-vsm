@@ -22,7 +22,7 @@ import concurrent.futures
 from datetime import datetime
 
 from .config import EvalConfig, VSMLITE_ROOT
-from .loader import load_tasks, sample_tasks
+from .loader import load_tasks, sample_tasks  # noqa: F401  (sample_tasks re-exported via run_train sample_size)
 from . import metrics
 
 
@@ -226,18 +226,27 @@ def run_eval_dataset(config: EvalConfig) -> dict:
     return _run_batch([t.task_id for t in tasks], config)
 
 
-def run_train(config: EvalConfig) -> dict:
-    """train: dev-v2 все (или по фильтру) → harbor batch (VSM-024 Phase 3).
+def run_train(config: EvalConfig, sample_size: int | None = None) -> dict:
+    """train: dev-v2 все (или по фильтру) или N сэмплов (seed=42) → harbor batch.
 
     Раньше делегировала runner.run_all (старый пайплайн container/agent_phase/
     grader). Phase 3 cleanup переключил train на harbour — тот же _run_batch, что
     eval-test/eval-dataset. runner.py/container.py/agent_phase.py/grader.py
     удалены как устаревшие (superseded VSM-024).
+
+    sample_size (CLI --sample N): детерминированный random сэмпл N задач
+    (seed=config.eval_test_seed, default 42) — воспроизводимо между запусками
+    (точки сравнимы), как run_eval_test, но для train-датасета. Без --sample —
+    текущее поведение (все/по фильтру).
     """
     _log(f"── train: profile={config.profile} (harbour batch) ──")
     tasks = load_tasks(config)
     if not tasks:
         _log("нет задач для train (проверьте dataset_dir и фильтры)")
         return {}
+    if sample_size is not None:
+        tasks = sample_tasks(tasks, sample_size, config.eval_test_seed)
+        _log(f"sample: {sample_size} (seed={config.eval_test_seed}) из {len(load_tasks(config))}")
+        _log("выборка: " + ", ".join(t.task_id for t in tasks))
     _log(f"задач к прогону: {len(tasks)}")
     return _run_batch([t.task_id for t in tasks], config)
