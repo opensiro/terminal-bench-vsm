@@ -1,11 +1,12 @@
 {
   "generated": "2026-07-15",
+  "profile": "train",
   "dataset": "open-thoughts/OpenThoughts-TB-dev-v2",
   "harness": "claude-code",
   "summary": {
-    "total": 1,
+    "total": 2,
     "passed": 0,
-    "failed": 1,
+    "failed": 2,
     "error": 0,
     "pass_rate": 0.0
   },
@@ -14,11 +15,16 @@
       "total": 1,
       "passed": 0,
       "pass_rate": 0.0
+    },
+    "system-administration": {
+      "total": 1,
+      "passed": 0,
+      "pass_rate": 0.0
     }
   },
   "by_difficulty": {
     "easy": {
-      "total": 1,
+      "total": 2,
       "passed": 0,
       "pass_rate": 0.0
     }
@@ -30,18 +36,39 @@
       "passed": false,
       "category": "file-operations",
       "difficulty": "easy",
-      "agent_duration_sec": 1.2,
+      "agent_duration_sec": 179.5,
       "trace_len": 2,
       "failure_obs_count": 0,
-      "timestamp": "2026-07-15T13:36:10",
+      "timestamp": "2026-07-15T16:09:39",
       "error": null,
       "agent_exit_code": 0,
       "timed_out": false,
       "harbor": {
-        "trial_name": "jsonl-aggregator__Hk4nGNf",
+        "trial_name": "jsonl-aggregator__dKkAb3W",
         "terminated_by": "no_observations",
-        "verdict": "unknown",
+        "verdict": "task_failed",
         "attempts": 1,
+        "reward": 0.0
+      }
+    },
+    {
+      "task_id": "log-summary",
+      "status": "failed",
+      "passed": false,
+      "category": "system-administration",
+      "difficulty": "easy",
+      "agent_duration_sec": 1.2,
+      "trace_len": 2,
+      "failure_obs_count": 0,
+      "timestamp": "2026-07-15T16:14:43",
+      "error": null,
+      "agent_exit_code": 0,
+      "timed_out": false,
+      "harbor": {
+        "trial_name": "log-summary__LbjKRpk",
+        "terminated_by": "infra_error",
+        "verdict": "unknown",
+        "attempts": 0,
         "reward": 0.0
       }
     }

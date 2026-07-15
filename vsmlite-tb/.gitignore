@@ -32,6 +32,12 @@ state/domain_draft.local.yaml
 # ── eval/: артефакты прогонов (если будут вне state/) ──
 eval/runs/
 
+# ── harbor: trial артефакты (логи, trajectory, docker configs) — генерируются ──
+state/harbor-trials/
+
+# ── временные backups (smoke-test и т.п.) ──
+*.smoke-backup
+
 # ── process log (VSM-025): regenerable from state/events.json, runtime-only ──
 logs/process.log
 state/_events_snapshot.json
