@@ -140,6 +140,13 @@ def _prepare_overlay_task(original_task_dir: Path, overlay_dir: Path) -> Path:
         "RUN apt-get update -qq && DEBIAN_FRONTEND=noninteractive apt-get install -y -qq \\\n"
         "    --no-install-recommends jq make file tree > /dev/null 2>&1 && \\\n"
         "    rm -rf /var/lib/apt/lists/*\n"
+        # uv: TB verifiers (test.sh) install uv via curl at verify-time, but
+        # harbor's verifier phase has no network. Pre-install uv here so test.sh
+        # finds it on PATH and skips the download. Pinned to the version test.sh
+        # expects (0.7.13) to match exactly.
+        "RUN curl -LsSf https://astral.sh/uv/0.7.13/install.sh | sh && \\\n"
+        "    ln -sf $HOME/.local/bin/uv /usr/local/bin/uv && \\\n"
+        "    uv --version\n"
         # Direct binary download instead of the installer script — the script
         # opens /dev/tty for an interactive configure prompt that doesn't exist
         # in `docker build`. Download the tarball, extract to /tmp, move goose
