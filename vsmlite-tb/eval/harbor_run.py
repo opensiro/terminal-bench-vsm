@@ -131,7 +131,15 @@ def _prepare_overlay_task(original_task_dir: Path, overlay_dir: Path) -> Path:
         "    DEBIAN_FRONTEND=noninteractive apt-get install -y -qq --no-install-recommends \\\n"
         "        python3 python3-pip curl bzip2 libxcb1 libgomp1 > /dev/null 2>&1 && \\\n"
         "    rm -rf /var/lib/apt/lists/*\n"
-        "RUN pip install --no-cache-dir --quiet pyyaml\n"
+        # Triad dev-tools: pytest (test-controller runs tests during the agent
+        # phase, before the TB verifier), jq (JSON inspection — goose sub-agents
+        # parse task data), make (some tasks build with it), file (detect types).
+        # These are tools the agent needs; task-specific deps (pandas, etc.) are
+        # installed by the task's own Dockerfile or by the agent at runtime.
+        "RUN pip install --no-cache-dir --quiet pyyaml pytest\n"
+        "RUN apt-get update -qq && DEBIAN_FRONTEND=noninteractive apt-get install -y -qq \\\n"
+        "    --no-install-recommends jq make file tree > /dev/null 2>&1 && \\\n"
+        "    rm -rf /var/lib/apt/lists/*\n"
         # Direct binary download instead of the installer script — the script
         # opens /dev/tty for an interactive configure prompt that doesn't exist
         # in `docker build`. Download the tarball, extract to /tmp, move goose
