@@ -1,0 +1,65 @@
+id: VSM-019
+source_system: S1            # S1 internal capability — operational state control
+signal_type: policy          # CONTRACT §5 amendment
+severity: S1                 # structural — меняет S1 contract
+target_unit: child           # дочерний VSM (продукт)
+
+title: "CONTRACT §5.1: in-invocation checkpoints — operational axis amendment"
+
+summary: |
+  Поправка к `vsm/systems/s1-dispatcher/CONTRACT.md §5` (stateless retry). §5
+  регулирует memory axis (что S1 помнит МЕЖДУ invocation'ами = ничего). Эта
+  поправка вводит ВТОРУЮ, независимую ось — operational axis: контроль
+  состояния ВНУТРИ одного invoke().
+
+  РАЗРЕШЕНО: S1 (его внутренняя triada, VSM-020) может создавать in-invocation
+  git checkpoints и откатываться к ним внутри одного invoke() — для цикла
+  «решил → проконтролировал тестами → если упали, откатился → пересоздал».
+
+  НЕ ОТМЕНЯЕТ statelessness: checkpoints — ephemeral temp-refs, не переживают
+  invocation. Anti-oscillation guard (max_reverts). Auditability сохранена — все
+  checkpoint-операции логируются в trace.
+
+  Реализация: `src/runtime/checkpoint.py::CheckpointManager` + git MCP-инструменты
+  `git.stash_push`/`git.rev_parse`/`git.reset_hard`. Native аналог SHEPHERD
+  commit/revert (VSM-018 deferral).
+
+evidence:
+  - "vsm/systems/s1-dispatcher/CONTRACT.md §5.1 — amendment текст (in-invocation operational axis)"
+  - "src/runtime/checkpoint.py — CheckpointManager (create/revert/diff_since)"
+  - "src/mcp_server/tools/git.py — git.stash_push, git.rev_parse, git.reset_hard (VSM-019)"
+  - "src/tests/test_checkpoint.py — 7 tests PASS (create/revert/diff/idempotent/non-git)"
+  - "src/recovery_policies/reset_and_replay.py — реused паттерн git reset --hard + clean -fd"
+
+proposal: |
+  Принять CONTRACT §5.1 как additive поправку: memory axis (stateless between
+  invocations) — без изменений; operational axis (in-invocation checkpoints) —
+  разрешён с рамками (ephemeral, max_reverts, auditable). Это фундамент для
+  TriadSolver (VSM-020) и agentизации (VSM-021).
+
+acceptance:
+  - "CONTRACT.md §5.1 — текст добавлен, явно разделяет memory/operational axes"
+  - "checkpoint.py — CheckpointManager.create/revert/diff_since реализованы"
+  - "git.py — 3 новых MCP-инструмента (stash_push, rev_parse, reset_hard)"
+  - "test_checkpoint.py — 7 tests PASS"
+  - "non-git workspace graceful degradation (ref='none', revert=False)"
+  - "make validate GREEN"
+
+needs_human_decision: true   # severity S1 (structural contract change) → автоматически требует human
+
+status: accepted
+decision: "accepted — CONTRACT §5.1 amendment: operational axis (in-invocation checkpoints) разрешён, memory axis (stateless) без изменений. CheckpointManager + git primitives реализованы (7 tests PASS). Фундамент для VSM-020 TriadSolver."
+selected_options: []
+
+references:
+  - VSM-018   # SHEPHERD deferral — мотивация для native in-invocation reversibility
+  - VSM-020   # TriadSolver structure (использует CheckpointManager)
+  - VSM-007   # предшественник: MultiAgentSolver Split (linear, без revert)
+
+notes:
+  - "Две оси разделены явно: memory axis (cross-invocation, stateless) vs operational axis (in-invocation, checkpoint/revert)."
+  - "Anti-oscillation: max_reverts (default 2) — превышение → verify решает финальный verdict."
+  - "Auditability: checkpoint/revert ops логируются в trace как git.commit/git.reset_hard TraceEntry."
+
+created: 2026-07-15
+updated: 2026-07-15
