@@ -151,9 +151,15 @@ def _prepare_overlay_task(original_task_dir: Path, overlay_dir: Path) -> Path:
         # opens /dev/tty for an interactive configure prompt that doesn't exist
         # in `docker build`. Download the tarball, extract to /tmp, move goose
         # to /usr/local/bin (on PATH in all base images), skip configure.
+        # Retry wrapper: docker build network can be flaky (TLS errors); goose is
+        # 286MB so transient failures are common. 3 attempts with backoff.
         "RUN ARCH=$(uname -m) && \\\n"
-        f"    curl -fsSL https://github.com/aaif-goose/goose/releases/download/{_GOOSE_VERSION}/"
-        "goose-$ARCH-unknown-linux-gnu.tar.bz2 -o /tmp/goose.tar.bz2 && \\\n"
+        "    for i in 1 2 3; do \\\n"
+        f"      curl -fsSL https://github.com/aaif-goose/goose/releases/download/{_GOOSE_VERSION}/"
+        "goose-$ARCH-unknown-linux-gnu.tar.bz2 -o /tmp/goose.tar.bz2 && break || \\\n"
+        "      echo \"attempt $i failed, retrying...\" && sleep 5; \\\n"
+        "    done && \\\n"
+        "    test -s /tmp/goose.tar.bz2 && \\\n"
         "    tar -xjf /tmp/goose.tar.bz2 -C /tmp && \\\n"
         "    mv /tmp/goose /usr/local/bin/goose && chmod +x /usr/local/bin/goose && \\\n"
         "    rm /tmp/goose.tar.bz2 && \\\n"
