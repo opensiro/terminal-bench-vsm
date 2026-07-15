@@ -15,6 +15,8 @@
   state/live_metrics.json → units[], activity[] (от collect_metrics.py)
   state/dev_metrics.json → eval (pass-rate Terminal-Bench Dev Set v2, VSM-005)
   state/eval_history.json → eval.trend (per-run снэпшоты для S4)
+  state/batch_summaries/ → batches (per-batch саммари + cycle observations, VSM-030)
+  state/cycle_history.json → cycle_history (trend per-cycle, VSM-031)
 
 Usage:
   python3 scripts/render_data.py
@@ -185,6 +187,63 @@ def _duration_sec(started, finished):
         return None
 
 
+def _collect_batches(batches_dir: Path, limit: int = 50):
+    """VSM-030: per-batch саммари из state/batch_summaries/ для таймлайна батчей.
+
+    Каждый batch_summary.json пишется eval/modes.py:_run_batch (через
+    metrics.record_batch) и enrich'ится scripts/run_cycle.py (observations[],
+    decision, issues_raised). Это артефактный слой контура «наблюдение → решение»:
+    таймлайн показывает «что cycle увидел в батче → какое решение принял».
+
+    Возвращает светлые поля (без тяжёлого per_task, который в data.js не нужен —
+    детали по клику → файл). Сортировка по timestamp desc, последние limit.
+    Один битый batch не валилит сбор (skip + continue).
+    """
+    if not batches_dir.exists():
+        return []
+    batches = []
+    for f in sorted(batches_dir.glob("*.json"), reverse=True):
+        try:
+            b = json.loads(f.read_text(encoding="utf-8"))
+        except (FileNotFoundError, json.JSONDecodeError, OSError):
+            continue
+        if not isinstance(b, dict):
+            continue
+        batches.append({
+            "batch_id": b.get("batch_id"),
+            "profile": b.get("profile"),
+            "timestamp": b.get("timestamp") or b.get("started_at"),
+            "wall_clock_sec": b.get("wall_clock_sec"),
+            "workers": b.get("workers"),
+            "tasks_total": b.get("tasks_total") or len(b.get("per_task", [])),
+            "summary": b.get("summary", {}),
+            "trend_direction": b.get("trend_direction"),
+            "trend_delta": b.get("trend_delta"),
+            # cycle-enriched (run_cycle.py заполняет; пусто если батч без cycle):
+            "observations": b.get("observations", []),
+            "decision": b.get("decision", ""),
+            "issues_raised": b.get("issues_raised", []),
+            "decided_at": b.get("decided_at"),
+        })
+    # сортировка по timestamp desc (None — в конец)
+    batches.sort(key=lambda x: x.get("timestamp") or "", reverse=True)
+    return batches[:limit]
+
+
+def _read_cycle_history(limit: int = 50):
+    """VSM-031: state/cycle_history.json — память цикла для trend (гранулярность = цикл).
+
+    Пишется каждым запуском run_cycle.py: {cycle, timestamp, pass_rate, autonomy,
+    verdict, decision, issue_created}. В отличие от eval_history (daily-snapshot
+    из _run_batch) — пишется каждым циклом, надёжна для интервальных прогонов.
+    Возвращает последние limit записей (asc — для trend-графика по времени).
+    """
+    history = _read(STATE / "cycle_history.json", [])
+    if not isinstance(history, list):
+        return []
+    return history[-limit:]
+
+
 def main():
     project = ROOT.name
     try:
@@ -218,6 +277,10 @@ def main():
     eval_trend = _eval_trend(eval_history)
     # VSM-029: per-run саммари из harbor-trials/ для раздела Runs в мониторе
     runs = _collect_runs(STATE / "harbor-trials")
+    # VSM-030: per-batch саммари из state/batch_summaries/ (cycle-enriched)
+    batches = _collect_batches(STATE / "batch_summaries")
+    # VSM-031: cycle_history — память цикла для trend (гранулярность = цикл)
+    cycle_history = _read_cycle_history()
 
     data = {
         "generated": datetime.now().isoformat(timespec="seconds"),
@@ -272,6 +335,12 @@ def main():
         "history": history,
         "activity": live.get("activity", []),
         "interventions": intervention_list,   # VSM-005: S5 intervention log (публичный индикатор автономности)
+        # VSM-030: per-batch саммари (cycle-enriched: observations/decision/issues).
+        # Таймлайн «что cycle увидел в батче → какое решение принял».
+        "batches": batches,
+        # VSM-031: cycle_history — trend pass_rate/A(t) per-cycle (надёжнее
+        # eval_history для интервальных прогонов: пишется каждым циклом).
+        "cycle_history": cycle_history,
     }
 
     MONITOR.mkdir(exist_ok=True)
@@ -302,6 +371,7 @@ def main():
     eval_str = f"{pr:.0%}" if pr is not None else "—"
     print(f"  eval: {eval_str} pass-rate ({data['eval']['trend']['direction']})")
     print(f"  issues: {len(data['issues'])} | units: {len(data['units'])} | activity days: {len(data['activity'])}")
+    print(f"  batches: {len(data['batches'])} (cycle-enriched) | cycle_history: {len(data['cycle_history'])} cycles")
     if log_report:
         print(f"  logs: {events_str} | agents: {log_report['product_agents']} product, {log_report['system_agents']} system (active)")
     print(f"  → {target.relative_to(ROOT)}")

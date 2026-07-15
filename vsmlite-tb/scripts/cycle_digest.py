@@ -86,6 +86,56 @@ def _eval_line(dev_metrics, eval_history):
     return f"▸ eval: **{pass_rate:.0%}**{trend_str} — {passed}/{total} tasks"
 
 
+def _cycle_observation_block():
+    """VSM-030/031: блок observations/decision последнего cycle из cycle_history.
+
+    Даёт S5 контекст «что детерминистический cycle уже обнаружил» ДО глубокого
+    LLM-анализа. cycle_history пишется каждым run_cycle.py; последний batch_summary
+    (state/batch_summaries/) содержит полные observations[].
+
+    Возвращает список строк (пустой если cycle_history нет) — последний cycle:
+    decision + observations (critical/warn/info) + issue если создан.
+    """
+    ch = _read(STATE / "cycle_history.json", [])
+    if not isinstance(ch, list) or not ch:
+        return []
+    last = ch[-1]
+    lines = []
+    cycle_n = last.get("cycle", "?")
+    decision = last.get("decision", "")
+    issue = last.get("issue_created")
+    lines.append(f"▸ cycle #{cycle_n} (детерминистический): **{decision}**")
+    if issue:
+        lines.append(f"  ⚡ auto-created {issue} (needs_human_decision)")
+
+    # последние observations из последнего batch_summary (если есть).
+    bs_dir = STATE / "batch_summaries"
+    if bs_dir.exists():
+        # последний по timestamp (mtime — proxy; batch_id содержит дату).
+        summaries = []
+        for f in bs_dir.glob("*.json"):
+            try:
+                b = json.loads(f.read_text(encoding="utf-8"))
+                if isinstance(b, dict):
+                    summaries.append(b)
+            except (json.JSONDecodeError, OSError):
+                continue
+        summaries.sort(key=lambda x: x.get("timestamp") or x.get("batch_id") or "",
+                       reverse=True)
+        if summaries:
+            obs = summaries[0].get("observations", [])
+            if obs:
+                lines.append(f"  observations ({len(obs)}):")
+                for o in obs[:6]:  # потолок 6 в дайджесте
+                    sev = o.get("severity", "?")
+                    mark = {"critical": "⚡", "warn": "⚠", "info": "▸"}.get(sev, "·")
+                    lines.append(f"    {mark} [{sev}] {o.get('type','?')}: {o.get('detail','')}")
+    return lines
+
+
+
+
+
 def main():
     mat = _read(STATE / "maturation.json", {})
     status = _read(STATE / "status.json", {})
@@ -117,6 +167,10 @@ def main():
     lines.append("")
     lines.append(f"▸ A(t): **{score}** ({verdict_a}) | maturation: **{phase}**")
     lines.append(eval_line)
+    # VSM-030/031: что детерминистический cycle уже обнаружил (контекст для S5).
+    cycle_lines = _cycle_observation_block()
+    if cycle_lines:
+        lines.extend(cycle_lines)
     if red_findings:
         lines.append(f"▸ ⚠️ S3* audit: {len(red_findings)} RED finding(s) — см. state/audit.json")
     if intel and intel.get("signals"):

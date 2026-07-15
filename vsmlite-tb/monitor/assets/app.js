@@ -103,6 +103,7 @@ function renderHeader(active) {
       <a href="index.html"   class="${active==='index'?'active':''}">Системы / maturation</a>
       <a href="metrics.html" class="${active==='metrics'?'active':''}">Метрики по датам</a>
       <a href="runs.html"    class="${active==='runs'?'active':''}">Раны (${(((D.eval||{}).runs)||[]).length})</a>
+      <a href="batches.html" class="${active==='batches'?'active':''}">Батчи (${(D.batches||[]).length})</a>
       <a href="issues.html"  class="${active==='issues'?'active':''}">Запросы корректировки (${(D.issues||[]).length})</a>
       <a href="reference.html" class="${active==='reference'?'active':''}">Памятка VSM↔vsmlite</a>
     </nav>`;
@@ -379,6 +380,9 @@ function renderMetricsPage() {
 }
 function renderRunsPage() {   // VSM-029: хедер + навигация для runs.html; таблицу рисует inline-скрипт страницы
   renderHeader("runs");
+}
+function renderBatchesPage() {  // VSM-030: хедер + навигация для batches.html; таймлайн рисует inline-скрипт
+  renderHeader("batches");
 }
 
 // ════════════════════════ Памятка VSM ↔ vsmlite (reference.html) ════════════════════════

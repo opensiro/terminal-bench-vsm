@@ -301,6 +301,11 @@ def main() -> int:
                         help="keep the resolved harbor config for debugging")
     parser.add_argument("--dataset-dir", default=None,
                         help="override dataset cache dir (env EVAL_DATASET_DIR)")
+    parser.add_argument("--finalize", action="store_true",
+                        help="after the trial, write an eval_history snapshot "
+                             "(metrics.record_run) — фиксирует точку T0/T1 для trend "
+                             "при интервальных прогонах (одиночный harbor trial start "
+                             "не вызывает record_run сам; только _run_batch делает)")
     args = parser.parse_args()
 
     config = EvalConfig()
@@ -308,6 +313,19 @@ def main() -> int:
         config.dataset_dir = Path(args.dataset_dir)
 
     result = run_trial(args.task, config, keep_config=args.keep_config)
+
+    # VSM-031: --finalize — для интервальных прогонов (канарейка/полный датасет
+    # по частям). Один harbor trial start не пишет eval_history snapshot; без него
+    # trend T0→T1 не фиксируется. record_run пишет daily-snapshot (один в день).
+    if args.finalize and result:
+        snapshot = metrics.record_run(config)
+        trend = metrics.compute_trend(config)
+        print(f"── finalize ──", file=sys.stderr)
+        print(f"  eval_history snapshot: pass_rate={snapshot.get('pass_rate', 0.0):.1%} "
+              f"({snapshot.get('passed', 0)}/{snapshot.get('total', 0)})", file=sys.stderr)
+        print(f"  trend: {trend['direction']} (delta={trend['delta']:+.1%})", file=sys.stderr)
+        print(f"  → {metrics._history_path(config)}", file=sys.stderr)
+
     return 0 if result else 1
 
 

@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>vsmlite-tb · Батчи — cycle observability</title>
+  <link rel="stylesheet" href="assets/style.css">
+  <style>
+    /* только специфичное для batches.html — остальное из style.css */
+    .batch-filters { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:18px; }
+    .batch-filter { background:var(--panel-2); border:1px solid var(--border); color:var(--muted);
+      padding:5px 14px; border-radius:14px; font-size:12px; cursor:pointer; font-weight:600; }
+    .batch-filter.active { color:#0d1117; background:var(--accent); border-color:var(--accent); }
+    .batch-filter .cnt { opacity:.7; margin-left:4px; font-weight:400; }
+    table.batches th, table.batches td { font-size:13px; vertical-align:top; }
+    table.batches tr.batch-detail { display:none; }
+    table.batches tr.batch-detail.show { display:table-row; }
+    table.batches tr.batch-detail td { background:var(--panel-2); padding:12px 14px; }
+    .batch-row { cursor:pointer; }
+    .batch-row:hover { background:var(--panel-2); }
+    /* decision badges */
+    .dec-pill { font-size:11px; font-weight:600; padding:2px 9px; border-radius:10px; border:1px solid var(--border); white-space:nowrap; }
+    .dec-critical { color:var(--red); border-color:var(--red); }
+    .dec-concerns { color:#20180a; background:var(--amber); border-color:var(--amber); }
+    .dec-ok { color:var(--green); border-color:var(--green); }
+    .dec-none { color:var(--muted); }
+    .dec-empty { color:var(--muted); font-style:italic; }
+    /* observation badges */
+    .obs-list { margin:0; padding:0; list-style:none; }
+    .obs-list li { padding:3px 0; display:flex; gap:8px; align-items:flex-start; font-size:12px; }
+    .obs-sev { font-size:10px; font-weight:700; padding:1px 6px; border-radius:8px; text-transform:uppercase; letter-spacing:.04em; min-width:52px; text-align:center; }
+    .obs-sev.critical { color:var(--red); border:1px solid var(--red); }
+    .obs-sev.warn { color:#20180a; background:var(--amber); }
+    .obs-sev.info { color:var(--green); border:1px solid var(--green); }
+    .obs-type { font-family:var(--font-mono, ui-monospace, monospace); font-weight:600; }
+    .obs-detail { color:var(--muted); }
+    .obs-detector { font-size:10px; color:var(--muted); opacity:.7; }
+    .issue-link { font-family:var(--font-mono, ui-monospace, monospace); font-size:11px; }
+    .pr-good { color:var(--green); font-weight:600; }
+    .pr-mid  { color:var(--amber); }
+    .pr-bad  { color:var(--red); }
+    .trend-up { color:var(--green); }
+    .trend-down { color:var(--red); }
+    .trend-flat, .trend-none { color:var(--muted); }
+    .mono { font-family:var(--font-mono, ui-monospace, monospace); font-size:12px; }
+    .obs-empty { color:var(--muted); font-style:italic; font-size:12px; }
+  </style>
+</head>
+<body>
+  <header class="top"></header>
+
+  <section>
+    <h2>Батчи — таймлайн «что cycle увидел → что решил»</h2>
+    <div id="batches-kpis"></div>
+  </section>
+
+  <section>
+    <div class="batch-filters" id="batches-filters"></div>
+    <div class="card">
+      <table class="batches" id="batches-table"></table>
+    </div>
+  </section>
+
+  <section>
+    <div class="note">
+      Источник: <code>state/batch_summaries/*.json</code> →
+      <code>monitor/data.js</code> (<code>window.VSM_DATA.batches</code>).
+      Каждый батч пишется <code>eval/modes.py:_run_batch</code> (через
+      <code>metrics.record_batch</code>) и enrich'ится
+      <code>scripts/run_cycle.py</code> (observations[] / decision / issues_raised).
+      Регенерация: <code>python3 scripts/render_data.py</code>. Детали по клику.
+      <br>Отделяется от <a href="runs.html">Ранов</a>: runs = per-task trial'ы;
+      batches = per-eval-run саммари с observability контура cycle (VSM-030/031).
+    </div>
+  </section>
+
+  <script src="data.js"></script>
+  <script src="assets/hints.js"></script>
+  <script src="assets/app.js"></script>
+  <script>
+    (function () {
+      const D = window.VSM_DATA || {};
+      const batches = (D.batches || []);
+
+      function esc(s) {
+        return String(s == null ? "" : s)
+          .replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+      }
+      function fmtTime(iso) {
+        if (!iso) return "—";
+        const m = String(iso).match(/(\d{4})-(\d{2})-(\d{2})T(\d{2}:\d{2})/);
+        return m ? `${m[2]}-${m[3]} ${m[4]}` : esc(String(iso).slice(0, 16));
+      }
+      function fmtDur(sec) {
+        if (sec == null) return "—";
+        if (sec < 60) return sec + "s";
+        const m = Math.floor(sec / 60), s = Math.round(sec % 60);
+        return s ? `${m}m ${s}s` : `${m}m`;
+      }
+      function pct(x) {
+        if (x == null) return "—";
+        return (Math.round(x * 1000) / 10) + "%";
+      }
+      function prCls(pr) {
+        if (pr == null) return "dec-none";
+        if (pr >= 0.5) return "pr-good";
+        if (pr > 0) return "pr-mid";
+        return "pr-bad";
+      }
+
+      // decision → badge class + short label
+      function decBadge(decision) {
+        if (!decision) return { cls: "dec-empty", label: "(без cycle)" };
+        if (decision.startsWith("needs_human_decision")) return { cls: "dec-critical", label: "⚡ critical" };
+        if (decision.startsWith("ok_with_concerns")) return { cls: "dec-concerns", label: "⚠ concerns" };
+        if (decision.startsWith("ok_no_action")) return { cls: "dec-ok", label: "✓ ok" };
+        return { cls: "dec-none", label: esc(decision.slice(0, 24)) };
+      }
+
+      // classify batch by decision for filters
+      function batchCategory(b) {
+        const d = b.decision || "";
+        if (!d) return "no_cycle";
+        if (d.startsWith("needs_human_decision")) return "critical";
+        if (d.startsWith("ok_with_concerns")) return "concerns";
+        return "ok";
+      }
+
+      const counts = { critical: 0, concerns: 0, ok: 0, no_cycle: 0 };
+      batches.forEach(b => { counts[batchCategory(b)] = (counts[batchCategory(b)] || 0) + 1; });
+
+      // ── KPI tiles ──
+      const kpi = document.getElementById("batches-kpis");
+      if (kpi) {
+        if (!batches.length) {
+          kpi.innerHTML = '<div class="empty">нет батчей (запусти eval: make eval-all или python3 -m eval run-all — после батча появится cycle-enriched саммари)</div>';
+        } else {
+          const tile = (v, l) => `<div class="m-tile"><div class="l">${l}</div><div class="v">${v}</div></div>`;
+          // средний pass_rate по всем батчам
+          const prVals = batches.map(b => (b.summary || {}).pass_rate).filter(x => x != null);
+          const avgPr = prVals.length ? prVals.reduce((a, b) => a + b, 0) / prVals.length : null;
+          kpi.innerHTML =
+            tile(batches.length, "всего батчей") +
+            tile(counts.critical || 0, "⚡ critical") +
+            tile(counts.concerns || 0, "⚠ concerns") +
+            tile(counts.ok || 0, "✓ ok") +
+            tile(avgPr == null ? "—" : pct(avgPr), "средний pass-rate");
+        }
+      }
+
+      // ── Filters ──
+      const filtersEl = document.getElementById("batches-filters");
+      const filterDefs = [
+        { id: "all", label: "все" },
+        { id: "critical", label: "⚡ critical" },
+        { id: "concerns", label: "⚠ concerns" },
+        { id: "ok", label: "✓ ok" },
+        { id: "no_cycle", label: "без cycle" },
+      ];
+      let activeFilter = "all";
+      function renderFilters() {
+        if (!filtersEl) return;
+        filtersEl.innerHTML = filterDefs.map(f => {
+          const c = f.id === "all" ? batches.length : (counts[f.id] || 0);
+          return `<button class="batch-filter ${f.id === activeFilter ? "active" : ""}" data-filter="${f.id}">${f.label}<span class="cnt">${c}</span></button>`;
+        }).join("");
+      }
+      renderFilters();
+      filtersEl && filtersEl.addEventListener("click", e => {
+        const b = e.target.closest("[data-filter]");
+        if (!b) return;
+        activeFilter = b.dataset.filter;
+        renderFilters();
+        renderTable();
+      });
+
+      // ── Table ──
+      const tbl = document.getElementById("batches-table");
+      function renderTable() {
+        if (!tbl) return;
+        if (!batches.length) { tbl.innerHTML = '<div class="empty">нет батчей</div>'; return; }
+        const view = batches.filter(b => activeFilter === "all" || batchCategory(b) === activeFilter);
+        const head = `<thead><tr>
+          <th>batch</th><th>profile</th><th class="num">pass-rate</th>
+          <th>trend</th><th class="num">tasks</th><th class="num">wall</th>
+          <th>decision</th><th>started</th>
+        </tr></thead>`;
+        const rows = view.map((b, i) => {
+          const sm = b.summary || {};
+          const pr = sm.pass_rate;
+          const dec = decBadge(b.decision);
+          const tdir = b.trend_direction || "none";
+          const tdelta = b.trend_delta;
+          const trendStr = `<span class="trend-${tdir}">${tdir}${tdelta != null ? " " + pct(Math.abs(tdelta)) : ""}</span>`;
+          const workers = b.workers != null ? ` · w${b.workers}` : "";
+          return `<tbody>
+            <tr class="batch-row" data-idx="${i}">
+              <td class="mono">${esc(b.batch_id)}</td>
+              <td>${esc(b.profile)}</td>
+              <td class="num ${prCls(pr)}">${pct(pr)}</td>
+              <td>${trendStr}</td>
+              <td class="num">${b.tasks_total != null ? b.tasks_total : "—"}</td>
+              <td class="num">${fmtDur(b.wall_clock_sec)}${workers}</td>
+              <td><span class="dec-pill ${dec.cls}">${dec.label}</span></td>
+              <td>${fmtTime(b.timestamp)}</td>
+            </tr>
+            <tr class="batch-detail" data-detail="${i}">
+              <td colspan="8">
+                ${renderDetail(b)}
+              </td>
+            </tr>
+          </tbody>`;
+        }).join("");
+        tbl.innerHTML = head + rows;
+      }
+      renderTable();
+
+      // detail row: observations + decision + issues + summary breakdown
+      function renderDetail(b) {
+        const sm = b.summary || {};
+        const obs = b.observations || [];
+        const issues = b.issues_raised || [];
+        let html = '<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">';
+
+        // left: observations
+        html += '<div><div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px">Observations (cycle auto-detection)</div>';
+        if (!obs.length) {
+          html += '<div class="obs-empty">нет observations (decision: ok_no_action или батч без cycle)</div>';
+        } else {
+          html += '<ul class="obs-list">';
+          obs.forEach(o => {
+            html += `<li>
+              <span class="obs-sev ${o.severity || 'warn'}">${esc(o.severity || '?')}</span>
+              <div>
+                <span class="obs-type">${esc(o.type)}</span>
+                <span class="obs-detail">— ${esc(o.detail)}</span>
+                <div class="obs-detector">${esc(o.detector)}</div>
+              </div>
+            </li>`;
+          });
+          html += '</ul>';
+        }
+        html += '</div>';
+
+        // right: decision + issues + summary
+        html += '<div>';
+        html += `<div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px">Decision</div>`;
+        html += `<div style="margin-bottom:12px"><span class="dec-pill ${decBadge(b.decision).cls}">${esc(b.decision || '—')}</span>`;
+        if (b.decided_at) html += ` <span style="font-size:11px;color:var(--muted)">at ${fmtTime(b.decided_at)}</span>`;
+        html += '</div>';
+
+        if (issues.length) {
+          html += `<div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px">Issues raised (auto)</div>`;
+          html += '<div style="margin-bottom:12px">' + issues.map(is => `<span class="issue-link">${esc(is)}</span>`).join(', ') + '</div>';
+        }
+
+        html += `<div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px">Summary</div>`;
+        html += `<div style="font-size:12px;font-variant-numeric:tabular-nums">
+          passed <b style="color:var(--green)">${sm.passed || 0}</b> /
+          failed <b style="color:var(--red)">${sm.failed || 0}</b> /
+          error <b>${sm.error || 0}</b> /
+          total <b>${sm.total || 0}</b>
+        </div>`;
+        html += '</div>';
+
+        html += '</div>';
+        return html;
+      }
+
+      // ── Click to expand detail ──
+      tbl && tbl.addEventListener("click", e => {
+        const row = e.target.closest(".batch-row");
+        if (!row) return;
+        const idx = row.dataset.idx;
+        const detail = tbl.querySelector(`[data-detail="${idx}"]`);
+        if (detail) detail.classList.toggle("show");
+      });
+    })();
+  </script>
+  <script>renderBatchesPage && renderBatchesPage();</script>
+</body>
+</html>
