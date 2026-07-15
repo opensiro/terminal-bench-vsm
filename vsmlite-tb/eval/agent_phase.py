@@ -32,6 +32,10 @@ from .config import (
 )
 from .container import TBContainer
 
+# Имя продуктового MCP-сервера (одно на обе стороны bridge'а: mcp_config.json +
+# claude-code --allowedTools wildcard). Дубликат server.py:122 serverInfo.name.
+MCP_SERVER_NAME = "coding-harness-tools"
+
 
 @dataclass
 class AgentPhaseResult:
@@ -68,7 +72,7 @@ def _build_mcp_config(container: TBContainer, config: EvalConfig) -> dict:
     container_name = container.name
     return {
         "mcpServers": {
-            "coding-harness-tools": {
+            MCP_SERVER_NAME: {
                 "transport": "stdio",
                 "command": "docker",
                 "args": [
@@ -119,15 +123,27 @@ def _build_harness_args(
     """
     binary = _resolve_harness_binary(config)
     if config.harness_type == "claude-code":
+        # VSM-022 решение A: ограничить tool-surface до продуктового MCP.
+        # Без --allowedTools claude-code сохраняет нативные Bash/Read/Write/Edit
+        # на хосте и решает задачу минуя MCP bridge → trace пуст, pass_rate
+        # измеряет harness, а не автономность продукта.
+        # mcp__<server>__* — wildcard-форма, разрешает ВСЕ инструменты сервера
+        # (синтаксис подтверждён claude --help + code.claude.com/docs/en/permissions).
+        # Нативные тулы (Bash/Read/Write/Edit/...) не перечислены → отключены.
         return [
             binary,
             "--mcp-config", mcp_config_path or "",
+            "--allowedTools", f"mcp__{MCP_SERVER_NAME}__*",
             "--print",
             "--dangerously-skip-permissions",
             *config.harness_extra_args,
             task_prompt,
         ]
     elif config.harness_type == "goose":
+        # VSM-023 (под-issue от VSM-022): goose не имеет эквивалента --allowedTools.
+        # --with-extension подключает MCP, но НЕ отключает built-in tools (developer,
+        # computer-controller, ...). trace может остаться пустым, если goose решает
+        # через свои built-in. --no-profile убирает user-профиль, но не core builtins.
         args = [
             binary, "run",
             "--text", task_prompt,

@@ -95,6 +95,17 @@ def main() -> None:
             config.filter_task_ids = args.task
             for tid in args.task:
                 run_single(tid, config)
+            # run --task (батч) не идёт через run_all, поэтому eval_history.json
+            # (trend для S4/autonomy) не пишется. Фиксируем снэпшот явно — это
+            # нужно для canary-set прогонов (T0/T1), которые идут через --task.
+            from .metrics import record_run, compute_trend
+            snapshot = record_run(config)
+            trend = compute_trend(config)
+            import sys as _sys
+            print(f"batch snapshot: pass_rate={snapshot['pass_rate']:.1%} "
+                  f"({snapshot['passed']}/{snapshot['total']})  "
+                  f"trend: {trend['direction']} ({trend['delta']:+.1%})",
+                  file=_sys.stderr)
         elif args.command == "run" and not args.task:
             run_all(config)
         else:

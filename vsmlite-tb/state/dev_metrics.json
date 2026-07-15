@@ -1,0 +1,49 @@
+{
+  "generated": "2026-07-15",
+  "dataset": "open-thoughts/OpenThoughts-TB-dev-v2",
+  "harness": "claude-code",
+  "summary": {
+    "total": 1,
+    "passed": 0,
+    "failed": 1,
+    "error": 0,
+    "pass_rate": 0.0
+  },
+  "by_category": {
+    "file-operations": {
+      "total": 1,
+      "passed": 0,
+      "pass_rate": 0.0
+    }
+  },
+  "by_difficulty": {
+    "easy": {
+      "total": 1,
+      "passed": 0,
+      "pass_rate": 0.0
+    }
+  },
+  "tasks": [
+    {
+      "task_id": "jsonl-aggregator",
+      "status": "failed",
+      "passed": false,
+      "category": "file-operations",
+      "difficulty": "easy",
+      "agent_duration_sec": 1.2,
+      "trace_len": 2,
+      "failure_obs_count": 0,
+      "timestamp": "2026-07-15T13:36:10",
+      "error": null,
+      "agent_exit_code": 0,
+      "timed_out": false,
+      "harbor": {
+        "trial_name": "jsonl-aggregator__Hk4nGNf",
+        "terminated_by": "no_observations",
+        "verdict": "unknown",
+        "attempts": 1,
+        "reward": 0.0
+      }
+    }
+  ]
+}

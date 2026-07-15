@@ -1,0 +1,25 @@
+# Canary set для измерения прогресса продукта (VSM-022 решение A).
+#
+# Назначение: фиксированный набор задач, прогоняемый repeatedly в режиме A
+# (harness ограничен до MCP продукта). Те же задачи на каждой итерации → точки
+# T0, T1, ... сравнимы во времени. delta pass_rate = эффект VSM-цикла.
+#
+# Полный датасет (100) — только milestone, раз в фазу.
+#
+# Критерии отбора:
+#   - локальная/быстрая сборка (базовый образ + apt-пакеты, без git clone / conda);
+#   - разнообразие: easy + medium, разные category;
+#   - agent_timeout <= 900s (кроме schedule-vacation 900s).
+#
+# Прогон:
+#   sg docker -c '.venv/bin/python -m eval run $(awk "!/^#/{print \"--task \"$0}" eval/canary.txt)'
+#
+# 8 задач:
+jsonl-aggregator                    # easy, file-operations
+log-summary                        # easy, system-administration
+schedule-vacation                  # easy, algorithms
+build-merkle-tree-cli-sha512       # easy, software-engineering
+csv-json-jsonl-merger              # medium, file-operations
+acl-permissions-inheritance        # medium, system-administration
+python-api-rate-limit              # medium, software-engineering
+malicious-package-forensics        # medium, security
