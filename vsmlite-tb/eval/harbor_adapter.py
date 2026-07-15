@@ -81,16 +81,47 @@ class ProductAdapter(BaseAgent):
         return "0.1.0"
 
     async def setup(self, environment: BaseEnvironment) -> None:
-        """Install minimal Python deps the product needs to import.
+        """Install deps the product + its goose sub-agents need inside the container.
 
-        The TB base image (python:3.13-slim) lacks PyYAML, which the product's
-        taxonomy loader requires (classifier/taxonomy_loader.py). Phase 2 will
-        extend this to install goose binary + full deps when use_agents=True.
+        The TB base image (python:3.13-slim) lacks: PyYAML (taxonomy loader),
+        goose binary + its shared libs (triad sub-agents), and curl (goose installer).
+        Installs are idempotent; goose lands in ~/.local/bin/goose.
         """
+        # 1. apt deps: curl (goose installer), goose shared libs (libxcb1, libgomp1).
+        await environment.exec(
+            command=(
+                "apt-get update -qq && "
+                "DEBIAN_FRONTEND=noninteractive apt-get install -y -qq curl bzip2 "
+                "libxcb1 libgomp1 > /dev/null 2>&1"
+            ),
+            timeout_sec=180,
+        )
+
+        # 2. Python deps: PyYAML (product taxonomy loader).
         await environment.exec(
             command="pip install --quiet pyyaml",
             timeout_sec=120,
         )
+
+        # 3. goose binary (triad sub-agents). curl-pipe-bash, as harbor's own
+        # goose agent does (harbor/agents/installed/goose.py:install). Lands in
+        # ~/.local/bin/goose. GOOSE_DISABLE_KEYRING avoids keyring prompts in CI.
+        # Pinning "stable" keeps it current; the product's goose_runner is
+        # version-tolerant (uses --text/--no-session/--with-extension, all stable).
+        await environment.exec(
+            command=(
+                'GOOSE_DISABLE_KEYRING=true '
+                'curl -fsSL https://github.com/block/goose/releases/download/stable/download_cli.sh | bash'
+            ),
+            timeout_sec=180,
+        )
+        # Verify goose is on PATH for the agent user (it installs to ~/.local/bin).
+        check = await environment.exec(
+            command='export PATH="$HOME/.local/bin:$PATH" && goose --version',
+            timeout_sec=30,
+        )
+        if check.return_code != 0:
+            logger.warning("goose install verification failed: %s", check.stderr)
 
     async def run(
         self,
@@ -120,7 +151,10 @@ class ProductAdapter(BaseAgent):
         # 3. Launch orchestrator_runner inside the container. PYTHONPATH makes the
         #    product importable; WORKSPACE_ROOT is the task workspace (/app). The
         #    shim writes its recovery-cycle summary to /logs/agent/product-trace.json.
+        # PATH includes ~/.local/bin so the triad's goose sub-agents (installed in
+        # setup()) are found by goose_runner.resolve_binary().
         command = (
+            f'export PATH="$HOME/.local/bin:$PATH" && '
             f"PYTHONPATH=/opt/vsm_src WORKSPACE_ROOT=/app "
             f"python3 {_SHIM_PATH}"
             f" --instruction-file {_CONTAINER_TASK_PROMPT}"

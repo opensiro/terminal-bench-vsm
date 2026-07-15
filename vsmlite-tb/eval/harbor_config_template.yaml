@@ -19,6 +19,11 @@ agent:
 environment:
   type: docker
   mounts:
+    # src/ (product code) at /opt/vsm_src — PYTHONPATH root for orchestrator imports.
     - {type: bind, source: <ABS_SRC>, target: /opt/vsm_src, read_only: true}
-    - {type: bind, source: <ABS_VSM>, target: /opt/vsm_systems, read_only: true}
+    # vsm/ (SOUL/SKILL/TASK prompt material + state/) at /opt/vsm — MUST be a
+    # sibling of src/ so dispatcher._systems_dir() (parent.parent.parent/"vsm"/"systems")
+    # resolves correctly inside the container → /opt/vsm/systems. Phase 2: triad
+    # goose sub-agents read s1-planner/s1-test-controller/s1-verifier from here.
+    - {type: bind, source: <ABS_VSM>, target: /opt/vsm, read_only: true}
     - {type: bind, source: <ABS_EVAL>, target: /opt/eval_shim, read_only: true}

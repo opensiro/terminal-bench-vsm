@@ -10,14 +10,15 @@ Usage:
     python3 -m eval.harbor_run --task jsonl-aggregator
     python3 -m eval.harbor_run --task jsonl-aggregator --keep-config  # debug
 
-This is the Phase 1 smoke harness. Phase 2 will add canary-set batching
-(equivalent to the old `eval run --task a b c` + record_run) once the real
-multi-agent path (use_agents=True) is proven.
+This is the eval entry point for harbor-based runs. Phase 2: runs the real
+triad (goose sub-agents) inside the container; API keys are propagated via --ae
+from the host goose secrets.yaml so the container never needs the secrets file.
 """
 from __future__ import annotations
 
 import argparse
 import json
+import os
 import shutil
 import subprocess
 import sys
@@ -33,6 +34,44 @@ from . import metrics
 def _resolve_repo_root() -> Path:
     """vsmlite-tb/.. = the monorepo root (parent of this package)."""
     return Path(__file__).resolve().parent.parent.parent
+
+
+# Cache for API keys read from the host goose secrets.yaml (lazily populated).
+_SECRETS: dict[str, str] = {}
+
+
+def _read_goose_secrets() -> list[str]:
+    """Read API keys from ~/.config/goose/secrets.yaml (host) into _SECRETS.
+
+    Returns the list of key NAMES that were found (caller uses them to build
+    --ae KEY=VALUE flags). Goose 1.42 stores keys under their provider-specific
+    env-var name (ZHIPU_API_KEY for zai). We never print values — only names.
+    Falls back to os.environ if the secrets file is absent or unreadable.
+    """
+    if _SECRETS:
+        return list(_SECRETS.keys())
+
+    # Try goose secrets.yaml first (canonical source on this host).
+    secrets_path = Path.home() / ".config" / "goose" / "secrets.yaml"
+    found: dict[str, str] = {}
+    if secrets_path.exists():
+        try:
+            import re
+            for line in secrets_path.read_text(encoding="utf-8").splitlines():
+                m = re.match(r"^([A-Z][A-Z0-9_]*_API_KEY)\s*:\s*(.+)$", line.strip())
+                if m:
+                    found[m.group(1)] = m.group(2).strip().strip('"').strip("'")
+        except OSError:
+            pass
+
+    # Fall back to env (covers CI / other hosts without a goose secrets file).
+    for key in ("ZHIPU_API_KEY", "ANTHROPIC_API_KEY", "ZAI_API_KEY"):
+        val = os.environ.get(key)
+        if val and key not in found:
+            found[key] = val
+
+    _SECRETS.update(found)
+    return list(_SECRETS.keys())
 
 
 def _generate_config(task_path: Path, trials_dir: Path, config_out: Path) -> Path:
@@ -90,13 +129,22 @@ def run_trial(task_id: str, config: EvalConfig, keep_config: bool = False) -> di
             "--config", str(config_path),
             "--trials-dir", str(trials_dir),
         ]
-        print(f"  $ {' '.join(cmd)}", file=sys.stderr)
+
+        # Propagate LLM API keys into the container as env overlay (--ae). Goose
+        # sub-agents (triad planner/test-controller/verifier) read these to call
+        # the model. Keys are read from the host goose secrets.yaml (not env, which
+        # is empty for these names), so the container doesn't need the file mounted.
+        # ZHIPU_API_KEY → zai/glm-5.2 (S1/S2/S3/S4/S5); ANTHROPIC_API_KEY → S3* (opt).
+        for key in _read_goose_secrets():
+            cmd.extend(["--ae", f"{key}={_SECRETS[key]}"])
+            print(f"  --ae {key}=<redacted>", file=sys.stderr)
+
+        print(f"  $ {' '.join(cmd[:6])} ...", file=sys.stderr)
 
         # Harbor runs under its own python (uv tools); it imports our ProductAdapter
         # via import_path "eval.harbor_adapter:ProductAdapter". For that import to
         # resolve, our cwd (the vsmlite-tb/ root containing the eval/ package) must
         # be on PYTHONPATH. subprocess inherits env, so prepend cwd explicitly.
-        import os
         env = os.environ.copy()
         cwd_abs = str(Path(__file__).resolve().parent.parent)
         env["PYTHONPATH"] = cwd_abs + os.pathsep + env.get("PYTHONPATH", "")

@@ -8,9 +8,13 @@ adapter to parse into an ATIF trajectory.
 This file lives in the PARENT (vsmlite-tb/eval/), not the product. It knows about
 the eval pipeline; the product (src/) stays benchmark-agnostic (membrane VSM-002).
 
-Phase 1 (smoke): use_agents=False — deterministic stub, no LLM. Proves infra
-feasibility (import + invoke + write trace). Phase 2 will set use_agents=True for
-the real multi-agent recovery cycle (needs goose binary + API keys in container).
+Phase 2 (triad): solver_mode="triad" — the recovery cycle runs via the Python
+path (S1Dispatcher + FailureClassifier + S3StarAuditor + S2Coordinator), but
+S1's internal solver is the TriadSolver (VSM-020): solve → control-by-tests →
+verify, with in-invocation checkpoint/revert. The triad spawns goose sub-agents
+(s1-planner/test-controller/verifier) via goose_runner when the goose binary is
+on PATH (installed by ProductAdapter.setup). use_agents=False — the agentization
+is inside S1 (solver_mode), not the orchestrator (protocol).
 """
 from __future__ import annotations
 
@@ -55,9 +59,12 @@ def main() -> int:
     classifier = FailureClassifier(taxonomy)
     auditor = S3StarAuditor(AuditConfig(s1_provider="zai", s3star_provider="anthropic"))
     s2 = S2Coordinator(get_anti_repeat_limit=classifier.get_anti_repeat_limit)
-    # Phase 1 smoke: "mono" = RuleBasedSolver (deterministic stub, no LLM).
-    # Phase 2 will wire the triad (make_triad_with_goose) via use_agents=True.
-    dispatcher = S1Dispatcher(solver_mode="mono")
+    # Phase 2: "triad" = TriadSolver (solve → control-by-tests → verify, VSM-020).
+    # Triad itself spawns goose sub-agents (s1-planner/test-controller/verifier)
+    # via goose_runner when the goose binary is on PATH (installed by setup()).
+    # use_agents stays False: the recovery cycle runs via the Python path
+    # (dispatcher/classifier/auditor/s2); only S1's internal solver is agentized.
+    dispatcher = S1Dispatcher(solver_mode="triad")
 
     inp = S1Input(
         task_prompt=task_prompt,
@@ -70,7 +77,7 @@ def main() -> int:
         taxonomy_path=taxonomy,
         s1_provider="zai",
         s3star_provider="anthropic",
-        use_agents=False,  # Phase 1 smoke: deterministic stub, no LLM. Phase 2: True.
+        use_agents=False,  # triad is wired through dispatcher (solver_mode), not protocol
     )
 
     result = run_recovery_cycle(

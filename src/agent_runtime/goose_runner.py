@@ -308,6 +308,36 @@ def build_mcp_wrapper(tools: list[str], workspace: str, trace_file: str, tmpdir:
     return str(wrapper_path)
 
 
+# ── Provider mapping (goose 1.42 contract) ──
+
+# VSM-internal provider names → goose CLI env vars. Goose reads GOOSE_PROVIDER +
+# GOOSE_MODEL to select the model, and a provider-specific API key env var.
+# The API key itself is NOT set here (must be in the surrounding env so it's not
+# leaked into logs); only the provider/model selection is mapped.
+_GOOSE_PROVIDER_MAP: dict[str, dict[str, str]] = {
+    "zai": {
+        "GOOSE_PROVIDER": "zai",
+        "GOOSE_MODEL": "glm-5.2",
+    },
+    "anthropic": {
+        "GOOSE_PROVIDER": "anthropic",
+        "GOOSE_MODEL": "claude-haiku-4-5",
+    },
+}
+
+
+def _goose_provider_env(provider: str) -> dict[str, str]:
+    """Map a VSM provider name to goose CLI env vars.
+
+    Returns GOOSE_PROVIDER + GOOSE_MODEL for goose to select the model. The
+    provider-specific API key (ZHIPU_API_KEY for zai, ANTHROPIC_API_KEY for
+    anthropic) must already be in os.environ — GooseRunner.run copies the full
+    parent env, so keys propagated by the caller (e.g. harbor --ae) reach goose.
+    Unknown providers fall back to no override (goose uses its default config).
+    """
+    return _GOOSE_PROVIDER_MAP.get(provider, {})
+
+
 # ── Runner ──
 
 @dataclass
@@ -358,8 +388,11 @@ class GooseRunner:
                 args.extend(["--with-extension", mcp_wrapper])
 
             env = os.environ.copy()
-            # Provider hint for goose (VSM-001 cross-provider for S3*)
+            # Provider hint for goose (VSM-001 cross-provider for S3*).
+            # AGENT_PROVIDER is a VSM-internal tag (audit trail); goose 1.42 itself
+            # reads GOOSE_PROVIDER + GOOSE_MODEL + the provider-specific API key.
             env["AGENT_PROVIDER"] = config.provider
+            env.update(_goose_provider_env(config.provider))
 
             start = time.time()
             try:
