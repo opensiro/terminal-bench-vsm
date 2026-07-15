@@ -62,6 +62,8 @@ def _build_config(args: argparse.Namespace) -> EvalConfig:
         config.dataset_dir = args.dataset_dir
     if getattr(args, "no_sanity", False):
         config.sanity_check = False
+    if getattr(args, "no_cycle", False):
+        config.no_cycle = True
     return config
 
 
@@ -85,6 +87,8 @@ def main() -> None:
                         help="путь к локальной копии датасета (override EVAL_DATASET_DIR)")
     parser.add_argument("--no-sanity", action="store_true",
                         help="отключить sanity-проверку перед агентом (default: вкл)")
+    parser.add_argument("--no-cycle", action="store_true",
+                        help="отключить авто vsmlite-cycle после батча (default: вкл; VSM-031)")
 
     sub = parser.add_subparsers(dest="command", required=True)
 

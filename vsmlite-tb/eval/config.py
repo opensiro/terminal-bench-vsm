@@ -111,6 +111,12 @@ class EvalConfig:
     # битой структурой → status=error без запуска контейнера/агента.
     sanity_check: bool = True
 
+    # VSM-cycle automation (VSM-031): авто-запуск vsmlite-cycle после батча
+    # (run_cycle.py — observe/decide/issue/A(t)/cycle_count/render_data). False
+    # по умолчанию — контур A(t) самокорректирующийся. env EVAL_NO_CYCLE=1 или
+    # CLI --no-cycle отключают для разовых прогонов / CI smoke-тестов.
+    no_cycle: bool = False
+
     # Фильтры выбора задач (применяются в loader/runner)
     filter_difficulty: str | None = None   # easy | medium | hard | extreme
     filter_category: str | None = None
@@ -160,6 +166,10 @@ class EvalConfig:
                 self.dataset_dir = Path(env_dir)
             else:
                 self.dataset_dir = VSMLITE_ROOT / ".cache" / prof.cache_subdir
+
+        # VSM-031: EVAL_NO_CYCLE=1 отключает авто-цикл после батча (как --no-cycle).
+        if os.environ.get("EVAL_NO_CYCLE", "").strip() in ("1", "true", "yes"):
+            self.no_cycle = True
 
     @property
     def profile_meta(self) -> DatasetProfile:
