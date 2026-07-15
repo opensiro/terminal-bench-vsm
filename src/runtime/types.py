@@ -75,6 +75,40 @@ class Artifact:
     op: str  # created | modified | deleted
 
 
+# ── S1 triad types (VSM-020, CONTRACT §5.1) ──
+# The triad (solve → control-by-tests → verify) is an internal S1 structure.
+# These types capture the control/verify sub-results so they are observable in
+# S1Output (auditability) without breaking the existing output contract (§3).
+
+
+class ControlVerdict(str, Enum):
+    """Result of the triad's test-control phase (VSM-020)."""
+    PASS = "pass"                           # tests pass → proceed to verify
+    FAIL_REVERTED = "fail_reverted"         # tests failed, checkpoint reverted → re-solve
+    FAIL_NO_CHECKPOINT = "fail_no_checkpoint"  # tests failed, nothing to revert to → verify as-is
+    FAIL_REVERT_LIMIT = "fail_revert_limit"  # tests failed, max_reverts hit → verify as-is
+
+
+@dataclass
+class ControlResult:
+    """Outcome of one test-control invocation (VSM-020)."""
+    verdict: ControlVerdict
+    test_output: str = ""
+    # Checkpoint captured before/for this control pass (Any to avoid a circular
+    # import with runtime.checkpoint.Checkpoint; the field holds a Checkpoint or None).
+    checkpoint: Any = None
+    revert_count: int = 0
+    reason: str = ""
+
+
+@dataclass
+class VerifyResult:
+    """Outcome of the triad's verify phase (VSM-020)."""
+    passed: bool
+    reason: str = ""
+    checks: list[dict] = field(default_factory=list)
+
+
 @dataclass
 class S1Output:
     """S1 output contract (CONTRACT §3)."""
@@ -84,3 +118,6 @@ class S1Output:
     artifacts: list[Artifact] = field(default_factory=list)
     failure_observations: list[FailureObservation] = field(default_factory=list)
     cost: dict[str, float] = field(default_factory=lambda: {"time_used": 0.0, "tokens_used": 0, "actions_taken": 0})
+    # ── VSM-020 triad fields (additive; default empty for backward compat) ──
+    control_results: list[ControlResult] = field(default_factory=list)
+    verify_result: "VerifyResult | None" = None

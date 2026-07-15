@@ -1,0 +1,75 @@
+id: VSM-018
+source_system: S4            # scout-сигнал: внешний substrate (shepherd-agents.ai)
+signal_type: gap             # gap — недостающая capability (reversible state control в S1)
+severity: S2                 # архитектурно значимо, но не viability-brech
+target_unit: child           # дочерний VSM (продукт) — S1 internal state control
+
+title: "SHEPHERD как S1 state-control substrate — отложено (alpha); native triad вместо"
+
+summary: |
+  SHEPHERD (shepherd-agents.ai, pip `shepherd-ai` v0.3.0) рассматривался как substrate
+  для контроля состояния ВНУТРИ S1: reversible execution trace (commit/revert/fork/select),
+  где «harness, супервизящий агентов — это просто ещё один агент». Идея — сделать
+  execution S1 первоклассным реверсивным Git-подобным trace'ом: «решил → зафиксировал
+  состояние → проконтролировал тестами → если упали, откатился».
+
+  РЕШЕНИЕ: отложить внешнюю зависимость. SHEPHERD v0.3.0 — alpha (авторы прямо пишут
+  «не использовать в production»). Для коммерческого продукта load-bearing alpha-зависимость
+  в recovery-цикле — неприемлемый риск (API будут ломаться).
+
+  ВМЕСТО: реализовать идею in-invocation reversibility нативно, как S1-внутреннюю
+  структуру — триаду подагентов «solver → test-controller → verify» с git-based
+  checkpoint/revert (VSM-019 поправка CONTRACT §5.1, VSM-020 TriadSolver, VSM-021
+  agentизация через GooseRunner). Это лежит в плоскости S1 (operational state control),
+  а не S5 (governance/identity) — SHEPHERD ≠ S5.
+
+evidence:
+  - "https://shepherd-agents.ai/ — Programmable Meta-Agents via Reversible Execution Traces"
+  - "https://docs.shepherd-agents.ai/ — alpha v0.3.0, 'early development preview'"
+  - "vsm/systems/s1-dispatcher/CONTRACT.md §5 — stateless fresh-per-invocation (in-invocation ось не описана)"
+  - "src/runtime/multi_agent.py — MultiAgentSolver (VSM-007): planner→executor→verifier, linear, без revert/branching"
+  - "src/runtime/artifacts.py::snapshot — read-only mtime diff (не content-restore)"
+  - "src/recovery_policies/reset_and_replay.py — единственный существующий git-revert (destructive --hard + clean -fd)"
+
+proposal: |
+  Не добавлять `shepherd-ai` в requirements.txt. Реализовать native in-invocation
+  reversibility:
+    - WS1 (VSM-019): CONTRACT §5.1 amendment — явно разделить cross-invocation
+      statelessness (memory axis, без изменений) и in-invocation state control
+      (operational axis, РАЗРЕШЁН). Git checkpoint/revert primitive.
+    - WS2 (VSM-020): TriadSolver — state machine SOLVING→CONTROLLING→{REVERT→SOLVING |
+      VERIFYING}→DONE, in-process stubs.
+    - WS3 (VSM-021): agentизация триады через GooseRunner (s1-planner /
+      s1-test-controller / s1-verifier) + фикс workspace-binding в goose_runner.
+
+  Вернуться к SHEPHERD когда: выйдет из alpha; либо если native triad покажет
+  фундаментальные ограничения (тогда SHEPHERD как drop-in substrate — architecture
+  уже совместима).
+
+acceptance:
+  - "shepherd-ai ОТСУТСТВУЕТ в requirements.txt / любых import"
+  - "VSM-019 (CONTRACT §5.1 amendment) — done"
+  - "VSM-020 (TriadSolver structure) — done"
+  - "VSM-021 (S1 triad agentization) — done"
+  - "make validate GREEN; native triad проходит capability_report"
+
+needs_human_decision: true   # severity S2 + архитектурное решение (отказ от внешнего substrate)
+
+status: wontfix              # для alpha-зависимости SHEPHERD — wontfix; native path принят в VSM-019/020/021
+decision: "deferred — SHEPHERD v0.3.0 alpha неприемлем как load-bearing зависимость коммерческого продукта. Реализована native in-invocation reversibility (VSM-019/020/021): git checkpoint/revert primitive + S1 triad solver→test-controller→verify. SHEPHERD пересмотреть при выходе из alpha или если native triad упрётся в фундаментальные ограничения."
+selected_options: []
+
+references:
+  - VSM-019   # CONTRACT §5.1 amendment (in-invocation checkpoints)
+  - VSM-020   # TriadSolver structure
+  - VSM-021   # S1 triad agentization (GooseRunner)
+  - VSM-007   # предшественник: MultiAgentSolver (planner→executor→verifier, linear)
+
+notes:
+  - "SHEPHERD ≠ S5: это substrate для контроля состояния ВНУТРИ S1 (operations), не governance."
+  - "Ключевой insight: CONTRACT §5 запрещает checkpoint *между* invocation'ами (memory axis); in-invocation checkpoint — другая ось (operational), не нарушает statelessness при явной поправке."
+  - "Аналог SHEPHERD commit/revert нативно: git add -A + commit на temp-ref → reset --hard + clean -fd."
+  - "Аналог SHEPHERD held-proposal: checkpoint diff_before/diff_after наблюдаем в trace (auditability сохранена)."
+
+created: 2026-07-15
+updated: 2026-07-15

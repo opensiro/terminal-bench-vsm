@@ -44,12 +44,17 @@ class AgentConfig:
 
     Args:
         system_name: "s1-dispatcher" | "s2-coordinator" | "s3-optimizer" |
-                     "s3-star-auditor" | "s4-scout" | "s5-guardian"
+                     "s3-star-auditor" | "s4-scout" | "s5-guardian" |
+                     "s1-planner" | "s1-test-controller" | "s1-verifier" (VSM-021)
         systems_dir: path to vsm/systems/ (where SOUL/SKILL/TASK live)
         provider: LLM provider for goose (VSM-001: S3* must differ from S1).
         tools: list of MCP tool module names to attach (per-role surface).
         max_turns: goose --max-turns.
         binary: goose binary path (auto-detect if empty).
+        workspace: workspace path the MCP server binds to. If None, defaults to
+            systems_dir.parent (= vsm/, for S2-S5 state readers). VSM-021:
+            S1 sub-agents set this to the task workspace so their fs/shell/git
+            tools operate on the actual task, not on vsm/.
     """
 
     system_name: str
@@ -63,6 +68,10 @@ class AgentConfig:
     # parallel mode classifies like S3, instead of auditing). Empty = use the
     # default contract for system_name from _output_contract().
     contract_override: str = ""
+    # VSM-021: workspace binding. None → systems_dir.parent (legacy behavior for
+    # S2-S5 which read state/ under vsm/). S1 sub-agents set this to the task
+    # workspace so fs/shell/git tools target the actual coding task.
+    workspace: str | None = None
 
     def resolve_binary(self) -> str:
         return self.binary or "goose"
@@ -191,6 +200,48 @@ def _output_contract(system_name: str) -> str:
             "escalate to human. Apply OSM primitives for structural issues via "
             "osm_apply. Identity/values/never_do changes = BLOCKED (require parent)."
         ),
+        # ── S1 triad sub-agents (VSM-021) ──
+        "s1-planner": (
+            "── Output contract (S1 planner) ──\n"
+            "End your response with a JSON block enclosed in ```json ... ```:\n"
+            "```\n"
+            '{"steps": [\n'
+            '   {"tool": "<fs.list|shell.exec|fs.read|fs.write|fs.edit|git.commit|...>",\n'
+            '    "args": {<tool args>}, "desc": "<short human-readable>"}\n'
+            " ],\n"
+            ' "rationale": "<why this plan solves the task>"}\n'
+            "```\n"
+            "Decompose the task into ordered tool-call steps the executor will run. "
+            "Include a test run (shell.exec pytest) as the final step so the "
+            "test-controller can evaluate. Keep steps minimal and concrete."
+        ),
+        "s1-test-controller": (
+            "── Output contract (S1 test-controller) ──\n"
+            "End your response with a JSON block enclosed in ```json ... ```:\n"
+            "```\n"
+            '{"verdict": "pass" | "fail_reverted" | "fail_no_checkpoint"\n'
+            '             | "fail_revert_limit",\n'
+            ' "test_output": "<test stdout/stderr summary>",\n'
+            ' "revert_performed": <bool>,\n'
+            ' "reason": "<why pass / why fail / why revert>"}\n'
+            "```\n"
+            "Evaluate the last test run (run pytest if none ran). If tests FAIL and "
+            "a checkpoint exists (revert_count < max_reverts), return fail_reverted "
+            "and revert via git.reset_hard — then the solver will re-solve. If no "
+            "checkpoint or limit reached, return the corresponding fail_* verdict."
+        ),
+        "s1-verifier": (
+            "── Output contract (S1 verifier) ──\n"
+            "End your response with a JSON block enclosed in ```json ... ```:\n"
+            "```\n"
+            '{"passed": <bool>,\n'
+            ' "reason": "<concrete justification>",\n'
+            ' "checks": [{"name": <string>, "passed": <bool>, "detail": <string>}]}\n'
+            "```\n"
+            "Final verification of the latest solve pass (since the last checkpoint). "
+            "Check: tests pass, artifacts are coherent, no error keywords. Judge "
+            "only the post-checkpoint state — reverted failed attempts do not count."
+        ),
     }
     return contracts.get(
         system_name,
@@ -286,7 +337,10 @@ class GooseRunner:
         with tempfile.TemporaryDirectory(prefix=f"agent-{config.system_name}-") as tmpdir:
             tmpdir_path = Path(tmpdir)
             trace_file = tmpdir_path / "trace.json"
-            workspace = str(config.systems_dir.parent)  # vsm/ — agents read state/ here
+            # VSM-021: S1 sub-agents bind to the task workspace (fs/shell/git
+            # operate on the actual coding task); S2-S5 keep the legacy default
+            # (systems_dir.parent = vsm/, where state/ lives).
+            workspace = config.workspace or str(config.systems_dir.parent)
 
             mcp_wrapper = build_mcp_wrapper(
                 config.tools, workspace, str(trace_file), tmpdir_path,

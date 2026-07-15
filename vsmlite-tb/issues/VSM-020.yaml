@@ -1,0 +1,69 @@
+id: VSM-020
+source_system: S1            # S1 internal structure — triad sub-agents
+signal_type: quality         # enhancement of S1 operational capability
+severity: S2                 # значимая структурная эволюция S1 (не viability-breach)
+target_unit: child           # дочерний VSM (продукт) — S1 internal triad
+
+title: "S1 TriadSolver: solve → control-by-tests → verify (in-invocation checkpoint/revert)"
+
+summary: |
+  Эволюция MultiAgentSolver (VSM-007). S1 теперь имеет внутреннюю триаду
+  подагентов `solver → test-controller → verifier` с in-invocation git
+  checkpoint/revert (CONTRACT §5.1, VSM-019).
+
+  State machine: SOLVING → CONTROLLING → {REVERT→SOLVING | VERIFYING} → DONE.
+    - SOLVING: planner → executor (tool calls via MCP). Checkpoint captures
+      workspace state before solving (CONTRACT §5.1 operational axis).
+    - CONTROLLING: test-controller evaluates the latest test run. PASS → verify.
+      FAIL + reverts left → revert to checkpoint + re-solve. FAIL + limit →
+      verify decides (anti-oscillation, max_reverts guard).
+    - VERIFYING: verifier checks trace since last checkpoint → final verdict.
+
+  Native реализация идеи SHEPHERD reversibility (VSM-018 deferral) средствами
+  продукта. Sub-agent seams (planner_fn, test_controller_fn, verifier_fn) —
+  rule-based stubs в WS2 (тестируемые), GooseRunner-backed в WS3 (VSM-021).
+
+  Statelessness сохранён (CONTRACT §5 memory axis): checkpoint state живёт только
+  в рамках одного invoke(), не переживает invocation.
+
+evidence:
+  - "src/runtime/triad_solver.py — TriadSolver (state machine + stubs)"
+  - "src/runtime/types.py — ControlVerdict, ControlResult, VerifyResult, S1Output.control_results/verify_result"
+  - "src/runtime/dispatcher.py — solver_mode='triad' wiring + S1Output enrichment"
+  - "src/runtime/agent_loop.py — duck-typed get_control_results() enrichment"
+  - "src/tests/test_triad_solver.py — 6 tests PASS (happy/revert/limit/non-git/stateless/dispatcher)"
+  - "src/runtime/checkpoint.py — CheckpointManager (create/revert/diff_since)"
+
+proposal: |
+  TriadSolver как новая S1 internal structure (в пределах Phase 1). Эволюция
+  VSM-007 Split (linear → revert-capable). Sub-agent seams готовы для agentизации
+  (VSM-021): planner_fn/test_controller_fn/verifier_fn заменяются на
+  GooseRunner-backed callables без изменения state machine.
+
+acceptance:
+  - "TriadSolver реализует SolverProtocol (decide_next_action)"
+  - "State machine: SOLVING→CONTROLLING→{REVERT→SOLVING|VERIFYING}→DONE"
+  - "Anti-oscillation: max_reverts guard (default 2)"
+  - "trace_cursor: reverted failure не реридится control/verify (семантика)"
+  - "S1Output.control_results/verify_result — additive, backward-compatible"
+  - "test_triad_solver.py — 6 tests PASS"
+  - "make validate GREEN; capability_report без регрессий"
+
+needs_human_decision: false   # operational enhancement в пределах Phase 1
+
+status: done
+decision: "done — TriadSolver реализован: solve→control-by-tests→verify state machine с in-invocation checkpoint/revert. 6 tests PASS, regression-clean (orchestrator 6/6, checkpoint 7/7, capability_report PASS). Sub-agent seams готовы для VSM-021 agentизации."
+selected_options: []
+
+references:
+  - VSM-019   # CONTRACT §5.1 amendment (operational axis — foundation)
+  - VSM-018   # SHEPHERD deferral — мотивация
+  - VSM-007   # предшественник: MultiAgentSolver (linear, без revert)
+
+notes:
+  - "trace_cursor: control и verify inspect только trace с момента последнего SOLVING-start — reverted failed attempt не вредит финальному verdict (но остаётся в полном trace для S3* audit)."
+  - "Anti-oscillation: max_reverts (default 2) — превышение → verify решает финальный verdict без дальнейших rollback'ов."
+  - "AgentLoop enrichment duck-typed: get_control_results() если есть — не ломает RuleBasedSolver/MultiAgentSolver (у них метода нет, getattr возвращает None)."
+
+created: 2026-07-15
+updated: 2026-07-15

@@ -415,7 +415,79 @@ def _verify_s1(workspace: Path, cfg: VerifyConfig) -> SystemStatus:
             duration_ms=(time.time() - t0) * 1000,
         ))
 
-    # Check 3: preflight_check works
+    # Check 3: triad solver (TriadSolver solve→control→verify, VSM-020)
+    t0 = time.time()
+    try:
+        from .dispatcher import S1Dispatcher
+        dispatcher = S1Dispatcher(solver_mode="triad")
+        input = S1Input(
+            task_prompt="verify: run tests (triad)",
+            workspace=workspace,
+            budget=Budget(time_seconds=60, tokens=10000, actions=30),
+        )
+        output = dispatcher.invoke(input)
+        passed = output.verdict in (Verdict.TASK_RESOLVED, Verdict.TASK_FAILED, Verdict.UNKNOWN)
+        n_ctrl = len(output.control_results)
+        checks.append(CheckResult(
+            name="triad_solver_invoke",
+            passed=passed,
+            detail=(
+                f"verdict={output.verdict.value}, trace={len(output.trace)} entries, "
+                f"control_results={n_ctrl}"
+            ),
+            duration_ms=(time.time() - t0) * 1000,
+        ))
+        evidence["triad"] = {
+            "verdict": output.verdict.value, "trace_len": len(output.trace),
+            "control_results": n_ctrl,
+        }
+    except Exception as exc:
+        checks.append(CheckResult(
+            name="triad_solver_invoke",
+            passed=False,
+            detail=f"error: {type(exc).__name__}: {exc}",
+            duration_ms=(time.time() - t0) * 1000,
+        ))
+
+    # Check 4: triad agentization wiring (VSM-021, offline — no goose launched)
+    t0 = time.time()
+    try:
+        from agent_runtime.protocol import ROLE_CONFIGS
+        from agent_runtime.goose_runner import AgentConfig, build_prompt, _output_contract
+        triad_roles = ("s1-planner", "s1-test-controller", "s1-verifier")
+        missing = [r for r in triad_roles if r not in ROLE_CONFIGS]
+        assert not missing, f"missing ROLE_CONFIGS: {missing}"
+        # build_prompt must assemble for each (SOUL/SKILL/TASK exist on disk).
+        sys_dir = Path(__file__).resolve().parent.parent.parent / "vsm" / "systems"
+        prompts_ok = True
+        for role in triad_roles:
+            ac = AgentConfig(system_name=role, systems_dir=sys_dir, workspace=str(workspace))
+            prompt = build_prompt(ac, "{}")
+            if "Output contract" not in prompt or len(prompt) < 100:
+                prompts_ok = False
+            # contract entry must exist
+            _output_contract(role)
+        checks.append(CheckResult(
+            name="triad_agentization_config",
+            passed=(not missing) and prompts_ok,
+            detail=(
+                f"roles={list(triad_roles)}, prompts_ok={prompts_ok}, "
+                f"workspace_field={hasattr(AgentConfig, 'workspace')}"
+            ),
+            duration_ms=(time.time() - t0) * 1000,
+        ))
+        evidence["triad_agentization"] = {
+            "roles": list(triad_roles), "prompts_ok": prompts_ok,
+        }
+    except Exception as exc:
+        checks.append(CheckResult(
+            name="triad_agentization_config",
+            passed=False,
+            detail=f"error: {type(exc).__name__}: {exc}",
+            duration_ms=(time.time() - t0) * 1000,
+        ))
+
+    # Check 5: preflight_check works
     t0 = time.time()
     try:
         from mcp_server.server import create_server

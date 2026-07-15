@@ -2,12 +2,14 @@
 
 Stateless (CONTRACT §5): fresh-per-invocation. No state between runs.
 
-Three execution modes:
+Four execution modes:
   1. AgentLoop + RuleBasedSolver (mono, default, for testing): deterministic
      stub drives MCP tools in-process.
   2. AgentLoop + MultiAgentSolver (multi, VSM-007 Split): planner + executor +
      verifier sub-agents, coordinated via SessionStore. Set via solver_mode="multi".
-  3. HarnessRunner (production): external harness (Claude Code / Goose) drives
+  3. AgentLoop + TriadSolver (triad, VSM-020): solve → control-by-tests → verify
+     with in-invocation checkpoint/revert (CONTRACT §5.1). Set via solver_mode="triad".
+  4. HarnessRunner (production): external harness (Claude Code / Goose) drives
      MCP server as subprocess. Harness = brain, MCP = hands (VSM-005 membrane).
 """
 from __future__ import annotations
@@ -18,17 +20,29 @@ from .budget import BudgetTracker
 from .artifacts import snapshot, diff
 
 
+def _systems_dir() -> Path:
+    """Resolve vsm/systems/ relative to src/ (sibling of src/runtime/).
+
+    Used by the agentized triad (VSM-021) to locate s1-planner /
+    s1-test-controller / s1-verifier SOUL/SKILL/TASK. Mirrors the
+    _DEFAULT_SYSTEMS_DIR resolution in agent_runtime/protocol.py.
+    """
+    return Path(__file__).resolve().parent.parent.parent / "vsm" / "systems"
+
+
 class S1Dispatcher:
     """S1 dispatcher: launch → isolate → trace → collect output.
 
     Stateless: each invoke() is independent. No state between invocations.
 
-    Three execution modes:
+    Four execution modes:
       1. AgentLoop + RuleBasedSolver (mono, default, for testing): deterministic
          stub drives MCP tools in-process.
       2. AgentLoop + MultiAgentSolver (multi, VSM-007 Split): planner + executor
          + verifier sub-agents coordinated via SessionStore.
-      3. HarnessRunner (production): external harness (Claude Code / Goose)
+      3. AgentLoop + TriadSolver (triad, VSM-020): solve → control-by-tests → verify
+         with in-invocation checkpoint/revert (CONTRACT §5.1, VSM-019).
+      4. HarnessRunner (production): external harness (Claude Code / Goose)
          drives MCP server as subprocess.
 
     Args:
@@ -37,13 +51,14 @@ class S1Dispatcher:
         harness: HarnessRunner for production mode. If set, uses external harness
             instead of in-process AgentLoop (takes precedence over solver_mode).
         solver_mode: "mono" (default) → RuleBasedSolver; "multi" →
-            MultiAgentSolver (VSM-007 Split). Ignored when harness is set.
+            MultiAgentSolver (VSM-007 Split); "triad" → TriadSolver (VSM-020).
+            Ignored when harness is set.
     """
 
     def __init__(self, mcp_server=None, harness=None, solver_mode: str = "mono"):
-        if solver_mode not in ("mono", "multi"):
+        if solver_mode not in ("mono", "multi", "triad"):
             raise ValueError(
-                f"invalid solver_mode: {solver_mode!r} (expected 'mono' or 'multi')"
+                f"invalid solver_mode: {solver_mode!r} (expected 'mono', 'multi' or 'triad')"
             )
         self._mcp_server = mcp_server
         self._harness = harness
@@ -90,18 +105,46 @@ class S1Dispatcher:
         if not preflight.ok:
             return preflight_diagnostic_output(preflight)
 
-        # 4. Run solver (mono → RuleBasedSolver, multi → MultiAgentSolver)
-        if self._solver_mode == "multi":
-            from .multi_agent import MultiAgentSolver
+        # 4. Run solver (mono → RuleBasedSolver, multi → MultiAgentSolver,
+        #    triad → TriadSolver with checkpoint/revert)
+        if self._solver_mode in ("multi", "triad"):
+            import hashlib
             # Derive a deterministic task_id for the per-task session. S1Input has
             # no explicit id, so hash the task prompt + workspace for isolation
             # between tasks while remaining stable across retries of the same task.
-            import hashlib
             task_id = hashlib.sha1(
                 f"{input.task_prompt}|{input.workspace}".encode("utf-8")
             ).hexdigest()[:12]
-            solver = MultiAgentSolver(task_id=task_id)
+
+            if self._solver_mode == "triad":
+                from .checkpoint import CheckpointManager
+                checkpoint_mgr = CheckpointManager(input.workspace)
+                # VSM-021: use goose-backed sub-agents when goose is available;
+                # otherwise fall back to in-process stubs (tests, CI).
+                import shutil
+                if shutil.which("goose"):
+                    from .triad_solver import make_triad_with_goose
+                    solver = make_triad_with_goose(
+                        systems_dir=_systems_dir(),
+                        workspace=input.workspace,
+                        checkpoint_mgr=checkpoint_mgr,
+                        task_id=task_id,
+                    )
+                else:
+                    from .triad_solver import TriadSolver
+                    solver = TriadSolver(
+                        task_id=task_id,
+                        workspace=input.workspace,
+                        checkpoint_mgr=checkpoint_mgr,
+                    )
+            else:  # multi
+                from .multi_agent import MultiAgentSolver
+                solver = MultiAgentSolver(task_id=task_id)
             output = solve_with_solver(input, self._mcp_server, budget, solver)
+
+            # Enrich S1Output with triad control_results (auditability, VSM-020).
+            if self._solver_mode == "triad":
+                output.control_results = solver.get_control_results()
         else:
             output = solve(input, self._mcp_server, budget)
 
@@ -137,7 +180,8 @@ def invoke(
 
     If harness is provided, uses HarnessRunner (production mode).
     Otherwise uses AgentLoop: solver_mode="mono" → RuleBasedSolver (testing),
-    solver_mode="multi" → MultiAgentSolver (VSM-007 Split).
+    solver_mode="multi" → MultiAgentSolver (VSM-007 Split),
+    solver_mode="triad" → TriadSolver with checkpoint/revert (VSM-020).
     """
     dispatcher = S1Dispatcher(
         mcp_server=mcp_server, harness=harness, solver_mode=solver_mode

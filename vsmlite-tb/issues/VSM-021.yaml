@@ -1,0 +1,76 @@
+id: VSM-021
+source_system: S1            # S1 internal — agentизация триады
+signal_type: quality         # enhancement: stub sub-agents → goose-backed
+severity: S2                 # значимая agentизация, но в пределах S1
+target_unit: child           # дочерний VSM (продукт) — S1 triad sub-agents
+
+title: "S1 triad agentизация: s1-planner / s1-test-controller / s1-verifier (GooseRunner)"
+
+summary: |
+  Agentизация S1-триады (VSM-020). Sub-agents planner/test-controller/verifier
+  переходят с rule-based stubs на настоящие goose-агенты через GooseRunner.
+
+  Три новых S1-internal роли (НЕ standalone VSM-системы — internal sub-agents):
+    - s1-planner: декомпозиция задачи в plan (fs, shell)
+    - s1-test-controller: контроль тестами + checkpoint/revert decision (fs, shell, git)
+    - s1-verifier: финальная проверка post-checkpoint solve-pass (fs, shell)
+
+  Ключевой фикс архитектуры: AgentConfig.workspace (VSM-021) — GooseRunner теперь
+  может bind'ить MCP к task workspace, не только к vsm/ (legacy default для S2-S5).
+  Это позволило S1 sub-agents оперировать на реальной задаче.
+
+  Graceful degradation: если goose недоступен (tests, CI без goose), фабрики
+  (make_goose_planner / make_goose_test_controller / make_goose_verifier) fall back
+  на rule-based stubs — триада остаётся функциональной. Dispatcher детектит goose
+  через shutil.which и выбирает путь автоматически.
+
+  Cross-provider constraint (VSM-001) сохранён: все три sub-agents используют
+  s1_provider (zai) — они часть S1; S3* остаётся anthropic.
+
+evidence:
+  - "src/agent_runtime/goose_runner.py — AgentConfig.workspace field + GooseRunner.run() binding"
+  - "src/agent_runtime/goose_runner.py — _output_contract для s1-planner/test-controller/verifier"
+  - "src/agent_runtime/protocol.py — ROLE_CONFIGS + _agent_config provider override для S1 sub-agents"
+  - "vsm/systems/s1-planner/{SOUL,SKILL,TASK}.md — planner role"
+  - "vsm/systems/s1-test-controller/{SOUL,SKILL,TASK}.md — control + revert role"
+  - "vsm/systems/s1-verifier/{SOUL,SKILL,TASK}.md — final verify role"
+  - "src/runtime/triad_solver.py — make_goose_planner/make_goose_test_controller/make_goose_verifier + make_triad_with_goose"
+  - "src/runtime/dispatcher.py — goose detection (shutil.which) + make_triad_with_goose wiring"
+  - "src/runtime/verify.py — triad_solver_invoke + triad_agentization_config checks PASS"
+
+proposal: |
+  S1 triad полностью агентизирована. Структура (VSM-020 state machine) неизменна —
+  agentизация касается только sub-agent backing (stub → goose). Это завершает
+  native in-invocation reversibility (VSM-018 SHEPHERD deferral): commit/revert
+  теперь управляется настоящим test-controller агентом, не rule-based заглушкой.
+
+acceptance:
+  - "AgentConfig.workspace field добавлен (backward-compatible: None → vsm/ default)"
+  - "3 новых system dirs: vsm/systems/s1-{planner,test-controller,verifier}/"
+  - "ROLE_CONFIGS содержит 9 ролей (6 + 3 S1 sub-agents)"
+  - "_output_contract содержит entries для 3 triad roles"
+  - "make_triad_with_goose + 3 фабрики реализованы с graceful fallback"
+  - "dispatcher: goose detection + автоматический выбор goose/stub path"
+  - "capability_report: triad_solver_invoke + triad_agentization_config PASS"
+  - "make validate GREEN; regression-clean (orchestrator 6/6, checkpoint 7/7, triad 6/6)"
+
+needs_human_decision: false   # operational agentизация в пределах Phase 1
+
+status: done
+decision: "done — S1 triad agentизирована: s1-planner / s1-test-controller / s1-verifier как goose-агенты через GooseRunner. AgentConfig.workspace fix — ключевой разблокер. Graceful fallback на stubs когда goose недоступен. capability_report PASS (5 S1 checks). Native in-invocation reversibility (VSM-018) завершена."
+selected_options: []
+
+references:
+  - VSM-020   # TriadSolver structure (state machine — foundation)
+  - VSM-019   # CONTRACT §5.1 amendment (operational axis)
+  - VSM-018   # SHEPHERD deferral — мотивация
+  - VSM-013   # agent-runtime foundation (паттерн агентизации)
+
+notes:
+  - "AgentConfig.workspace = ключевой фикс: ранее GooseRunner жёстко bind'ил MCP к vsm/ (для S2-S5 state readers); S1 sub-agents нуждаются в task workspace."
+  - "Graceful degradation: shutil.which('goose') проверяет доступность; если нет — stubs. Тесты/CI без goose работают."
+  - "Cross-provider preserved: S1 sub-agents = s1_provider (zai); S3* = anthropic. Constraint VSM-001 не нарушен."
+  - "triad_agentization_config check — OFFLINE: проверяет ROLE_CONFIGS + build_prompt + workspace field без запуска goose (быстрый, детерминированный)."
+
+created: 2026-07-15
+updated: 2026-07-15

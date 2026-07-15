@@ -160,6 +160,42 @@ environment — но это не дело S1, и S1 об этом знает т�
   эффективность станет узким местом — пересмотреть (но не режимами, а через
   recovery_directive, расширив его optional полями по мере необходимости).
 
+### §5.1 In-invocation checkpoints (amendment, VSM-019)
+
+§5 выше регулирует **memory axis** — что S1 помнит *между* invocation'ами. Эта
+поправка вводит **operational axis** — контроль состояния *внутри* одного
+invocation. Две оси независимы; разрешение operational axis **не отменяет**
+statelessness по memory axis.
+
+**Разрешено (operational axis)**: внутри одного `invoke()` S1 (точнее, его
+внутренняя triada solver→test-controller→verify, VSM-020/021) может создавать
+**in-invocation checkpoints** и откатываться к ним — чтобы реализовать цикл
+«решил → проконтролировал тестами → если упали, откатился → пересоздал».
+
+**Механизм**: git-based. Checkpoint = `git add -A && git commit` на workspace;
+revert = `git reset --hard <ref> && git clean -fd`. Реализация —
+[`CheckpointManager`](../../../src/runtime/checkpoint.py) (VSM-019). Поверх
+существующих git MCP-инструментов (`git.commit`, `git.checkout`, `git.reset_hard`,
+`git.stash_push`, `git.rev_parse`).
+
+**Жёсткие рамки (неотменлемые)**:
+- Checkpoint/revert живёт **только в рамках одного `invoke()`**. При выходе из
+  invoke() все in-invocation checkpoints уничтожаются (temp-refs не переживают
+  invocation). Между invocation'ами S1 остаётся stateless (§5 memory axis).
+- **Anti-oscillation**: число revert'ов на один invocation ограничено
+  (`max_reverts`, default 2 — `TriadSolver`). Превышение → финная проверка (verify)
+  решает финальный verdict без дальнейших rollback'ов.
+- **Auditability сохранена**: каждая checkpoint/revert-операция логируется в
+  `trace` как обычный `TraceEntry` (`git.commit` / `git.reset_hard` / ...). S3*
+  видит полный audit trail — нет скрытого state.
+- **State axis (env/fs/git) между invocation'ами** по-прежнему управляется recovery
+  policy ВНЕ S1 (§5). In-invocation checkpoints — это operational временные метки
+  внутри решения, не persistent env-изменения.
+
+**Обоснование**: это нативная реализация идеи reversible execution trace (см.
+VSM-018 — SHEPHERD-deferral) средствами самого продукта, без alpha-зависимостей.
+«commit/revert» здесь = operational state control, не governance (это не роль S5).
+
 ## 6. Failure observations format (что S3 парсит)
 
 Всегда полный в output. S3-classifier (T3) маппит эти наблюдения на failure class
