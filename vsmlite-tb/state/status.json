@@ -1,13 +1,43 @@
 {
   "_comment": "status.json — health систем vsmlite (S1-S5+S3*). Пишет S2 (status sweep), читает render_data.py. summary — человекочитаемо (1-2 предложения); current_task — технически.",
-  "generated": null,
+  "generated": "2026-07-16T00:09:12",
   "operational_mode": "normal",
   "systems": {
-    "S1":  { "name": "synthesis-operator", "summary": "", "current_task": "", "health": "unknown" },
-    "S2":  { "name": "s2-coordinator",     "summary": "", "current_task": "", "health": "unknown" },
-    "S3":  { "name": "s3-optimizer",       "summary": "", "current_task": "", "health": "unknown" },
-    "S3*": { "name": "s3-star-auditor",    "summary": "", "current_task": "", "health": "unknown" },
-    "S4":  { "name": "s4-scout",           "summary": "", "current_task": "", "health": "unknown" },
-    "S5":  { "name": "s5-guardian",        "summary": "", "current_task": "", "health": "unknown" }
+    "S1": {
+      "name": "synthesis-operator",
+      "health": "active",
+      "summary": "cycle #2; orchestrating child maturation",
+      "current_task": "A(t)=0.475 (SEMI-AUTONOMOUS)"
+    },
+    "S2": {
+      "name": "s2-coordinator",
+      "health": "healthy",
+      "summary": "cycle orchestration operational (deterministic)",
+      "current_task": "no conflicts detected"
+    },
+    "S3": {
+      "name": "s3-optimizer",
+      "health": "healthy",
+      "summary": "A(t)=0.475 verdict=SEMI-AUTONOMOUS",
+      "current_task": "op signs: 1/4 meet"
+    },
+    "S3*": {
+      "name": "s3-star-auditor",
+      "health": "healthy",
+      "summary": "no findings",
+      "current_task": "idle"
+    },
+    "S4": {
+      "name": "s4-scout",
+      "health": "idle",
+      "summary": "no signals yet",
+      "current_task": "scanning"
+    },
+    "S5": {
+      "name": "s5-guardian",
+      "health": "healthy",
+      "summary": "0 interventions (low=autonomous)",
+      "current_task": "prepare_only (basta)"
+    }
   }
 }

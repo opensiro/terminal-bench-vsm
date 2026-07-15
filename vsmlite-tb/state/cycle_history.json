@@ -1,0 +1,20 @@
+[
+  {
+    "cycle": 1,
+    "timestamp": "2026-07-16T00:06:27",
+    "pass_rate": 0.3333,
+    "autonomy": 0.475,
+    "verdict": "SEMI-AUTONOMOUS",
+    "decision": "ok_with_concerns: 1 warnings",
+    "issue_created": null
+  },
+  {
+    "cycle": 2,
+    "timestamp": "2026-07-16T00:09:12",
+    "pass_rate": 0.3333,
+    "autonomy": 0.475,
+    "verdict": "SEMI-AUTONOMOUS",
+    "decision": "ok_with_concerns: 1 warnings",
+    "issue_created": null
+  }
+]

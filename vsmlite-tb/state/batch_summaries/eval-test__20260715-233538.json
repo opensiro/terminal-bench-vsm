@@ -1,0 +1,59 @@
+{
+  "batch_id": "eval-test__20260715-233538",
+  "profile": "eval-test",
+  "timestamp": "2026-07-15T23:35:38",
+  "started_at": "2026-07-15T23:35:38",
+  "finished_at": "2026-07-15T23:48:01",
+  "wall_clock_sec": 742.8,
+  "workers": 1,
+  "tasks_total": 3,
+  "summary": {
+    "total": 3,
+    "passed": 1,
+    "failed": 2,
+    "error": 0,
+    "pass_rate": 0.3333
+  },
+  "trend_direction": "none",
+  "trend_delta": 0.0,
+  "per_task": [
+    {
+      "task_id": "build-cython-ext",
+      "trial_name": "build-cython-ext__MFPs87i",
+      "status": "failed",
+      "duration_sec": 137.8,
+      "reward": 0.0,
+      "terminated_by": "no_observations",
+      "tool_calls": 2
+    },
+    {
+      "task_id": "constraints-scheduling",
+      "trial_name": "constraints-scheduling__2SXTCbE",
+      "status": "passed",
+      "duration_sec": 267.3,
+      "reward": 1.0,
+      "terminated_by": "task_resolved",
+      "tool_calls": 7
+    },
+    {
+      "task_id": "torch-pipeline-parallelism",
+      "trial_name": "torch-pipeline-parallelism__RV35bKQ",
+      "status": "failed",
+      "duration_sec": 175.7,
+      "reward": 0.0,
+      "terminated_by": "no_observations",
+      "tool_calls": 2
+    }
+  ],
+  "observations": [
+    {
+      "type": "low_pass_rate",
+      "severity": "warn",
+      "detail": "pass_rate 33.3% < 50% threshold",
+      "detector": "rule:low_pass"
+    }
+  ],
+  "decision": "ok_with_concerns: 1 warnings",
+  "issues_raised": [],
+  "decided_at": "2026-07-16T00:09:12"
+}

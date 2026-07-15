@@ -38,5 +38,37 @@
     "from": 30,
     "to": 31,
     "detail": "+VSM-031"
+  },
+  {
+    "ts": "2026-07-15T23:48:04",
+    "type": "cycle.completed",
+    "field": "cycle_count",
+    "from": 3,
+    "to": 1,
+    "detail": "#3 → #1"
+  },
+  {
+    "ts": "2026-07-15T23:48:04",
+    "type": "issue.changed",
+    "field": "issues.count",
+    "from": 32,
+    "to": 33,
+    "detail": "+VSM-033"
+  },
+  {
+    "ts": "2026-07-16T00:09:13",
+    "type": "cycle.completed",
+    "field": "cycle_count",
+    "from": 1,
+    "to": 2,
+    "detail": "#1 → #2"
+  },
+  {
+    "ts": "2026-07-16T00:09:13",
+    "type": "issue.changed",
+    "field": "issues.count",
+    "from": 33,
+    "to": 34,
+    "detail": "+VSM-034"
   }
 ]

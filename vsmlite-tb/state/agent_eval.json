@@ -1,21 +1,78 @@
 {
   "_comment": "agent_eval.json — скоринг 0-10 (A-E, D<0.5=FAIL) работы агентов (VSM-025). Пишет export_logs.py из agent_eval.evaluate().",
-  "generated": "2026-07-15T17:20:28",
+  "generated": "2026-07-16T00:09:13",
   "grade_scale": "A≥9.0 | B≥7.5 | C≥5.0 (pass) | D≥2.5 (FAIL) | E<2.5",
   "trace_note": "trace_len info-only (VSM-022 superseded→VSM-024); harbor block — progressive enhancement",
   "token_note": "token-spend deferred→VSM-024 (instrumentation pending)",
-  "product": [],
-  "systems": [],
+  "product": [
+    {
+      "task_id": "task",
+      "score": 7.8,
+      "grade": "B",
+      "passed": true,
+      "components": {
+        "verdict": 6.0,
+        "pytest": 0.0,
+        "efficiency": 1.5,
+        "harbor_bonus": 0.3,
+        "penalty_timeout": 0.0,
+        "penalty_exit": 0.0
+      },
+      "summary": "task [7.8/B] file-operations·easy · 163s · trace6 · pytest0/0 · exit0. harbor(terminated_by=task_resolved, attempts=1).",
+      "category": "file-operations",
+      "difficulty": "easy"
+    }
+  ],
+  "systems": [
+    {
+      "agent": "S1",
+      "score": 10.0,
+      "grade": "A",
+      "passed": true,
+      "components": {
+        "produced_output": 4.0,
+        "quality_delta": 4.0,
+        "no_regressions": 2.0
+      },
+      "summary": "S1 [10.0/A] active. produced_output=4.0 quality_delta=4.0 no_regressions=2.0",
+      "idle": false
+    },
+    {
+      "agent": "S2",
+      "score": 8.0,
+      "grade": "B",
+      "passed": true,
+      "components": {
+        "produced_output": 4.0,
+        "quality_delta": 2.0,
+        "no_regressions": 2.0
+      },
+      "summary": "S2 [8.0/B] active. produced_output=4.0 quality_delta=2.0 no_regressions=2.0",
+      "idle": false
+    }
+  ],
   "breakdown": {
-    "by_difficulty": {},
-    "by_category": {}
+    "by_difficulty": {
+      "easy": {
+        "total": 1,
+        "passed": 1,
+        "pass_rate": 1.0
+      }
+    },
+    "by_category": {
+      "file-operations": {
+        "total": 1,
+        "passed": 1,
+        "pass_rate": 1.0
+      }
+    }
   },
   "summary": {
-    "product_count": 0,
-    "product_avg": null,
-    "product_pass": 0,
-    "system_count": 0,
-    "system_avg": null,
-    "system_idle": 6
+    "product_count": 1,
+    "product_avg": 7.8,
+    "product_pass": 1,
+    "system_count": 2,
+    "system_avg": 9.0,
+    "system_idle": 4
   }
 }

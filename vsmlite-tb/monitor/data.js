@@ -1,48 +1,48 @@
 window.VSM_DATA = {
-  "generated": "2026-07-15T17:20:28",
+  "generated": "2026-07-16T00:09:12",
   "project": "vsmlite-template",
   "operational_mode": "normal",
   "systems": {
     "S1": {
       "name": "synthesis-operator",
-      "summary": "",
-      "current_task": "",
-      "health": "unknown"
+      "health": "active",
+      "summary": "cycle #2; orchestrating child maturation",
+      "current_task": "A(t)=0.475 (SEMI-AUTONOMOUS)"
     },
     "S2": {
       "name": "s2-coordinator",
-      "summary": "",
-      "current_task": "",
-      "health": "unknown"
+      "health": "healthy",
+      "summary": "cycle orchestration operational (deterministic)",
+      "current_task": "no conflicts detected"
     },
     "S3": {
       "name": "s3-optimizer",
-      "summary": "",
-      "current_task": "",
-      "health": "unknown"
+      "health": "healthy",
+      "summary": "A(t)=0.475 verdict=SEMI-AUTONOMOUS",
+      "current_task": "op signs: 1/4 meet"
     },
     "S3*": {
       "name": "s3-star-auditor",
-      "summary": "",
-      "current_task": "",
-      "health": "unknown"
+      "health": "healthy",
+      "summary": "no findings",
+      "current_task": "idle"
     },
     "S4": {
       "name": "s4-scout",
-      "summary": "",
-      "current_task": "",
-      "health": "unknown"
+      "health": "idle",
+      "summary": "no signals yet",
+      "current_task": "scanning"
     },
     "S5": {
       "name": "s5-guardian",
-      "summary": "",
-      "current_task": "",
-      "health": "unknown"
+      "health": "healthy",
+      "summary": "0 interventions (low=autonomous)",
+      "current_task": "prepare_only (basta)"
     }
   },
   "units": [],
   "metrics": {
-    "autonomy_score": 0.175,
+    "autonomy_score": 0.475,
     "maturation_phase": "Phase 4",
     "coverage_ratio": 0.0,
     "validate_pass_rate": null,
@@ -62,21 +62,33 @@ window.VSM_DATA = {
     "s5_intervention_count": 0,
     "s5_intervention_cycles": 0,
     "intervention_share": 0.0,
-    "eval_pass_rate": 0.0
+    "eval_pass_rate": 1.0
   },
   "eval": {
     "dataset": "open-thoughts/OpenThoughts-TB-dev-v2",
     "harness": "claude-code",
-    "generated": null,
+    "generated": "2026-07-15",
     "summary": {
-      "total": 0,
-      "passed": 0,
+      "total": 1,
+      "passed": 1,
       "failed": 0,
       "error": 0,
-      "pass_rate": 0.0
+      "pass_rate": 1.0
     },
-    "by_difficulty": {},
-    "by_category": {},
+    "by_difficulty": {
+      "easy": {
+        "total": 1,
+        "passed": 1,
+        "pass_rate": 1.0
+      }
+    },
+    "by_category": {
+      "file-operations": {
+        "total": 1,
+        "passed": 1,
+        "pass_rate": 1.0
+      }
+    },
     "trend": {
       "current": 0.0,
       "previous": null,
@@ -85,6 +97,586 @@ window.VSM_DATA = {
     },
     "history": [],
     "runs": [
+      {
+        "trial_name": "torch-pipeline-parallelism__RV35bKQ",
+        "task_id": "task",
+        "status": "failed",
+        "verdict": "task_failed",
+        "reward": 0.0,
+        "terminated_by": "no_observations",
+        "attempts": 1,
+        "started_at": "2026-07-15T20:44:18.314573Z",
+        "finished_at": "2026-07-15T20:48:01.522862Z",
+        "duration_sec": 223,
+        "tokens": {
+          "input": null,
+          "cache": null,
+          "output": null
+        },
+        "cost_usd": null,
+        "config": {
+          "adapter": "eval.harbor_adapter:ProductAdapter",
+          "adapter_name": "vsm-product",
+          "adapter_version": "0.1.0",
+          "model_name": null,
+          "timeout_multiplier": 1.0,
+          "agent_timeout_multiplier": null,
+          "verifier_timeout_multiplier": null,
+          "environment_type": "docker",
+          "install_only": false
+        }
+      },
+      {
+        "trial_name": "constraints-scheduling__2SXTCbE",
+        "task_id": "task",
+        "status": "passed",
+        "verdict": "task_resolved",
+        "reward": 1.0,
+        "terminated_by": "task_resolved",
+        "attempts": 1,
+        "started_at": "2026-07-15T20:38:24.849837Z",
+        "finished_at": "2026-07-15T20:44:15.859864Z",
+        "duration_sec": 351,
+        "tokens": {
+          "input": null,
+          "cache": null,
+          "output": null
+        },
+        "cost_usd": null,
+        "config": {
+          "adapter": "eval.harbor_adapter:ProductAdapter",
+          "adapter_name": "vsm-product",
+          "adapter_version": "0.1.0",
+          "model_name": null,
+          "timeout_multiplier": 1.0,
+          "agent_timeout_multiplier": null,
+          "verifier_timeout_multiplier": null,
+          "environment_type": "docker",
+          "install_only": false
+        }
+      },
+      {
+        "trial_name": "build-cython-ext__MFPs87i",
+        "task_id": "task",
+        "status": "failed",
+        "verdict": "task_failed",
+        "reward": 0.0,
+        "terminated_by": "no_observations",
+        "attempts": 1,
+        "started_at": "2026-07-15T20:35:41.616853Z",
+        "finished_at": "2026-07-15T20:38:21.916316Z",
+        "duration_sec": 160,
+        "tokens": {
+          "input": null,
+          "cache": null,
+          "output": null
+        },
+        "cost_usd": null,
+        "config": {
+          "adapter": "eval.harbor_adapter:ProductAdapter",
+          "adapter_name": "vsm-product",
+          "adapter_version": "0.1.0",
+          "model_name": null,
+          "timeout_multiplier": 1.0,
+          "agent_timeout_multiplier": null,
+          "verifier_timeout_multiplier": null,
+          "environment_type": "docker",
+          "install_only": false
+        }
+      },
+      {
+        "trial_name": "constraints-scheduling__L92J8jH",
+        "task_id": "task",
+        "status": "failed",
+        "verdict": "task_resolved",
+        "reward": 0.0,
+        "terminated_by": "task_resolved",
+        "attempts": 1,
+        "started_at": "2026-07-15T17:57:42.959181Z",
+        "finished_at": "2026-07-15T18:01:39.549440Z",
+        "duration_sec": 236,
+        "tokens": {
+          "input": null,
+          "cache": null,
+          "output": null
+        },
+        "cost_usd": null,
+        "config": {
+          "adapter": "eval.harbor_adapter:ProductAdapter",
+          "adapter_name": "vsm-product",
+          "adapter_version": "0.1.0",
+          "model_name": null,
+          "timeout_multiplier": 1.0,
+          "agent_timeout_multiplier": null,
+          "verifier_timeout_multiplier": null,
+          "environment_type": "docker",
+          "install_only": false
+        }
+      },
+      {
+        "trial_name": "torch-pipeline-parallelism__gGKFVJe",
+        "task_id": "task",
+        "status": "failed",
+        "verdict": "unknown",
+        "reward": 0.0,
+        "terminated_by": "infra_error",
+        "attempts": 0,
+        "started_at": "2026-07-15T17:29:05.271601Z",
+        "finished_at": "2026-07-15T17:30:02.862204Z",
+        "duration_sec": 57,
+        "tokens": {
+          "input": null,
+          "cache": null,
+          "output": null
+        },
+        "cost_usd": null,
+        "config": {
+          "adapter": "eval.harbor_adapter:ProductAdapter",
+          "adapter_name": "vsm-product",
+          "adapter_version": "0.1.0",
+          "model_name": null,
+          "timeout_multiplier": 1.0,
+          "agent_timeout_multiplier": null,
+          "verifier_timeout_multiplier": null,
+          "environment_type": "docker",
+          "install_only": false
+        }
+      },
+      {
+        "trial_name": "constraints-scheduling__C4Rkfap",
+        "task_id": "task",
+        "status": "failed",
+        "verdict": "unknown",
+        "reward": 0.0,
+        "terminated_by": "infra_error",
+        "attempts": 0,
+        "started_at": "2026-07-15T17:28:04.480941Z",
+        "finished_at": "2026-07-15T17:29:02.994202Z",
+        "duration_sec": 58,
+        "tokens": {
+          "input": null,
+          "cache": null,
+          "output": null
+        },
+        "cost_usd": null,
+        "config": {
+          "adapter": "eval.harbor_adapter:ProductAdapter",
+          "adapter_name": "vsm-product",
+          "adapter_version": "0.1.0",
+          "model_name": null,
+          "timeout_multiplier": 1.0,
+          "agent_timeout_multiplier": null,
+          "verifier_timeout_multiplier": null,
+          "environment_type": "docker",
+          "install_only": false
+        }
+      },
+      {
+        "trial_name": "build-cython-ext__YQxMoTj",
+        "task_id": "task",
+        "status": "failed",
+        "verdict": "unknown",
+        "reward": 0.0,
+        "terminated_by": "infra_error",
+        "attempts": 0,
+        "started_at": "2026-07-15T17:27:33.527339Z",
+        "finished_at": "2026-07-15T17:28:02.139499Z",
+        "duration_sec": 28,
+        "tokens": {
+          "input": null,
+          "cache": null,
+          "output": null
+        },
+        "cost_usd": null,
+        "config": {
+          "adapter": "eval.harbor_adapter:ProductAdapter",
+          "adapter_name": "vsm-product",
+          "adapter_version": "0.1.0",
+          "model_name": null,
+          "timeout_multiplier": 1.0,
+          "agent_timeout_multiplier": null,
+          "verifier_timeout_multiplier": null,
+          "environment_type": "docker",
+          "install_only": false
+        }
+      },
+      {
+        "trial_name": "torch-pipeline-parallelism__DfM59bv",
+        "task_id": "task",
+        "status": "error",
+        "verdict": "unknown",
+        "reward": null,
+        "terminated_by": "infra_error",
+        "attempts": 0,
+        "started_at": "2026-07-15T17:22:58.872640Z",
+        "finished_at": "2026-07-15T17:38:19.464500Z",
+        "duration_sec": 920,
+        "tokens": {
+          "input": null,
+          "cache": null,
+          "output": null
+        },
+        "cost_usd": null,
+        "config": {
+          "adapter": "eval.harbor_adapter:ProductAdapter",
+          "adapter_name": "vsm-product",
+          "adapter_version": "0.1.0",
+          "model_name": null,
+          "timeout_multiplier": 1.0,
+          "agent_timeout_multiplier": null,
+          "verifier_timeout_multiplier": null,
+          "environment_type": "docker",
+          "install_only": false
+        }
+      },
+      {
+        "trial_name": "constraints-scheduling__z8utw6F",
+        "task_id": "task",
+        "status": "failed",
+        "verdict": "unknown",
+        "reward": 0.0,
+        "terminated_by": "infra_error",
+        "attempts": 0,
+        "started_at": "2026-07-15T17:21:49.358153Z",
+        "finished_at": "2026-07-15T17:22:56.653860Z",
+        "duration_sec": 67,
+        "tokens": {
+          "input": null,
+          "cache": null,
+          "output": null
+        },
+        "cost_usd": null,
+        "config": {
+          "adapter": "eval.harbor_adapter:ProductAdapter",
+          "adapter_name": "vsm-product",
+          "adapter_version": "0.1.0",
+          "model_name": null,
+          "timeout_multiplier": 1.0,
+          "agent_timeout_multiplier": null,
+          "verifier_timeout_multiplier": null,
+          "environment_type": "docker",
+          "install_only": false
+        }
+      },
+      {
+        "trial_name": "build-cython-ext__dA2Nrpn",
+        "task_id": "task",
+        "status": "failed",
+        "verdict": "unknown",
+        "reward": 0.0,
+        "terminated_by": "infra_error",
+        "attempts": 0,
+        "started_at": "2026-07-15T17:21:21.807278Z",
+        "finished_at": "2026-07-15T17:21:47.489342Z",
+        "duration_sec": 25,
+        "tokens": {
+          "input": null,
+          "cache": null,
+          "output": null
+        },
+        "cost_usd": null,
+        "config": {
+          "adapter": "eval.harbor_adapter:ProductAdapter",
+          "adapter_name": "vsm-product",
+          "adapter_version": "0.1.0",
+          "model_name": null,
+          "timeout_multiplier": 1.0,
+          "agent_timeout_multiplier": null,
+          "verifier_timeout_multiplier": null,
+          "environment_type": "docker",
+          "install_only": false
+        }
+      },
+      {
+        "trial_name": "torch-pipeline-parallelism__LJTuNDm",
+        "task_id": "task",
+        "status": "error",
+        "verdict": "unknown",
+        "reward": null,
+        "terminated_by": "infra_error",
+        "attempts": 0,
+        "started_at": "2026-07-15T16:57:04.311706Z",
+        "finished_at": "2026-07-15T17:14:35.394978Z",
+        "duration_sec": 1051,
+        "tokens": {
+          "input": null,
+          "cache": null,
+          "output": null
+        },
+        "cost_usd": null,
+        "config": {
+          "adapter": "eval.harbor_adapter:ProductAdapter",
+          "adapter_name": "vsm-product",
+          "adapter_version": "0.1.0",
+          "model_name": null,
+          "timeout_multiplier": 1.0,
+          "agent_timeout_multiplier": null,
+          "verifier_timeout_multiplier": null,
+          "environment_type": "docker",
+          "install_only": false
+        }
+      },
+      {
+        "trial_name": "constraints-scheduling__qFHRVWi",
+        "task_id": "task",
+        "status": "failed",
+        "verdict": "unknown",
+        "reward": 0.0,
+        "terminated_by": "infra_error",
+        "attempts": 0,
+        "started_at": "2026-07-15T16:54:45.131605Z",
+        "finished_at": "2026-07-15T16:57:02.308476Z",
+        "duration_sec": 137,
+        "tokens": {
+          "input": null,
+          "cache": null,
+          "output": null
+        },
+        "cost_usd": null,
+        "config": {
+          "adapter": "eval.harbor_adapter:ProductAdapter",
+          "adapter_name": "vsm-product",
+          "adapter_version": "0.1.0",
+          "model_name": null,
+          "timeout_multiplier": 1.0,
+          "agent_timeout_multiplier": null,
+          "verifier_timeout_multiplier": null,
+          "environment_type": "docker",
+          "install_only": false
+        }
+      },
+      {
+        "trial_name": "build-cython-ext__rEetMV3",
+        "task_id": "task",
+        "status": "failed",
+        "verdict": "unknown",
+        "reward": 0.0,
+        "terminated_by": "infra_error",
+        "attempts": 0,
+        "started_at": "2026-07-15T16:50:52.667650Z",
+        "finished_at": "2026-07-15T16:54:43.082603Z",
+        "duration_sec": 230,
+        "tokens": {
+          "input": null,
+          "cache": null,
+          "output": null
+        },
+        "cost_usd": null,
+        "config": {
+          "adapter": "eval.harbor_adapter:ProductAdapter",
+          "adapter_name": "vsm-product",
+          "adapter_version": "0.1.0",
+          "model_name": null,
+          "timeout_multiplier": 1.0,
+          "agent_timeout_multiplier": null,
+          "verifier_timeout_multiplier": null,
+          "environment_type": "docker",
+          "install_only": false
+        }
+      },
+      {
+        "trial_name": "jsonl-aggregator__FzUJhfY",
+        "task_id": "task",
+        "status": "passed",
+        "verdict": "task_resolved",
+        "reward": 1.0,
+        "terminated_by": "task_resolved",
+        "attempts": 1,
+        "started_at": "2026-07-15T15:20:45.649285Z",
+        "finished_at": "2026-07-15T15:26:32.141408Z",
+        "duration_sec": 346,
+        "tokens": {
+          "input": null,
+          "cache": null,
+          "output": null
+        },
+        "cost_usd": null,
+        "config": {
+          "adapter": "eval.harbor_adapter:ProductAdapter",
+          "adapter_name": "vsm-product",
+          "adapter_version": "0.1.0",
+          "model_name": null,
+          "timeout_multiplier": 1.0,
+          "agent_timeout_multiplier": null,
+          "verifier_timeout_multiplier": null,
+          "environment_type": "docker",
+          "install_only": false
+        }
+      },
+      {
+        "trial_name": "jsonl-aggregator__euTwcBH",
+        "task_id": "task",
+        "status": "error",
+        "verdict": null,
+        "reward": null,
+        "terminated_by": null,
+        "attempts": null,
+        "started_at": "2026-07-15T15:18:11.887383Z",
+        "finished_at": "2026-07-15T15:18:53.722051Z",
+        "duration_sec": 41,
+        "tokens": {
+          "input": null,
+          "cache": null,
+          "output": null
+        },
+        "cost_usd": null,
+        "config": {
+          "adapter": "eval.harbor_adapter:ProductAdapter",
+          "adapter_name": null,
+          "adapter_version": null,
+          "model_name": null,
+          "timeout_multiplier": 1.0,
+          "agent_timeout_multiplier": null,
+          "verifier_timeout_multiplier": null,
+          "environment_type": "docker",
+          "install_only": false
+        }
+      },
+      {
+        "trial_name": "jsonl-aggregator__5poudkc",
+        "task_id": "task",
+        "status": "failed",
+        "verdict": "task_resolved",
+        "reward": 0.0,
+        "terminated_by": "task_resolved",
+        "attempts": 1,
+        "started_at": "2026-07-15T15:06:56.105230Z",
+        "finished_at": "2026-07-15T15:13:46.561708Z",
+        "duration_sec": 410,
+        "tokens": {
+          "input": null,
+          "cache": null,
+          "output": null
+        },
+        "cost_usd": null,
+        "config": {
+          "adapter": "eval.harbor_adapter:ProductAdapter",
+          "adapter_name": "vsm-product",
+          "adapter_version": "0.1.0",
+          "model_name": null,
+          "timeout_multiplier": 1.0,
+          "agent_timeout_multiplier": null,
+          "verifier_timeout_multiplier": null,
+          "environment_type": "docker",
+          "install_only": false
+        }
+      },
+      {
+        "trial_name": "jsonl-aggregator__zFZNYfL",
+        "task_id": "task",
+        "status": "failed",
+        "verdict": "task_failed",
+        "reward": 0.0,
+        "terminated_by": "no_observations",
+        "attempts": 1,
+        "started_at": "2026-07-15T14:57:05.140694Z",
+        "finished_at": "2026-07-15T15:02:08.405205Z",
+        "duration_sec": 303,
+        "tokens": {
+          "input": null,
+          "cache": null,
+          "output": null
+        },
+        "cost_usd": null,
+        "config": {
+          "adapter": "eval.harbor_adapter:ProductAdapter",
+          "adapter_name": "vsm-product",
+          "adapter_version": "0.1.0",
+          "model_name": null,
+          "timeout_multiplier": 1.0,
+          "agent_timeout_multiplier": null,
+          "verifier_timeout_multiplier": null,
+          "environment_type": "docker",
+          "install_only": false
+        }
+      },
+      {
+        "trial_name": "jsonl-aggregator__qzKysy8",
+        "task_id": "task",
+        "status": "error",
+        "verdict": null,
+        "reward": null,
+        "terminated_by": null,
+        "attempts": null,
+        "started_at": "2026-07-15T14:54:31.097971Z",
+        "finished_at": "2026-07-15T14:55:56.380350Z",
+        "duration_sec": 85,
+        "tokens": {
+          "input": null,
+          "cache": null,
+          "output": null
+        },
+        "cost_usd": null,
+        "config": {
+          "adapter": "eval.harbor_adapter:ProductAdapter",
+          "adapter_name": null,
+          "adapter_version": null,
+          "model_name": null,
+          "timeout_multiplier": 1.0,
+          "agent_timeout_multiplier": null,
+          "verifier_timeout_multiplier": null,
+          "environment_type": "docker",
+          "install_only": false
+        }
+      },
+      {
+        "trial_name": "jsonl-aggregator__eBNZoeK",
+        "task_id": "task",
+        "status": "error",
+        "verdict": null,
+        "reward": null,
+        "terminated_by": null,
+        "attempts": null,
+        "started_at": "2026-07-15T14:48:05.313989Z",
+        "finished_at": "2026-07-15T14:49:46.762531Z",
+        "duration_sec": 101,
+        "tokens": {
+          "input": null,
+          "cache": null,
+          "output": null
+        },
+        "cost_usd": null,
+        "config": {
+          "adapter": "eval.harbor_adapter:ProductAdapter",
+          "adapter_name": null,
+          "adapter_version": null,
+          "model_name": null,
+          "timeout_multiplier": 1.0,
+          "agent_timeout_multiplier": null,
+          "verifier_timeout_multiplier": null,
+          "environment_type": "docker",
+          "install_only": false
+        }
+      },
+      {
+        "trial_name": "jsonl-aggregator__NWG9PD9",
+        "task_id": "task",
+        "status": "error",
+        "verdict": null,
+        "reward": null,
+        "terminated_by": null,
+        "attempts": null,
+        "started_at": "2026-07-15T14:40:29.776296Z",
+        "finished_at": "2026-07-15T14:44:40.063996Z",
+        "duration_sec": 250,
+        "tokens": {
+          "input": null,
+          "cache": null,
+          "output": null
+        },
+        "cost_usd": null,
+        "config": {
+          "adapter": "eval.harbor_adapter:ProductAdapter",
+          "adapter_name": null,
+          "adapter_version": null,
+          "model_name": null,
+          "timeout_multiplier": 1.0,
+          "agent_timeout_multiplier": null,
+          "verifier_timeout_multiplier": null,
+          "environment_type": "docker",
+          "install_only": false
+        }
+      },
       {
         "trial_name": "jsonl-aggregator__i5wrmdo",
         "task_id": "jsonl-aggregator",
@@ -762,11 +1354,11 @@ window.VSM_DATA = {
       "S3",
       "S3*"
     ],
-    "autonomy_verdict": "DEPENDENT",
+    "autonomy_verdict": "SEMI-AUTONOMOUS",
     "autonomy_target": 1.0,
     "autonomy_signs": {
       "s5_sign": {
-        "value": 0.0,
+        "value": 1.0,
         "from": "interventions",
         "meets": true
       },
@@ -786,17 +1378,17 @@ window.VSM_DATA = {
         "meets": false
       },
       "eval_sign": {
-        "value": 0.0,
+        "value": 1.0,
         "from": "dev_metrics",
-        "meets": false
+        "meets": true
       }
     },
     "last_primitive": "Create",
     "last_transition": "Phase 3 → Phase 4",
     "child_initialized": true,
     "child_path": "../vsm",
-    "cycle_count": 0,
-    "updated": "2026-07-14"
+    "cycle_count": 2,
+    "updated": "2026-07-16"
   },
   "audit": [],
   "audit_caveats": [],
@@ -2396,9 +2988,11 @@ window.VSM_DATA = {
           "hint": "Не сейчас. Eval-батчи идут, но vsmlite на них не реагирует (системы idle). Принять как known-gap."
         }
       ],
-      "status": "triage",
-      "decision": "",
-      "selected_options": [],
+      "status": "done",
+      "decision": "accept — выбран option full-s4-auto. Контур «батч → S4-наблюдение → S5-решение» замкнут ДЕТЕРМИНИСТИЧЕСКИ через scripts/run_cycle.py (VSM-031): после каждого батча rule-based детекторы классифицируют состояние (regression/zero_pass/infra_cluster/low_pass_rate/improvement → observations[]), decision logic выносит needs_human_decision|ok_with_concerns|ok_no_action, при critical автоматически создаётся VSM-NNN (triage, dedup). Это слой 2 (наблюдение) + слой 3 (решение) без LLM. LLM-агенты S4/S5 (/vsmlite-cycle) остаются слоем ГЛУБОКОГО анализа поверх — когда rule-based детекции недостаточно и нужен семантический разбор регрессии. Слой 1 (batch артефакт) — metrics.record_batch → state/batch_summaries/. UI-таймлайн (monitor/batches.html) + cycle_digest enrichment — closed этим follow-up. Полный self-correcting контур A(t) работает без ручного запуска.",
+      "selected_options": [
+        "full-s4-auto"
+      ],
       "references": [
         "VSM-031",
         "VSM-029",
@@ -2418,76 +3012,251 @@ window.VSM_DATA = {
     },
     {
       "id": "VSM-031",
-      "source_system": "S3",
+      "source_system": "S1",
       "signal_type": "gap",
       "severity": "S2",
       "target_unit": "meta",
-      "title": "Parallel trial runs in _run_batch (ThreadPoolExecutor over harbor trials)",
-      "summary": "Eval-батч (make eval-test / eval-all / eval-dataset) гоняет задачи строго\nпоследовательно — plain `for` в eval/modes.py:46. При медиане ~280s/trial (21\nrecorded trial) батч из 20 сэмплов ≈ 90+ min wall-clock. Контейнерная изоляция\nуже безопасна для параллелизма (каждый trial = свой Docker + свой\nstate/harbor-trials/<task>__<random-id>/, бинд-маунты read-only), но два\nблокера мешают распараллелить «в лоб»:\n\n  1. metrics.record (eval/metrics.py:57) — non-atomic read-modify-rewrite\n     (load → mutate tasks[] → _write перезаписывает весь файл). Гонка тихо\n     теряет результаты даже РАЗНЫХ задач (last-writer-wins). Нет flock, нет\n     os.replace. Эталон безопасной записи уже есть: src/agent_runtime/state_bus.\n  2. Нет workers-cap / CLI-флага — некуда повесить степень параллелизма.\n\nРеальный потолок = rate-limit Z.AI, не CPU/RAM: каждый trial крутит 3 goose-\nсабпроцесса (триада) × workers × GOOSE_THINKING_EFFORT=max (glm-5.2).\n\nOrthogonal к VSM-030 (batch observability): параллелизм naturally производит\nbatch-данные (workers, wall_clock, per-task durations) — это ровно то, что\nlayer-1 VSM-030 хочет в state/batch_summaries/<id>.json. VSM-031 закладывает\nseam (rich batch-кортеж + record_batch), частично закрывая acceptance VSM-030.\n",
+      "title": "VSM-cycle automation: детерминистический контур «батч → наблюдение → решение»",
+      "summary": "Замыкает VSM-030: после eval-батча vsmlite (S2–S5) больше не idle —\nдетерминистический цикл (без LLM) автоматически наблюдает батч, классифицирует\nсостояние, принимает решение, при critical создаёт VSM-issue, обновляет A(t)/\nstatus/cycle_count, эмитит monitor/data.js. LLM-цикл /vsmlite-cycle остаётся\nслоем над этим скриптом (глубокий S4/S5 анализ — по требованию).\n\nТри gap'а, которые закрыты (выявлены Explore-аудитом):\n  1. НЕТ ТРИГГЕРА — eval/modes.py:_run_batch() выходил без вызова vsmlite.\n     ТЕПЕРЬ: после record_run/build_batch_record → subprocess run_cycle.py.\n  2. НЕТ ОРКЕСТРАТОРА — /vsmlite-cycle существовал только как prose-prompt для\n     LLM-сессии. ТЕПЕРЬ: scripts/run_cycle.py — детерминистические шаги.\n  3. cycle_count НЕ ИМЕЛ ВЛАДЕЛЬЦА — 13 упоминаний в коде, все READ; инкремент\n     «поручен» LLM в prose-prompt → застрял на 0. ТЕПЕРЬ: единственный writer\n     — _increment_cycle_count() в run_cycle.py.\n\nДва режима работы (замечание про интервальные прогоны):\n  - BATCH-TRIGGERED: вызывается из _run_batch после каждого батча.\n  - STATE-TRIGGERED: `make cycle` без батча — наблюдает aggregate dev_metrics\n    (аккумулирует по task_id; интервалы сливаются в один файл сами — см.\n    metrics.record upsert по task_id, без таймстампа).\n",
       "evidence": [
-        "eval/modes.py:46 — plain sequential `for tid in task_ids` (нет concurrency)",
-        "eval/metrics.py:57-83 record() — load→mutate→_write, перезапись всего tasks[] без лока",
-        "eval/metrics.py:206 _write() — path.write_text без tempfile+os.replace (нет atomicity)",
-        "eval/harbor_run.py:100 run_trial() — blocking subprocess.run (GIL освобождается на I/O → threads подходят)",
-        "state/harbor-trials/ — 21 trial, рандомный __<id> суффикс → разные task_id не интерферируют",
-        "src/agent_runtime/state_bus.py:218-245 — эталон flock + os.replace (переиспользуем)",
-        "21 trial timing: median 280s, max 406s → 5-way parallelism ≈ 90min → ~20min"
+        "scripts/run_cycle.py (NEW ~330 строк) — детерминистический оркестратор: A(t) recompute, status sweep, rule-based observations (5 детекторов), decide, auto-issue, enrich batch, cycle_count++, render_data, validate",
+        "eval/modes.py:_run_batch() — после record_run/build_batch_record → _trigger_cycle(batch_record) (subprocess, non-fatal, флаг no_cycle)",
+        "eval/modes.py — _build_batch_record + _write_batch_summary: state/batch_summaries/<batch_id>.json с плейсхолдерами observations/decision/issues_raised (заполняет run_cycle)",
+        "eval/config.py — EvalConfig.no_cycle (default False) + EVAL_NO_CYCLE env в __post_init__",
+        "eval/__main__.py — CLI --no-cycle (отключить авто-цикл для разовых прогонов)",
+        "Makefile — make cycle (state-mode: наблюдать aggregate без батча)",
+        "run_cycle.py:_increment_cycle_count() — ЕДИНСТВЕННЫЙ writer cycle_count в maturation.json (grep 'cycle_count' scripts/ → все READ кроме этого)",
+        "run_cycle.py:_cycle_trend() — собственная память цикла (state/cycle_history.json), НЕ eval_history: eval_history пишется только из _run_batch daily-snapshot'ом, при интервальных прогонах (harbor trial start) не пишется"
       ],
-      "proposal": "1. Блокер: flock + atomic write в metrics.record/record_run/_write (эталон —\n   state_bus.py). Читатели остаются lock-free (видят цельный old/new файл).\n2. workers-поле (config.py, env EVAL_WORKERS, default 1 = zero-risk regression)\n   + CLI --workers/-W.\n3. ThreadPoolExecutor в _run_batch (threads ок — работа = blocking I/O). После\n   executor.shutdown — существующие post-batch вызовы (record_run/compute_trend)\n   однопоточные, как есть.\n4. Rich batch-кортеж из _run_batch + record_batch → state/batch_summaries/\n   (seam для VSM-030 layer-2/3: observations/decision — светлые плейсхолдеры).\n5. Не трогать схему dev_metrics.json (upsert по task_id достаточен для разных\n   задач), run_trial signature (контракт VSM-024), harbor_bridge.\n",
+      "rule_detectors": [
+        "zero_pass — 0/N passed при наличии задач (warn)",
+        "regression — pass_rate упал >10 п.п. относительно прошлого цикла (CRITICAL)",
+        "improvement — pass_rate вырос >10 п.п. (info, позитивный)",
+        "infra_cluster — >30% задач в status=error (warn)",
+        "low_pass_rate — pass_rate <50% при passed>0 (warn)"
+      ],
+      "decision_logic": [
+        "critical observations → needs_human_decision + auto-issue VSM-NNN (dedup по batch_id+types)",
+        "warn (без critical) → ok_with_concerns",
+        "только info/пусто → ok_no_action"
+      ],
+      "proposal": "Реализовано (этот issue = фиксация). Контур замкнут детерминистически —\nбез LLM. LLM-агенты S4/S5 не затронуты: /vsmlite-cycle остаётся как слой\nглубокого анализа поверх. Когда нужен детальный разбор регрессии (а не\nrule-based детекция) — человек запускает /vsmlite-cycle.\n\nДальнейшее (future work, не этот issue):\n- batches.html UI (таймлайн батчей с развёрткой «что увидел → что решил»);\n- интеграция observations в cycle_digest.py (S5 REPL-дайджест);\n- harbor job start (native батчи для полного датасета, см. контекст ниже).\n",
+      "interval_batches_context": "Полный датасет может гоняться интервалами (не одним батчем). Два уровня\nагрегации — оба работают с этой реализацией:\n  1. dev_metrics аккумулирует по task_id (upsert): прогоны в разные дни\n     сливаются в один dev_metrics.json автоматически. Таймстамп не нужен.\n     `make cycle` (state-mode) наблюдает aggregate в любой момент.\n  2. harbor job resume (native): дописывает trials к существующему job.\n     Пока используем harbor trial start (одиночные) — для полного датасета\n     рекомендуется переход на harbor job start (future work, отдельный issue).\n",
       "acceptance": [
-        "--workers N гоняет N задач одновременно (stderr показывает перекрытие start/done)",
-        "после parallel-батча dev_metrics.json содержит все N результатов (ни один не потерян — проверка блокера)",
-        "state/batch_summaries/<id>.json создаётся с pass_rate + tasks + workers + wall_clock_sec",
-        "--workers 1 бит-идентичен текущему sequential поведению (regression-safe)",
-        "make validate GREEN"
+        "make cycle работает, инкрементит cycle_count, печатает digest",
+        "после eval-батча: state/batch_summaries/<id>.json содержит non-empty observations[] и decision",
+        "при critical observation создаётся issues/VSM-NNN.yaml (monotonic id, needs_human_decision: true)",
+        "grep 'cycle_count' scripts/ | grep writer → единственный инкремент в run_cycle.py",
+        "make validate GREEN (run_cycle.py в scripts/ — read-only из ../vsm,../src)",
+        "state/status.json после цикла: health != unknown для всех систем",
+        "state/maturation.json: cycle_count > 0 (закрытие gap из VSM-030 evidence)",
+        "--no-cycle отключает авто-цикл (batch_summary без observations)",
+        "state/cycle_history.json пишется каждым циклом (trend гранулярность = цикл)"
+      ],
+      "needs_human_decision": false,
+      "references": [
+        "VSM-030",
+        "VSM-005",
+        "VSM-024",
+        "VSM-026"
+      ],
+      "merge_note": "Этот issue объединяет две комплементарные работы над VSM-031 (слиты в main):\n  1. cycle automation (scripts/run_cycle.py) — observability-слой: наблюдает\n     batch_summaries, решает, создаёт VSM-issue при critical, обновляет A(t).\n  2. parallel trials (eval/modes.py ThreadPoolExecutor + eval/metrics.py\n     record_batch + flock-safe writes + EvalConfig.workers) — production-слой:\n     параллельные батчи + безопасный seam batch_summaries для cycle.\nCycle потребляет артефакты parallel-слоя. Обе работы самодостаточны, но вместе\nдают полный контур: parallel eval → batch_summary seam → cycle observe/decide.\n",
+      "notes": [
+        "LLM-цикл /vsmlite-cycle НЕ затронут — остаётся слоем глубокого S4/S5 анализа поверх детерминистического.",
+        "Trend использует cycle_history (собственная память), не eval_history — потому что eval_history пишется только из _run_batch daily-snapshot'ом и неполон при интервальных прогонах.",
+        "Subprocess (не import) для триггера: scripts/ — плоские модули без __init__.py; изоляция падений.",
+        "auto-issue dedup: сигнатура = sorted critical-types + batch_id; если уже в triage — не плодит дубликаты.",
+        "Запуск с фронта других агентов: cycle не блокирует батч (non-fatal try/except), не мутирует ../vsm,../src."
+      ],
+      "created": "2026-07-15",
+      "updated": "2026-07-15",
+      "status": "triage",
+      "options": []
+    },
+    {
+      "id": "VSM-032",
+      "source_system": "S5",
+      "signal_type": "policy",
+      "severity": "S2",
+      "target_unit": "meta",
+      "title": "Два S4-scout'а по доменам среды + S3* evaluation_integrity + baseline snapshot 0.0.1",
+      "summary": "Среда, которую сканирует S4, мультигранна. Канон Beer/OSM: S4 = «outside-and-then»\n— скан среды системы (child VSM). Среда разделена на два домена, каждый со своим\nscout'ом (доменная специализация внутри S4, не новая система):\n  - product-domain (s4-scout, существующий): competitors, LLM-tech, mini-swe-agent\n    эволюция, recovery-подходы.\n  - benchmark-domain (s4-bench-scout, НОВЫЙ): Terminal-Bench 2.1, frontier-модели\n    (GLM-5.2/Opus/Sonnet), leaderboard, структура датасета, общие fail-кластеры.\n\nS3* (независимый аудит на ДРУГОЙ модели) получает второй audit-focus —\nevaluation_integrity (канонически чистое расширение: cross-provider-модель ловит\nсмещение в оценке собственного продукта). Не смешивается с benchmark-research.\n\nСоздан baseline-snapshot продукта vsm-baseline-0.0.1 (structural; pass-rate TBD\nдо готовности инфры) в public-report/ — точка отсчёта для frontier-сравнения.\nInvariant public-report/ расширен: теперь external + internal-snapshot (оба\nread-only-фиксации, НЕ смешиваются с A(t)).\n\nОбоснование декомпозиции: «внутренние данные → S3, интернет → S4» — ось\nортогональна ролям Beer. Канонически роли привязаны к объекту наблюдения\nотносительно системы (child VSM), не к источнику данных. Бенчмарк TB-2.1 = часть\nсреды (оценочный стенд внешне к продукту), поэтому ЛЮБОЙ его анализ (интернет\nИ локальный датасет) = S4. Метрика продукта на бенчмарке (pass-rate) уже feeds\nS3 через eval_sign → A(t); «бенчмарк-как-объект» остаётся S4.\n",
+      "evidence": [
+        "systems/s4-bench-scout/ — новый S4 benchmark-domain (SOUL/SKILL/HEARTBEAT/TASK)",
+        ".claude/agents/s4-bench-scout.md — agent definition (model: inherit)",
+        "systems/s3-star-auditor/SKILL.md — audit focus evaluation_integrity (VSM-032)",
+        "vsmlite.yaml → system_4.domain_split + system_3_star.audit_focuses (раньше скаляр audit_focus)",
+        "meta/tb2-structure.md — stable digest TB-2.1 (89 задач, 16 категорий, difficulty, schema)",
+        "meta/frontier-baselines.md — volatile digest (GLM-5.2 79.8%, Opus 61.8%, Sonnet 50.3%)",
+        "public-report/vsm-baseline-0.0.1.md — structural snapshot продукта (pass-rate TBD)",
+        "public-report/README.md — расширенный invariant (internal baseline snapshot ≠ A(t))",
+        "public-report/GLM-5.2-FP8_TB-2.1_mini-swe-agent.md — frontier-якорь 79.8% (VSM-028)"
+      ],
+      "proposal": "Принять структуру «два S4-scout'а по доменам среды + S3* evaluation_integrity»:\n1. s4-bench-scout (benchmark-domain S4) — новый агент + каталог systems/.\n2. s4-scout (product-domain S4) — без изменений.\n3. S3* — второй audit-focus evaluation_integrity (мембрана/no-leakage/\n   anti-reward-hacking/metric isolation); child_viability без изменений.\n4. vsm-baseline-0.0.1 — structural snapshot продукта в public-report/.\n5. Два standing-digest'а в meta/: tb2-structure.md (stable) + frontier-baselines.md (volatile).\n\nАльтернативы, рассмотренные и отвергнутые:\n- «внутренние → S3, интернет → S4»: ось источника данных ортогональна Beer-ролям;\n  бенчмарк = среда → S4 независимо от источника.\n- «отдельный utility-research-агент вне VSM»: не ложится в канон, вне permission matrix.\n- «нагрузить S3* benchmark-research»: ломает provider_constraint (S3* = viability/integrity\n  audit, не research; смешивание ломает чистоту аудита).\n- «один S4 с двумя monitoring-доменами»: смешивает объекты (продукт vs стенд).\n",
+      "acceptance": [
+        "make validate GREEN (инвариант не нарушен новыми файлами)",
+        "python3 scripts/autonomy.py работает (s4_sign читает state/intel.json — не сломан)",
+        "python3 scripts/render_data.py работает (телеметрия рендерится)",
+        "grep по vsm/+src/ чист от terminal-bench/harbor (мембрана VSM-002 сохранена)",
+        "vsmlite.yaml валиден (YAML парсится); system_3_star.audit_focuses — список",
+        "bench-scout пишет сигналы с source_domain: benchmark (отличие от product)"
       ],
       "needs_human_decision": true,
-      "policy_question": "Какой workers-cap по умолчанию (потолок = rate-limit Z.AI, 3 goose-сабпроцесса × N)?\n",
+      "policy_question": "Принять архитектуру «два S4-scout'а (product + benchmark domain) + S3*\nevaluation_integrity + internal baseline snapshot 0.0.1»?\n",
       "options": [
         {
-          "id": "cap-3",
-          "label": "cap=3 (консервативно)",
-          "hint": "3 параллельных trial = 9 goose-сессий одновременно. Безопасный старт, почти наверняка ниже rate-limit."
+          "id": "accept",
+          "label": "Accept (как реализовано)",
+          "hint": "Два S4 по доменам, S3* +evaluation_integrity, snapshot в public-report/. Канонически чисто. (Реком.)"
         },
         {
-          "id": "cap-5",
-          "label": "cap=5 (recommended)",
-          "hint": "5 параллельных = 15 goose-сессий. ~5× speedup на батче (90min→~20min). Подобрать под tier Z.AI."
+          "id": "accept-no-snapshot",
+          "label": "Accept, но snapshot вынести из public-report/",
+          "hint": "Агенты + S3* принимаем, но vsm-baseline-0.0.1 — в meta/baselines/ (public-report оставить external-only по VSM-028)."
         },
         {
-          "id": "cap-10",
-          "label": "cap=10 (агрессивно)",
-          "hint": "10 параллельных = 30 goose-сессий. Может упереться в rate-limit/429. drvfs-нагрузка на /mnt/e."
-        },
-        {
-          "id": "auto",
-          "label": "auto из rate-limit (future)",
-          "hint": "Читать лимит из ответов API (429 backoff) и адаптировать workers динамически. Сложнее, отдельный заход."
+          "id": "single-s4",
+          "label": "Только один S4 (два monitoring-домена)",
+          "hint": "Не плодить второго scout'а; смешать домены в одном s4-scout. Меньше файлов."
         },
         {
           "id": "defer",
           "label": "Defer",
-          "hint": "Не сейчас. Оставить workers=1 (sequential). Реализация block'а (flock) уже закоммичена как фундамент."
+          "hint": "Отложить до появления 2-го объекта в benchmark-domain (пока один бенчмарк = один scout избыточен)."
         }
       ],
       "status": "triage",
       "decision": "",
       "selected_options": [],
       "references": [
-        "VSM-030",
-        "VSM-029",
-        "VSM-026",
-        "VSM-024"
+        "VSM-028",
+        "VSM-005",
+        "VSM-002",
+        "VSM-027"
       ],
       "notes": [
-        "Контейнерная изоляция уже безопасна: каждый trial = свой Docker-контейнер + свой harbor-trials/ dir (рандомный __<id>). Бинд-маунты src/vsm/eval — read-only.",
-        "Блокер №1 — metrics.record гонка (теряет результаты разных задач). Чинится flock+os.replace, эталон в src/agent_runtime/state_bus.py.",
-        "Реальный потолок — rate-limit Z.AI (api.z.ai), не CPU/RAM. Подбирается экспериментально под tier.",
-        "Secondary: drvfs /mnt/e (WSL2) — 5-10 контейнеров читают бинд-маунты через 9P, многие-мелкие-файлы = bottleneck.",
-        "Orthogonal VSM-030: закладывает batch_summary seam (rich return из _run_batch + record_batch), не трогая layer-2/3 (S4/S5 observability)."
+        "OSM/Beer: S4 = environment scan; environment is multifaceted → domain split каноничен.",
+        "S3* evaluation_integrity особенно ценен на cross-provider: основной стек смещён в оценке себя.",
+        "pass-rate vsm-baseline-0.0.1 = TBD: инфра-раннер (harbour) достраивается отдельным агентом.",
+        "bench-scout пишет в state/intel.json (кормит s4_sign → A(t)) с source_domain: benchmark; подробный кеш — state/bench_intel.json.",
+        "child-dispatcher не требуется: bench-scout не мутирует ../vsm/, ../src/."
       ],
       "created": "2026-07-15",
       "updated": "2026-07-15"
+    },
+    {
+      "id": "VSM-033",
+      "source_system": "S1",
+      "signal_type": "gap",
+      "severity": "S1",
+      "target_unit": "meta",
+      "title": "Prebuilt-task overlay gap: harbour игнорирует overlay Dockerfile для TB-2.1 (prebuild fix)",
+      "summary": "КОРНЕВАЯ ПРИЧИНА (диагностирована при eval-test 3 samples):\nВсе 89 задач TB-2.1 имеют `docker_image = \"xiangyangli/<task>:20260204\"` в\ntask.toml. Harbour видит это и использует prebuilt-образ НАПРЯМУЮ, ИГНОРИРУЯ\nнаш overlay Dockerfile (harbor.environments.definition.should_use_prebuilt_\ndocker_image → True). Вся overlay-логика в harbor_run.py:_prepare_overlay_task\nработала ВХОЛСТУЮ: создавала Dockerfile с goose+pyyaml+pytest, который harbour\nникогда не читал.\n\nСЛЕДСТВИЕ: ModuleNotFoundError: No module named 'yaml' → все trials падали на\nинициализации (FailureClassifier → taxonomy_loader → import yaml), total_attempts=0,\nterminated_by=infra_error. Eval был полностью неработоспособен.\n\nРЕШЕНИЕ (вариант A — derive + patch task.toml):\n  1. scripts/prebuild_images.py — строит patched-образ vsm/<task>:patched:\n     FROM xiangyangli/<task> + pip install (pyyaml, pytest, numpy, pandas,\n     pillow, requests, scipy, matplotlib) + uv + goose binary. Зависимости\n     собраны сканированием всех 89 задач (imports + Dockerfiles).\n  2. harbor_run.py:_maybe_use_patched_image — если vsm/<task>:patched существует,\n     патчит task.toml в overlay-copy: docker_image → vsm/<task>:patched.\n     Harbour берёт patched-образ (с deps), продукт запускается корректно.\n  3. Оригинальный датасет НЕ мутируется (патчится только overlay-copy в tmpdir).\n\nДОКАЗАТЕЛЬСТВО (eval-test constraints-scheduling на patched image):\n  ДО:   duration=0.8s, trace_len=2, terminated_by=infra_error, tool_calls=0\n  ПОСЛЕ: duration=106.6s, trace_len=3, terminated_by=task_resolved, tool_calls=2\n  Продукт реально работал (fs.list + shell.exec pytest), не infra_error.\n",
+      "evidence": [
+        "harbor.environments.definition.should_use_prebuilt_docker_image: docker_image present + not force_build → True (prebuilt used, Dockerfile ignored)",
+        "task.toml [environment] docker_image = xiangyangli/<task>:20260204 — 89/89 TB-2.1 задач prebuilt",
+        "state/harbor-trials/constraints-scheduling__z8utw6F/agent/product-stdout.log → ModuleNotFoundError: No module named 'yaml'",
+        "scripts/prebuild_images.py (NEW) — derive Dockerfile + pip layers + goose + verify",
+        "eval/harbor_run.py:_maybe_use_patched_image — auto-patch task.toml docker_image → vsm/<task>:patched",
+        "vsm/constraints-scheduling:patched built: yaml 6.0.3 + pytest 9.1.1 + numpy 2.5.1 + goose 1.43.0 + uv 0.7.13 (all verified)",
+        "state/harbor-trials/constraints-scheduling__L92J8jH: duration=106.6s, tool_calls=2, terminated_by=task_resolved (product worked, не infra_error)"
+      ],
+      "dependency_layers": {
+        "product_runtime": [
+          "pyyaml (taxonomy_loader)",
+          "pytest (test-controller)"
+        ],
+        "common_task_deps": [
+          "numpy (32 tasks)",
+          "pandas (12)",
+          "pillow (10)",
+          "requests (7)",
+          "scipy (2)",
+          "matplotlib (3)"
+        ],
+        "heavy_ml_optional": [
+          "torch (29)",
+          "transformers (5)",
+          "datasets (3) — только --heavy"
+        ],
+        "binaries": [
+          "goose 1.43.0 (triad sub-agents)",
+          "uv 0.7.13 (TB verifier test.sh)"
+        ]
+      },
+      "proposal": "Реализовано (этот issue = фиксация). Prebuild infrastructure готова:\n  python3 scripts/prebuild_images.py                    # 3 задачи канарейки\n  python3 scripts/prebuild_images.py --all              # все 89 (медленно)\n  python3 scripts/prebuild_images.py --heavy            # + torch/transformers\n  python3 scripts/prebuild_images.py --list             # статус patched-образов\n\nДальнейшее (future work):\n- prebuild всех 89 задач (goose download flaky — retry wrapper уже есть);\n- --heavy для задач с torch (29 задач, ~2GB образ каждый);\n- publish vsm/<task>:patched в registry для CI воспроизводимости.\n",
+      "acceptance": [
+        "vsm/<task>:patched строится для задач канарейки (pyyaml+pytest+goose verified)",
+        "harbour использует patched-образ (_maybe_use_patched_image → task.toml patched)",
+        "продукт запускается (terminated_by != infra_error, tool_calls > 0)",
+        "make validate GREEN (prebuild_images.py не мутирует ../vsm, ../src)",
+        "оригинальный датасет не мутируется (патчится overlay-copy в tmpdir)"
+      ],
+      "needs_human_decision": false,
+      "references": [
+        "VSM-031",
+        "VSM-030",
+        "VSM-024"
+      ],
+      "notes": [
+        "Корневая причина НЕ кэш-баг (как первоначально гипотезировалось). Harbour intentionally игнорирует overlay Dockerfile для prebuilt задач — это design choice для воспроизводимости registry-образов.",
+        "uv install flaky (SSL_ERROR_SYSCALL на release-assets.githubusercontent.com). Retry wrapper 5 попыток; если все fail — build продолжается (verifier test.sh fallback на pip).",
+        "goose download тоже flaky (286MB с GitHub). Retry 5 попыток; если fail — build fail (goose критичен для triad)."
+      ],
+      "created": "2026-07-15",
+      "updated": "2026-07-15",
+      "status": "triage",
+      "options": []
+    },
+    {
+      "id": "VSM-034",
+      "source_system": "S4",
+      "signal_type": "quality",
+      "severity": "S2",
+      "target_unit": "child",
+      "title": "vsm-product: empty-workspace surrender — 2 tool calls → no_observations",
+      "summary": "Системный поведенческий паттерн продукта (vsm-product, glm-5.2 triad) на TB-2.1\nзадачах. Когда workspace /app стартует пустым ИЛИ требует подготовительных\nдействий (clone repo, создать файл, прочитать формат входов), продукт делает\nровно 2 вызова и замирает:\n  1. fs.list({\"path\": \".\"})     → пустой контент \"\" (относительный путь, /app пуст)\n  2. shell.exec(\"pytest\")       → \"collected 0 items\"\n…затем triad завершается terminated_by=no_observations, total_attempts=1.\nНикакой попытки следовать инструкции задачи (clone /app/pyknotid, создать\n/app/pipeline_parallel.py, прочитать входные файлы).\n\nКОНТРАСТ — успешные задачи (constraints-scheduling, jsonl-aggregator на PASS):\nпродукт сразу fs.list(\"/app\") (АБСОЛЮТНЫЙ путь), видит входные файлы, читает их,\nпишет solve-скрипт, запускает. 6-8 шагов, 5-7 tool_calls → task_resolved.\n\nЭто НЕ infra (контейнер жив, pytest работает, патч VSM-033 держит deps — нет\nModuleNotFoundError). Это продуктовая деградация: «посмотрел на CWD → pytest по\nпустому workspace → сдался» вместо следования task prompt. Паттерн устойчиво\nповторяется — 2/3 eval-test канареек и ~7/16 исторических trial'ов.\n",
+      "evidence": [
+        "state/harbor-trials/build-cython-ext__MFPs87i/agent/trajectory.json: 3 steps, 2 tool_calls (fs.list('.')→'', pytest→0 items), terminated_by=no_observations. Task требовал: git clone pyknotid + build Cython ext — продукт не сделал НИ ОДНОГО шага задачи",
+        "state/harbor-trials/torch-pipeline-parallelism__RV35bKQ/agent/trajectory.json: ИДЕНТИЧНЫЙ паттерн — 3 steps, 2 tool_calls (fs.list('.')→'', pytest→0 items), terminated_by=no_observations. Task требовал: создать /app/pipeline_parallel.py — не создан",
+        "state/harbor-trials/build-cython-ext__MFPs87i/agent/product-trace.json → s1_control: verdict=fail_no_checkpoint 'solver produced no artifacts; pytest collected 0 tests'",
+        "state/harbor-trials/jsonl-aggregator__zFZNYfL/agent/trajectory.json: тот же паттерн (3 steps, no_observations), хотя входные records_*.jsonl В /app — продукт fs.list('.') не нашёл их (относительный путь)",
+        "КОНТРАСТ PASS: state/harbor-trials/constraints-scheduling__2SXTCbE/agent/trajectory.json: 8 steps, 7 tool_calls (fs.list('/app')→видит .ics, read 3 files, write solve.py, exec, verify) → task_resolved, reward=1.0",
+        "КОНТРАСТ PASS: state/harbor-trials/jsonl-aggregator__FzUJhfY/agent/trajectory.json: 6 steps, 5 tool_calls → task_resolved",
+        "state/batch_summaries/eval-test__20260715-233538.json: pass_rate=33.3% (1/3) — constraints PASS, build-cython/torch FAIL по этому паттерну"
+      ],
+      "pattern_signature": "fs.list относительным путём \".\" → пусто → shell.exec pytest → 0 tests → stop.\nУсловие триггера: workspace не содержит «очевидных» готовых входов по\nотносительному пути ИЛИ продукт не пробует абсолютный /app / чтение task prompt.\n",
+      "affected_tasks_observed": [
+        "build-cython-ext (eval-test MFPs87i): FAIL no_observations, 2 calls",
+        "torch-pipeline-parallelism (eval-test RV35bKQ): FAIL no_observations, 2 calls",
+        "jsonl-aggregator (zFZNYfL, dKkAb3W, qMf54fm, LiGdATB, Hk4nGNf): no_observations (история)",
+        "build-merkle-tree-cli-sha512 (MNeXTCu): no_observations"
+      ],
+      "not_affected_observed": [
+        "constraints-scheduling (2SXTCbE): PASS — /app содержал .ics, продукт их прочитал",
+        "jsonl-aggregator (5poudkc, FzUJhfY): PASS — продукт нашёл входы и решил"
+      ],
+      "proposal": "Non-binding. S5 (basta: prepare_only) готовит, не постановляет. Возможные\nнаправления (решает человек):\n- prompt-engineering продукта: явная инструкция «первым шагом fs.list('/app') по\n  АБСОЛЮТНОМУ пути + прочитай task prompt, НЕ запускай pytest по пустому\n  workspace»; запрет сдаваться на collected 0 items.\n- workspace-seeding: если задача требует clone — продукт должен клонировать в\n  /app, а не ждать готового (системный prompt: «выполняй шаги задачи»).\n- triad control-loop: s1_control verdict=fail_no_checkpoint при 0 artifacts —\n  сейчас это терминальный handoff; рассмотреть recovery (2-я попытка с другим\n  framing) вместо single-attempt сдачи.\n- diagnostic: отличать «продукт не попробовал» (2 calls, no artifacts) от\n  «продукт попробовал, но не решил» (many calls, wrong output) — это разные\n  failure-классы, сейчас оба → reward=0.0.\n",
+      "acceptance": [
+        "На eval-test канарейках (build-cython-ext, torch-pipeline-parallelism) продукт делает >2 tool_calls и создаёт артефакты (clone/file write), а не fs.list('.')+pytest→stop",
+        "pass_rate на пустой-workspace категории задач растёт в следующем цикле (cycle_history trend up)",
+        "s1_control различает 'no_attempt' (0 artifacts, ≤2 calls) от 'attempted_wrong' (artifacts/wrong output)"
+      ],
+      "needs_human_decision": true,
+      "references": [
+        "VSM-033",
+        "VSM-031",
+        "VSM-030"
+      ],
+      "notes": [
+        "Паттерн НЕ зависит от patched-image (VSM-033): после патча контейнер жив, pytest работает, deps есть — провал именно в поведении продукта.",
+        "upsert-баг dev_metrics (metrics.record перезаписывает по task_id) маскирует масштаб: dev_metrics показывал 1/1, реальность — см. batch_summaries per_task. Этот баг — отдельный кандидат на issue.",
+        "terminated_by=no_observations ≠ 'triad не нашла что тестировать'. Triad отработала (attempts=1, pytest запущен), но КЛАССИФИКАТОР дал 0 observations т.к. нет артефактов для классификации. Корень — продукт не произвёл артефакты."
+      ],
+      "created": "2026-07-16",
+      "updated": "2026-07-16",
+      "status": "triage",
+      "options": []
     }
   ],
   "history": [
@@ -2538,7 +3307,7 @@ window.VSM_DATA = {
     },
     {
       "date": "2026-07-15",
-      "autonomy_score": 0.175,
+      "autonomy_score": 0.475,
       "maturation_phase": "Phase 4",
       "coverage_ratio": 0.0,
       "validate_pass_rate": null,
@@ -2557,9 +3326,82 @@ window.VSM_DATA = {
       "s5_intervention_count": 0,
       "s5_intervention_cycles": 0,
       "intervention_share": 0.0,
-      "eval_pass_rate": 0.0
+      "eval_pass_rate": 1.0
+    },
+    {
+      "date": "2026-07-16",
+      "autonomy_score": 0.475,
+      "maturation_phase": "Phase 4",
+      "coverage_ratio": 0.0,
+      "validate_pass_rate": null,
+      "drift_score": 0.0,
+      "triple_index": {
+        "actuality": "",
+        "capability": "",
+        "potentiality": "",
+        "measurement": ""
+      },
+      "balance_s3_s4": {
+        "ratio": null,
+        "status": "unknown",
+        "alert": false
+      },
+      "s5_intervention_count": 0,
+      "s5_intervention_cycles": 0,
+      "intervention_share": 0.0,
+      "eval_pass_rate": 1.0
     }
   ],
   "activity": [],
-  "interventions": []
+  "interventions": [],
+  "batches": [
+    {
+      "batch_id": "eval-test__20260715-233538",
+      "profile": "eval-test",
+      "timestamp": "2026-07-15T23:35:38",
+      "wall_clock_sec": 742.8,
+      "workers": 1,
+      "tasks_total": 3,
+      "summary": {
+        "total": 3,
+        "passed": 1,
+        "failed": 2,
+        "error": 0,
+        "pass_rate": 0.3333
+      },
+      "trend_direction": "none",
+      "trend_delta": 0.0,
+      "observations": [
+        {
+          "type": "low_pass_rate",
+          "severity": "warn",
+          "detail": "pass_rate 33.3% < 50% threshold",
+          "detector": "rule:low_pass"
+        }
+      ],
+      "decision": "ok_with_concerns: 1 warnings",
+      "issues_raised": [],
+      "decided_at": "2026-07-16T00:09:12"
+    }
+  ],
+  "cycle_history": [
+    {
+      "cycle": 1,
+      "timestamp": "2026-07-16T00:06:27",
+      "pass_rate": 0.3333,
+      "autonomy": 0.475,
+      "verdict": "SEMI-AUTONOMOUS",
+      "decision": "ok_with_concerns: 1 warnings",
+      "issue_created": null
+    },
+    {
+      "cycle": 2,
+      "timestamp": "2026-07-16T00:09:12",
+      "pass_rate": 0.3333,
+      "autonomy": 0.475,
+      "verdict": "SEMI-AUTONOMOUS",
+      "decision": "ok_with_concerns: 1 warnings",
+      "issue_created": null
+    }
+  ]
 };

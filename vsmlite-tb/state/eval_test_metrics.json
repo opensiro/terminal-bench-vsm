@@ -1,0 +1,50 @@
+{
+  "generated": "2026-07-15",
+  "profile": "eval-test",
+  "dataset": "zai-org/terminal-bench-2-verified",
+  "harness": "claude-code",
+  "summary": {
+    "total": 1,
+    "passed": 0,
+    "failed": 1,
+    "error": 0,
+    "pass_rate": 0.0
+  },
+  "by_category": {
+    "software-engineering": {
+      "total": 1,
+      "passed": 0,
+      "pass_rate": 0.0
+    }
+  },
+  "by_difficulty": {
+    "hard": {
+      "total": 1,
+      "passed": 0,
+      "pass_rate": 0.0
+    }
+  },
+  "tasks": [
+    {
+      "task_id": "task",
+      "status": "failed",
+      "passed": false,
+      "category": "software-engineering",
+      "difficulty": "hard",
+      "agent_duration_sec": 175.7,
+      "trace_len": 3,
+      "failure_obs_count": 0,
+      "timestamp": "2026-07-15T23:48:01",
+      "error": null,
+      "agent_exit_code": 0,
+      "timed_out": false,
+      "harbor": {
+        "trial_name": "torch-pipeline-parallelism__RV35bKQ",
+        "terminated_by": "no_observations",
+        "verdict": "task_failed",
+        "attempts": 1,
+        "reward": 0.0
+      }
+    }
+  ]
+}
