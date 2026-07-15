@@ -501,6 +501,9 @@ def make_goose_planner(
     """Return a planner_fn backed by the s1-planner goose agent.
 
     Falls back to _default_planner if goose is unavailable or parsing fails.
+    The planner gets read-only tools (fs/shell) so it can inspect the workspace
+    structure before producing a plan — its plan steps are then executed by the
+    in-process AgentLoop via the full MCP server.
     """
     def _planner(task_prompt, available_tools, recovery_directive):
         task_input = _json_dump({
@@ -511,6 +514,7 @@ def make_goose_planner(
         parsed = _run_goose_subagent(
             role="s1-planner", systems_dir=systems_dir, workspace=workspace,
             provider=provider, task_input=task_input, timeout_sec=timeout_sec,
+            tools=["fs", "shell"],
         )
         if parsed is None:
             return _default_planner(task_prompt, available_tools, recovery_directive)
@@ -551,6 +555,7 @@ def make_goose_test_controller(
         parsed = _run_goose_subagent(
             role="s1-test-controller", systems_dir=systems_dir, workspace=workspace,
             provider=provider, task_input=task_input, timeout_sec=timeout_sec,
+            tools=["fs", "shell", "git"],
         )
         if parsed is None:
             return _default_test_controller(
@@ -596,6 +601,7 @@ def make_goose_verifier(
         parsed = _run_goose_subagent(
             role="s1-verifier", systems_dir=systems_dir, workspace=workspace,
             provider=provider, task_input=task_input, timeout_sec=timeout_sec,
+            tools=["fs", "shell"],
         )
         if parsed is None:
             return _default_verifier(plan, trace, artifacts)
@@ -615,11 +621,18 @@ def _run_goose_subagent(
     provider: str,
     task_input: str,
     timeout_sec: int,
+    tools: list[str] | None = None,
 ):
     """Run one goose sub-agent; return parsed dict or None on any failure.
 
     None return signals the caller to fall back to the rule-based stub. This
     keeps the triad usable without goose (tests, CI).
+
+    tools: per-role MCP tool modules to attach (e.g. ["fs", "shell"]). When
+    non-empty, GooseRunner builds a --with-extension wrapper so goose can
+    actually call the tools (read/write/exec). Without this, goose runs blind
+    — it sees tool NAMES in the prompt text but cannot invoke them, so the
+    planner/verifier output is unconstrained by what's actually executable.
     """
     try:
         from agent_runtime.goose_runner import AgentConfig, GooseRunner  # type: ignore
@@ -633,6 +646,7 @@ def _run_goose_subagent(
         systems_dir=systems_dir,
         provider=provider,
         workspace=str(workspace),
+        tools=tools or [],
     )
     try:
         result = GooseRunner().run(cfg, task_input, timeout_sec=timeout_sec)
