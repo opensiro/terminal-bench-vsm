@@ -132,9 +132,15 @@ def _prepare_overlay_task(original_task_dir: Path, overlay_dir: Path) -> Path:
         "        python3 python3-pip curl bzip2 libxcb1 libgomp1 > /dev/null 2>&1 && \\\n"
         "    rm -rf /var/lib/apt/lists/*\n"
         "RUN pip install --no-cache-dir --quiet pyyaml\n"
-        "RUN GOOSE_DISABLE_KEYRING=true CONFIGURE=false curl -fsSL \\\n"
-        f"    https://github.com/block/goose/releases/download/{_GOOSE_VERSION}/download_cli.sh | bash\n"
-        "ENV PATH=\"/root/.local/bin:$PATH\"\n"
+        # Direct binary download instead of the installer script — the script
+        # opens /dev/tty for an interactive configure prompt that doesn't exist
+        # in `docker build`. We download the tarball, extract goose to
+        # /usr/local/bin (on PATH in all base images), skip configure entirely.
+        "RUN ARCH=$(uname -m) && \\\n"
+        f"    curl -fsSL https://github.com/aaif-goose/goose/releases/download/{_GOOSE_VERSION}/"
+        "goose-$ARCH-unknown-linux-gnu.tar.bz2 | \\\n"
+        "    tar -xj -C /usr/local/bin goose && \\\n"
+        "    goose --version\n"
     )
 
     original_dockerfile.write_text(overlay_dockerfile, encoding="utf-8")
