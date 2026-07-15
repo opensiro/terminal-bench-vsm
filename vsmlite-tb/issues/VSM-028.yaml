@@ -1,0 +1,99 @@
+id: VSM-028
+source_system: S4            # intelligence: обнаружен frontier-результат GLM-5.2 на TB 2.1
+signal_type: gap             # gap — нет артефакт-конвенции для внешних baseline-результатов
+severity: S3                 # не ломает viability; enhances frontier-калибровку A(t)
+target_unit: meta            # артефактная структура vsmlite-tb (родитель)
+
+title: "public-report/: конвенция внешних baseline-карточек как якорь A(t)"
+
+summary: |
+  Появилась первая baseline-карточка внешнего community-результата:
+  public-report/GLM-5.2-FP8_TB-2.1_mini-swe-agent.md — GLM-5.2 (FP8 weights +
+  FP8 KV cache) на Terminal-Bench 2.1 через mini-swe-agent harness = 79.8%
+  (71/89 passed, 17 failed, 1 errored). Карточка создана ad-hoc; конвенция пока
+  НЕ зафиксирована.
+
+  Gap: vsmlite-tb хранит только СОБСТВЕННЫЕ прогоны (state/dev_metrics.json →
+  A(t), VSM-004/005) и не имеет механизма фиксации ВНЕШНИХ baseline-результатов.
+  Без них A(t) — число в вакууме: нет frontier-якоря, относительно которого
+  оценивать «хорошо/плохо» pass_rate продукта. public-report/ закрывает этот gap
+  как референс-слой (read-only, community-reported, явно отделённый от A(t)).
+
+  Что уже есть в карточке (рабочий черновик конвенции):
+    - metadata-таблица (модель, квантизация, harness, датасет, pass_rate, дата, source-ссылка)
+    - headline-блок (TOTAL/PASSED/FAILED/ERRORED)
+    - token budget (input/cache/new/output + cache hit rate, с arithmetic-sanity)
+    - sampling/runtime config (помечен unknown — Reddit-источник был не machine-fetchable)
+    - полный список failed + кластеризация; errored с пометкой "not re-run"
+    - caveats (single harness, no re-run, config gap, external result)
+
+  Незакрытый вопрос (→ options): формат потребления vsmlite'ом. Сейчас только
+  markdown (человекочитаемый, хорошо для нарратива fail-анализа). Для автомати-
+  ческого сравнения с A(t) нужен либо _template.md (фиксация полей), либо
+  yaml/json sidecar (machine-readable), либо оба.
+
+evidence:
+  - "public-report/GLM-5.2-FP8_TB-2.1_mini-swe-agent.md — 79.8% (71/89), 17 failed, 1 errored, cache hit 98.8%"
+  - "state/dev_metrics.json → только СОБСТВЕННЫЕ прогоны (A(t)), external baselines не фиксируются"
+  - "eval/README.md:172 — summary.pass_rate = входной индикатор автономности A(t) (VSM-004/005); frontier-якоря нет"
+  - "источник карточки: r/LocalLLaMA/comments/1uofoej (GLM-5.2 FP8+FP8 KV, mini-swe-agent, 79.8%) — Reddit anti-bot блокировал fetch; sampling-config помечен unknown"
+  - "issues/template.yaml + vsmlite-issue.schema.json — конвенция для алгедонических сигналов; для public-report аналогичной schema НЕТ"
+
+proposal: |
+  Зафиксировать public-report/ как конвенцию (3 уровня, см. options):
+
+  Минимально (независимо от решения):
+  1. README в public-report/ — назначение папки, отличие от state/ (A(t), внутр.)
+     и issues/ (алгедоника). Явный invariant: external = read-only reference,
+     НЕ смешивается с A(t).
+  2. Конвенция именования: <MODEL>_<BENCH>_<HARNESS>.md (как первая карточка).
+  3. Ссылка из eval/README.md (секция Baselines/frontier-references).
+
+  Если выбран template/yaml — добавить:
+  - public-report/_template.md (фиксированный набор полей) ИЛИ
+  - <card>.yaml sidecar (machine-readable: model, bench, harness, pass_rate,
+    tokens, failed[]) для автоматического diff с A(t).
+
+acceptance:
+  - "public-report/README.md описывает назначение + invariant external≠A(t) (минимум 5 символов)"
+  - "конвенция именования <MODEL>_<BENCH>_<HARNESS>.md задокументирована"
+  - "eval/README.md ссылается на public-report/ как frontier-reference"
+  - "make validate GREEN (если валидатор затрагивает новые файлы)"
+  - "первая карточка (GLM-5.2) приведена к выбранному шаблону"
+
+needs_human_decision: true   # формат потребления vsmlite'ом — policy-level
+
+policy_question: |
+  Какой формат public-report/ для frontier-калибровки A(t)?
+
+options:
+  - id: md-only
+    label: "Только markdown"
+    hint: "Минимум. Человекочитаемые карточки, без template/yaml. Быстро, но поля плавают между карточками."
+  - id: md-template
+    label: "Markdown + _template.md"
+    hint: "Фиксирует набор полей через шаблон. Нарратив сохраняется, сравнимость ручная. (Рекоменд.)"
+  - id: yaml-sidecar
+    label: "Markdown + YAML sidecar"
+    hint: "Каждая карточка = .md (нарратив) + .yaml (machine-readable). Автоматический diff с A(t), но двойное ведение."
+  - id: defer
+    label: "Defer"
+    hint: "Оставить как есть (одна карточка ad-hoc); конвенцию зафиксировать когда появится 2-я модель."
+
+status: done                 # md-template реализован: README + _template.md + GLM-карточка выровнена
+decision: "accept — выбран option md-template (Markdown + _template.md). Нарратив сохраняется, поля фиксированы шаблоном, ручная сравнимость. yaml-sidecar отложен до потребности в автоматическом diff с A(t)."
+selected_options: ["md-template"]
+
+references:
+  - VSM-027   # аналогичный frontier-gap (Harbor-Index); S4/gap/S3, тоже про калибровку
+  - VSM-004   # A(t) как индикатор автономности — то, чему public-report даёт frontier-якорь
+  - VSM-026   # 3-режимная архитектура eval — public-report ортогонален (внешние референсы, не наши прогоны)
+
+notes:
+  - "Карточка явно помечена community-reported + NOT re-verified, чтобы не спутать с внутренними прогонами A(t)."
+  - "sampling/runtime config помечен unknown: Reddit (www/old/json API/mobile UA) отдал anti-bot HTML во всех попытках."
+  - "GLM-5.2 datasheet заявляет TB 2.1 = 81.0 (Terminus-2, temp=1.0, top_p=1.0, timeout=4h); 79.8% mini-swe-agent — на ~1.2 п.п. ниже (harness-эффект)."
+  - "Ортогонален VSM-027: Harbor-Index = новый eval-профиль (наши прогоны); public-report = внешние baseline (read-only reference)."
+
+created: 2026-07-15
+updated: 2026-07-15

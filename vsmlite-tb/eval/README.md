@@ -172,6 +172,18 @@ python3 -m eval {list,run,run-all,summary} [options]
 `summary.pass_rate` — **входной индикатор автономности** A(t) (VSM-004/005):
 рост pass_rate ↑ + снижение S5 interventions ↓ = рост автономности.
 
+## Baselines / frontier-ссылки
+
+Внешние community/official baseline-карточки живут в [`public-report/`](../public-report/README.md) —
+это read-only reference-слой, дающий A(t) frontier-якорь для сравнения. Карточки
+**НЕ** пишутся в `state/dev_metrics.json` и **НЕ** смешиваются с A(t)
+(invariant external≠A(t)).
+
+Текущие карточки:
+- [GLM-5.2 FP8 + FP8 KV · TB 2.1 · mini-swe-agent](../public-report/GLM-5.2-FP8_TB-2.1_mini-swe-agent.md) — 79.8 % (71/89)
+
+Конвенция именования и шаблон — см. `public-report/_template.md` и [VSM-028](../issues/VSM-028.yaml).
+
 ## Датасет
 
 [open-thoughts/OpenThoughts-TB-dev-v2](https://huggingface.co/datasets/open-thoughts/OpenThoughts-TB-dev-v2) —
