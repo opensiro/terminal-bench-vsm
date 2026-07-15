@@ -61,23 +61,84 @@ DATASET = ROOT / ".cache" / "tb-2-verified"
 # Канарейка: 3 задачи разной сложности для первичной проверки.
 CANARY_TASKS = ["build-cython-ext", "constraints-scheduling", "torch-pipeline-parallelism"]
 
-# ── Dependency layers ────────────────────────────────────────────────────────
-# Layer 1: VSM product runtime — нужно КАЖДОЙ задаче (иначе infra_error).
-#   pyyaml: classifier/taxonomy_loader.py import yaml
-#   pytest: test-controller runs tests during agent phase
-PRODUCT_DEPS = ["pyyaml", "pytest"]
+# ── Dependency profiles (4 образа покрывают большинство задач) ────────────────
+# Каждый профиль = набор pip-пакетов + goose + uv. Профиль auto-detect'ится по
+# import-scan'у задачи. Профили кумулятивны (ml ⊃ sci ⊃ core; web ⊃ core).
+#
+# По сканированию всех 89 задач:
+#   core (57 tasks): лёгкий — product runtime + base web utils
+#   sci  (22 tasks): + numpy/scipy/pandas/matplotlib (научный стек)
+#   ml   (9 tasks):  + torch/transformers (heavy, ~2GB)
+#   web  (2 tasks):  + selenium/bs4 (scraping)
+PROFILE_DEPS: dict[str, list[str]] = {
+    "core": ["pyyaml", "pytest", "requests", "pillow"],
+    "sci":  ["numpy", "scipy", "pandas", "matplotlib"],    # + core
+    "ml":   ["torch", "transformers"],                      # + core + sci
+    "web":  ["selenium", "beautifulsoup4"],                 # + core
+}
 
-# Layer 2: common scientific/python stack — нужно большинству задач (по scan).
-#   numpy(32 tasks), pandas(12), pillow(10), requests(7), scipy(2), matplotlib(3)
-COMMON_DEPS = ["numpy", "pandas", "pillow", "requests", "scipy", "matplotlib"]
+# import → profile mapping (для auto-detect)
+_IMPORT_TO_PROFILE: dict[str, str] = {
+    "numpy": "sci", "scipy": "sci", "pandas": "sci", "matplotlib": "sci",
+    "torch": "ml", "transformers": "ml", "datasets": "ml",
+    "selenium": "web", "bs4": "web",
+}
 
-# Layer 3: heavy ML — только если --heavy (torch 2GB+, очень медленно).
-HEAVY_DEPS = ["torch", "transformers", "datasets"]
+# Stdlib + internal modules to exclude from import scan
+_STDLIB = frozenset({
+    "os","sys","json","re","pathlib","datetime","time","math","random","collections",
+    "itertools","functools","typing","subprocess","shutil","tempfile","argparse","io","csv",
+    "base64","hashlib","urllib","logging","traceback","copy","enum","dataclasses","contextlib",
+    "abc","unittest","string","textwrap","platform","glob","inspect","importlib","warnings",
+    "signal","threading","asyncio","concurrent","queue","socket","struct","codecs","unicodedata",
+    "fractions","decimal","statistics","operator","heapq","bisect","array","weakref","gc","ctypes",
+    "pprint","uuid","secrets","configparser","sqlite3","xml","html","email","http","zipfile",
+    "gzip","tarfile","platform","distutils","site","__future__","types","numbers","locale",
+    "calendar","difflib","token","tokenize","ast","dis","compileall","fcntl","fnmatch","venv","stat",
+})
 
-# Goose binary install (from harbor canonical Dockerfile):
-#   block/goose (aaif-goose fork) — тот же что в overlay Dockerfile.
-#   Retry wrapper для flaky TLS.
 _GOOSE_VERSION = "stable"
+
+
+def _detect_profile(task_dir: Path) -> str:
+    """Auto-detect dependency profile для задачи по import-scan.
+
+    Возвращает один из: core, sci, ml, web. Профили кумулятивны:
+    ml ⊃ sci ⊃ core; web ⊃ core. Если нужны и ml и web — ml (тяжелее, включает sci).
+    """
+    found: set[str] = set()
+    for root, dirs, files in os.walk(task_dir):
+        for f in files:
+            if not (f.endswith(".py") or f.endswith(".md") or f.endswith(".sh")):
+                continue
+            try:
+                txt = open(os.path.join(root, f), encoding="utf-8", errors="replace").read()
+            except OSError:
+                continue
+            for m in re.finditer(r"^\s*(?:from\s+([\w.]+)\s+import|import\s+([\w.]+))", txt, re.M):
+                mod = (m.group(1) or m.group(2) or "").split(".")[0]
+                if mod in _IMPORT_TO_PROFILE:
+                    found.add(_IMPORT_TO_PROFILE[mod])
+    # priority: ml > sci > web > core (ml includes sci via cumulative deps)
+    if "ml" in found:
+        return "ml"
+    if "sci" in found:
+        return "sci"
+    if "web" in found:
+        return "web"
+    return "core"
+
+
+def _deps_for_profile(profile: str) -> list[str]:
+    """Кумулятивный список pip-пакетов для профиля (core всегда включён)."""
+    deps = list(PROFILE_DEPS["core"])
+    if profile == "sci":
+        deps += PROFILE_DEPS["sci"]
+    elif profile == "ml":
+        deps += PROFILE_DEPS["sci"] + PROFILE_DEPS["ml"]
+    elif profile == "web":
+        deps += PROFILE_DEPS["web"]
+    return deps
 
 
 def _read_task_docker_image(task_dir: Path) -> str | None:
@@ -99,20 +160,16 @@ def _image_exists(tag: str) -> bool:
     return r.returncode == 0
 
 
-def _dockerfile_for(base_image: str, deps: list[str], heavy: bool) -> str:
-    """Сгенерировать Dockerfile для patched-образа.
+def _dockerfile_for(base_image: str, profile: str) -> str:
+    """Сгенерировать Dockerfile для patched-образа по профилю (core/sci/ml/web).
 
-    Базируется на оригинальном task-образе, досыпает product + common deps +
+    Базируется на оригинальном task-образе, досыпает product + profile deps +
     goose binary. --break-system-packages для PEP 668 (python 3.12+).
     """
-    all_deps = PRODUCT_DEPS + deps
-    if heavy:
-        all_deps += HEAVY_DEPS
+    all_deps = _deps_for_profile(profile)
     pip_pkgs = " ".join(all_deps)
 
-    # apt deps: те что overlay ставил + dev-tools для triad (jq, make, file).
-    # uv: TB verifiers test.sh используют uv, но verifier phase без сети.
-    return f"""# Patched by scripts/prebuild_images.py (VSM-032)
+    return f"""# Patched by scripts/prebuild_images.py (VSM-033) — profile: {profile}
 # Adds VSM product runtime deps + goose binary on top of the original task image.
 FROM {base_image}
 
@@ -169,10 +226,12 @@ def _patch_task_toml(task_dir: Path, patched_tag: str) -> None:
     toml.write_text(patched, encoding="utf-8")
 
 
-def prebuild_task(task_id: str, *, heavy: bool, force: bool) -> str | None:
+def prebuild_task(task_id: str, *, force: bool,
+                  profile_override: str | None = None) -> str | None:
     """Построить patched-образ для одной задачи.
 
-    Возвращает tag (vsm/<task>:patched) или None если:
+    Профиль auto-detect'ится по import-scan (_detect_profile), если не задан
+    profile_override. Возвращает tag (vsm/<task>:patched) или None если:
       - нет docker_image в task.toml (не prebuilt задача);
       - образ уже есть и не --force.
     """
@@ -192,17 +251,22 @@ def prebuild_task(task_id: str, *, heavy: bool, force: bool) -> str | None:
         print(f"  ✓ {task_id}: {patched_tag} exists (use --force to rebuild)")
         return patched_tag
 
+    # Auto-detect dependency profile (core/sci/ml/web) или override.
+    profile = profile_override or _detect_profile(task_dir)
+    deps = _deps_for_profile(profile)
+    print(f"  📋 {task_id}: profile={profile} deps={len(deps)} ({', '.join(deps[:6])}{'…' if len(deps)>6 else ''})")
+
     # Pull base image if not local (harbour needs it as FROM).
     if not _image_exists(base_image):
         print(f"  ⬇ {task_id}: pulling base {base_image}...", file=sys.stderr)
         subprocess.run(["docker", "pull", base_image], check=True)
 
     # Generate Dockerfile + build.
-    dockerfile = _dockerfile_for(base_image, COMMON_DEPS, heavy)
+    dockerfile = _dockerfile_for(base_image, profile)
     with tempfile.TemporaryDirectory(prefix=f"vsm-prebuild-{task_id}-") as tmp:
         ctx = Path(tmp)
         (ctx / "Dockerfile").write_text(dockerfile, encoding="utf-8")
-        print(f"  🔨 {task_id}: building {patched_tag} (FROM {base_image})...")
+        print(f"  🔨 {task_id}: building {patched_tag} (FROM {base_image}, profile={profile})...")
         r = subprocess.run(
             ["docker", "build", "-t", patched_tag, str(ctx)],
             capture_output=False,
@@ -211,7 +275,7 @@ def prebuild_task(task_id: str, *, heavy: bool, force: bool) -> str | None:
             print(f"  ✗ {task_id}: build failed (exit {r.returncode})", file=sys.stderr)
             return None
 
-    # Verify: yaml + goose present.
+    # Verify: core deps + goose present.
     print(f"  🔍 {task_id}: verifying deps...")
     checks = {
         "yaml": ["python3", "-c", "import yaml; print(yaml.__version__)"],
@@ -241,30 +305,31 @@ def prebuild_task(task_id: str, *, heavy: bool, force: bool) -> str | None:
 def main() -> int:
     parser = argparse.ArgumentParser(
         prog="prebuild_images",
-        description="Pre-build patched overlay images for TB tasks (VSM-032)",
+        description="Pre-build patched overlay images for TB tasks (VSM-033)",
     )
     parser.add_argument("tasks", nargs="*", help="task_ids (default: canary 3)")
     parser.add_argument("--all", action="store_true",
                         help="all 89 tasks in dataset (slow; builds individually)")
-    parser.add_argument("--heavy", action="store_true",
-                        help="include heavy ML deps (torch ~2GB, transformers, datasets)")
+    parser.add_argument("--profile", choices=["core", "sci", "ml", "web"], default=None,
+                        help="override auto-detected dependency profile (default: auto-detect)")
     parser.add_argument("--force", action="store_true",
                         help="rebuild even if vsm/<task>:patched exists")
     parser.add_argument("--list", action="store_true",
-                        help="list all tasks with their docker_image, then exit")
+                        help="list all tasks with profile + docker_image + status")
     args = parser.parse_args()
 
     if args.list:
-        print(f"{'task_id':40} {'docker_image':50} status")
-        print("-" * 100)
+        print(f"{'task_id':40} {'profile':8} {'docker_image':50} status")
+        print("-" * 110)
         for d in sorted(os.listdir(DATASET)):
             tp = DATASET / d
             if not tp.is_dir():
                 continue
             img = _read_task_docker_image(tp) or "(build-context)"
+            prof = _detect_profile(tp) if img != "(build-context)" else "—"
             patched = f"vsm/{d}:patched"
             status = "✓ patched" if _image_exists(patched) else "—"
-            print(f"{d:40} {img:50} {status}")
+            print(f"{d:40} {prof:8} {img:50} {status}")
         return 0
 
     if args.all:
@@ -276,17 +341,17 @@ def main() -> int:
         tasks = CANARY_TASKS
 
     print(f"── prebuild_images: {len(tasks)} task(s) ──")
-    print(f"  deps: product={PRODUCT_DEPS}")
-    print(f"        common={COMMON_DEPS}")
-    if args.heavy:
-        print(f"        heavy={HEAVY_DEPS}")
+    if args.profile:
+        print(f"  profile: {args.profile} (override; auto-detect skipped)")
+    else:
+        print(f"  profile: auto-detect per task (core/sci/ml/web)")
     print(f"  force: {args.force}")
     print()
 
     built = []
     failed = []
     for tid in tasks:
-        tag = prebuild_task(tid, heavy=args.heavy, force=args.force)
+        tag = prebuild_task(tid, force=args.force, profile_override=args.profile)
         (built if tag else failed).append(tid)
 
     print()
@@ -295,8 +360,7 @@ def main() -> int:
     if failed:
         print(f"  failed: {', '.join(failed)}")
     print()
-    print("Next: harbor_run.py will auto-patch task.toml to use vsm/<task>:patched")
-    print("  (see _patch_task_toml — wired in the same commit).")
+    print("harbor_run.py auto-patches task.toml to use vsm/<task>:patched when present.")
     return 1 if failed else 0
 
 
