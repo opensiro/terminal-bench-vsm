@@ -82,13 +82,10 @@ class ProductAdapter(BaseAgent):
         return "0.1.0"
 
     async def setup(self, environment: BaseEnvironment) -> None:
-        """No-op. All dependency installation happens in run() instead.
-
-        Harbor wraps setup() in its own timeout (trial.py:1129, default ~300s)
-        which is too short for apt + goose install on a fresh ubuntu base image.
-        run() runs under the trial's agent-execution timeout (much longer), so we
-        install everything there as one combined command. This also makes every
-        run() self-contained regardless of container recreation.
+        """No-op. All deps (python3, pyyaml, goose) are baked into the Docker image
+        by the overlay Dockerfile that harbor_run generates (FROM <task-image> +
+        RUN apt+pip+goose). The image is content-addressed and cached by harbor, so
+        deps install happens once at build time, not per-trial at runtime.
         """
         return None
 
@@ -117,36 +114,11 @@ class ProductAdapter(BaseAgent):
             timeout_sec=15,
         )
 
-        # 3. Ensure all deps are present (python3, pip, pyyaml, goose). setup() is
-        # a no-op (harbor's setup timeout is too short for apt+goose on fresh
-        # images), so run() installs everything it needs. The check-and-install is
-        # idempotent: goose --version succeeds → skip the whole block.
-        goose_check = await environment.exec(
-            command='export PATH="$HOME/.local/bin:$PATH" && goose --version 2>/dev/null',
-            timeout_sec=15,
-        )
-        if goose_check.return_code != 0:
-            # Combined install: apt (python3+pip+curl+libs) + pip (pyyaml) + goose.
-            # One exec so it runs under the trial agent-execution timeout, not
-            # harbor's separate setup timeout.
-            await environment.exec(
-                command=(
-                    'export DEBIAN_FRONTEND=noninteractive && '
-                    'apt-get update -qq && '
-                    'apt-get install -y -qq python3 python3-pip curl bzip2 libxcb1 libgomp1 && '
-                    'pip install --quiet pyyaml && '
-                    'GOOSE_DISABLE_KEYRING=true curl -fsSL '
-                    'https://github.com/block/goose/releases/download/stable/download_cli.sh | bash'
-                ),
-                timeout_sec=480,
-            )
-
-        # 4. Launch orchestrator_runner inside the container. PYTHONPATH makes the
-        #    product importable; WORKSPACE_ROOT is the task workspace (/app). The
-        #    shim writes its recovery-cycle summary to /logs/agent/product-trace.json.
-        # PATH includes ~/.local/bin so the triad's goose sub-agents are found.
+        # 3. Launch orchestrator_runner inside the container. All deps (python3,
+        #    pyyaml, goose) are baked into the image by the overlay Dockerfile —
+        #    no runtime install needed. PYTHONPATH makes the product importable;
+        #    WORKSPACE_ROOT is the task workspace (/app).
         command = (
-            f'export PATH="$HOME/.local/bin:$PATH" && '
             f"PYTHONPATH=/opt/vsm_src WORKSPACE_ROOT=/app "
             f"python3 {_SHIM_PATH}"
             f" --instruction-file {_CONTAINER_TASK_PROMPT}"
