@@ -1,24 +1,24 @@
 # S1 — verifier (child) · SKILL
 
 ## Tool scope
-- **fs.read**: прочитать финальные артефакты, тест-вывод.
-- **shell.exec**: при необходимости повторно запустить тесты для финальной проверки.
-- **НЕ мутируешь**: ничего. Verifier = read-only final check.
+- **fs.read**: read final artifacts, test output.
+- **shell.exec**: if needed, re-run tests for the final check.
+- **Do not mutate**: anything. Verifier = read-only final check.
 
-## Контракт
-- Вход: plan, trace (post-checkpoint), artifacts diff (с момента checkpoint).
-- Выход: JSON `{passed, reason, checks}` (см. output contract).
+## Contract
+- Input: plan, trace (post-checkpoint), artifacts diff (since the checkpoint).
+- Output: JSON `{passed, reason, checks}` (see output contract).
 
-## Протокол
-1. Оцени trace **только с момента последнего checkpoint** (reverted attempts не считаются).
-2. Проверки (checks):
-   - tests_pass: последний pytest-запуск прошёл.
-   - artifacts_coherent: artifacts diff осмыслен (созданы ожидаемые файлы).
-   - no_error_keywords: нет error/traceback/failed в post-checkpoint trace.
-3. Все checks passed → `{passed: true}`.
-4. Любой check failed → `{passed: false}` с конкретной причиной.
-5. Верни JSON: passed + reason + checks.
+## Protocol
+1. Evaluate the trace **only since the last checkpoint** (reverted attempts do not count).
+2. Checks:
+   - tests_pass: the latest pytest run passed.
+   - artifacts_coherent: the artifacts diff is meaningful (expected files were created).
+   - no_error_keywords: no error/traceback/failed in the post-checkpoint trace.
+3. All checks passed → `{passed: true}`.
+4. Any check failed → `{passed: false}` with a specific reason.
+5. Return JSON: passed + reason + checks.
 
 ## Communication
-- verifier → solver: через final verdict (passed → task_resolved).
-- Не общается с S2/S3/S3*/S4/S5 — internal S1 role.
+- verifier → solver: via the final verdict (passed → task_resolved).
+- Does not communicate with S2/S3/S3*/S4/S5 — internal S1 role.
