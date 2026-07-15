@@ -1,0 +1,84 @@
+id: VSM-033
+source_system: S1            # synthesis-operator: infra blocker для eval pipeline
+signal_type: gap             # gap — eval не мог запустить продукт (infra_error на всех trial'ах)
+severity: S1                 # бьёт по核心: eval полностью неработоспособен без этого
+target_unit: meta            # eval/ + scripts/ (eval infrastructure vsmlite-tb)
+
+title: "Prebuilt-task overlay gap: harbour игнорирует overlay Dockerfile для TB-2.1 (prebuild fix)"
+
+summary: |
+  КОРНЕВАЯ ПРИЧИНА (диагностирована при eval-test 3 samples):
+  Все 89 задач TB-2.1 имеют `docker_image = "xiangyangli/<task>:20260204"` в
+  task.toml. Harbour видит это и использует prebuilt-образ НАПРЯМУЮ, ИГНОРИРУЯ
+  наш overlay Dockerfile (harbor.environments.definition.should_use_prebuilt_
+  docker_image → True). Вся overlay-логика в harbor_run.py:_prepare_overlay_task
+  работала ВХОЛСТУЮ: создавала Dockerfile с goose+pyyaml+pytest, который harbour
+  никогда не читал.
+
+  СЛЕДСТВИЕ: ModuleNotFoundError: No module named 'yaml' → все trials падали на
+  инициализации (FailureClassifier → taxonomy_loader → import yaml), total_attempts=0,
+  terminated_by=infra_error. Eval был полностью неработоспособен.
+
+  РЕШЕНИЕ (вариант A — derive + patch task.toml):
+    1. scripts/prebuild_images.py — строит patched-образ vsm/<task>:patched:
+       FROM xiangyangli/<task> + pip install (pyyaml, pytest, numpy, pandas,
+       pillow, requests, scipy, matplotlib) + uv + goose binary. Зависимости
+       собраны сканированием всех 89 задач (imports + Dockerfiles).
+    2. harbor_run.py:_maybe_use_patched_image — если vsm/<task>:patched существует,
+       патчит task.toml в overlay-copy: docker_image → vsm/<task>:patched.
+       Harbour берёт patched-образ (с deps), продукт запускается корректно.
+    3. Оригинальный датасет НЕ мутируется (патчится только overlay-copy в tmpdir).
+
+  ДОКАЗАТЕЛЬСТВО (eval-test constraints-scheduling на patched image):
+    ДО:   duration=0.8s, trace_len=2, terminated_by=infra_error, tool_calls=0
+    ПОСЛЕ: duration=106.6s, trace_len=3, terminated_by=task_resolved, tool_calls=2
+    Продукт реально работал (fs.list + shell.exec pytest), не infra_error.
+
+evidence:
+  - "harbor.environments.definition.should_use_prebuilt_docker_image: docker_image present + not force_build → True (prebuilt used, Dockerfile ignored)"
+  - "task.toml [environment] docker_image = xiangyangli/<task>:20260204 — 89/89 TB-2.1 задач prebuilt"
+  - "state/harbor-trials/constraints-scheduling__z8utw6F/agent/product-stdout.log → ModuleNotFoundError: No module named 'yaml'"
+  - "scripts/prebuild_images.py (NEW) — derive Dockerfile + pip layers + goose + verify"
+  - "eval/harbor_run.py:_maybe_use_patched_image — auto-patch task.toml docker_image → vsm/<task>:patched"
+  - "vsm/constraints-scheduling:patched built: yaml 6.0.3 + pytest 9.1.1 + numpy 2.5.1 + goose 1.43.0 + uv 0.7.13 (all verified)"
+  - "state/harbor-trials/constraints-scheduling__L92J8jH: duration=106.6s, tool_calls=2, terminated_by=task_resolved (product worked, не infra_error)"
+
+dependency_layers:
+  product_runtime: ["pyyaml (taxonomy_loader)", "pytest (test-controller)"]
+  common_task_deps: ["numpy (32 tasks)", "pandas (12)", "pillow (10)", "requests (7)", "scipy (2)", "matplotlib (3)"]
+  heavy_ml_optional: ["torch (29)", "transformers (5)", "datasets (3) — только --heavy"]
+  binaries: ["goose 1.43.0 (triad sub-agents)", "uv 0.7.13 (TB verifier test.sh)"]
+
+proposal: |
+  Реализовано (этот issue = фиксация). Prebuild infrastructure готова:
+    python3 scripts/prebuild_images.py                    # 3 задачи канарейки
+    python3 scripts/prebuild_images.py --all              # все 89 (медленно)
+    python3 scripts/prebuild_images.py --heavy            # + torch/transformers
+    python3 scripts/prebuild_images.py --list             # статус patched-образов
+
+  Дальнейшее (future work):
+  - prebuild всех 89 задач (goose download flaky — retry wrapper уже есть);
+  - --heavy для задач с torch (29 задач, ~2GB образ каждый);
+  - publish vsm/<task>:patched в registry для CI воспроизводимости.
+
+acceptance:
+  - "vsm/<task>:patched строится для задач канарейки (pyyaml+pytest+goose verified)"
+  - "harbour использует patched-образ (_maybe_use_patched_image → task.toml patched)"
+  - "продукт запускается (terminated_by != infra_error, tool_calls > 0)"
+  - "make validate GREEN (prebuild_images.py не мутирует ../vsm, ../src)"
+  - "оригинальный датасет не мутируется (патчится overlay-copy в tmpdir)"
+
+needs_human_decision: false   # инфраструктурный фикс; блокер снят
+
+references:
+  - VSM-031   # cycle automation — этот issue чинит eval pipeline чтобы cycle мог наблюдать реальные результаты
+  - VSM-030   # full-s4-auto observability — eval должен работать чтобы observability имела смысл
+  - VSM-024   # harbor pivot — prebuild дополняет harbor adapter (overlay Dockerfile был нерабочим для prebuilt задач)
+
+notes:
+  - "Корневая причина НЕ кэш-баг (как первоначально гипотезировалось). Harbour intentionally игнорирует overlay Dockerfile для prebuilt задач — это design choice для воспроизводимости registry-образов."
+  - "uv install flaky (SSL_ERROR_SYSCALL на release-assets.githubusercontent.com). Retry wrapper 5 попыток; если все fail — build продолжается (verifier test.sh fallback на pip)."
+  - "goose download тоже flaky (286MB с GitHub). Retry 5 попыток; если fail — build fail (goose критичен для triad)."
+
+created: 2026-07-15
+updated: 2026-07-15

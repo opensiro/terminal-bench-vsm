@@ -19,6 +19,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -136,7 +137,11 @@ def _prepare_overlay_task(original_task_dir: Path, overlay_dir: Path) -> Path:
         # parse task data), make (some tasks build with it), file (detect types).
         # These are tools the agent needs; task-specific deps (pandas, etc.) are
         # installed by the task's own Dockerfile or by the agent at runtime.
-        "RUN pip install --no-cache-dir --quiet pyyaml pytest\n"
+        # IMPORTANT: use `python3 -m pip` (not bare `pip`) so packages land in the
+        # SAME interpreter the orchestrator runs under. Base image python:3.13 has
+        # python3.13 in /usr/local/bin; apt's python3 is /usr/bin/python3 (3.11).
+        # Bare `pip install` targeted 3.11 → yaml missing in 3.13 → infra_error.
+        "RUN python3 -m pip install --no-cache-dir --quiet --break-system-packages pyyaml pytest\n"
         "RUN apt-get update -qq && DEBIAN_FRONTEND=noninteractive apt-get install -y -qq \\\n"
         "    --no-install-recommends jq make file tree > /dev/null 2>&1 && \\\n"
         "    rm -rf /var/lib/apt/lists/*\n"
@@ -168,6 +173,42 @@ def _prepare_overlay_task(original_task_dir: Path, overlay_dir: Path) -> Path:
 
     original_dockerfile.write_text(overlay_dockerfile, encoding="utf-8")
     return overlay_dir
+
+
+# ── VSM-032: patched prebuilt images ─────────────────────────────────────────
+# Все 89 TB-задач prebuilt (docker_image в task.toml). Harbour видит это и
+# использует prebuilt-образ напрямую, ИГНОРИРУЯ наш overlay Dockerfile. Поэтому
+# overlay (с goose+pyyaml) никогда не применялся → ModuleNotFoundError: yaml.
+# Fix: scripts/prebuild_images.py строит vsm/<task>:patched (base image + deps).
+# Здесь — патчим task.toml в overlay-copy: docker_image → vsm/<task>:patched.
+# Harbour берёт patched-образ (с deps), продукт запускается корректно.
+
+_PATCHED_TAG_RE = re.compile(r'^docker_image\s*=\s*"[^"]+"', re.M)
+
+
+def _maybe_use_patched_image(overlay_dir: Path, task_id: str) -> bool:
+    """Если vsm/<task>:patched существует — патчим task.toml на него.
+
+    Возвращает True если patched-образ использован (overlay Dockerfile не нужен),
+    False если нет (overlay Dockerfile работает как раньше для build-context задач).
+    """
+    import subprocess as _sp
+    patched_tag = f"vsm/{task_id}:patched"
+    # Быстрая проверка: есть ли образ локально?
+    r = _sp.run(["docker", "image", "inspect", patched_tag],
+                capture_output=True, text=True)
+    if r.returncode != 0:
+        return False  # нет patched-образа → оригинальный flow
+    toml_path = overlay_dir / "task.toml"
+    if not toml_path.exists():
+        return False
+    text = toml_path.read_text(encoding="utf-8")
+    if not _PATCHED_TAG_RE.search(text):
+        return False  # нет docker_image в task.toml (build-context задача)
+    patched_text = _PATCHED_TAG_RE.sub(f'docker_image = "{patched_tag}"', text)
+    toml_path.write_text(patched_text, encoding="utf-8")
+    print(f"  patched: task.toml → {patched_tag}", file=sys.stderr)
+    return True
 
 
 def _generate_config(task_path: Path, trials_dir: Path, config_out: Path) -> Path:
@@ -221,6 +262,11 @@ def run_trial(task_id: str, config: EvalConfig, keep_config: bool = False) -> di
         # context hash, so the overlay image is built ONCE and reused across
         # trials — no per-trial runtime install. Best-practice Docker layering.
         overlay_path = _prepare_overlay_task(task_path, tmpdir_path / "task")
+
+        # VSM-032: если vsm/<task>:patched существует — патчим task.toml overlay-copy
+        # на patched-образ. Harbour возьмёт его (с deps), overlay Dockerfile не нужен.
+        # Если нет — overlay Dockerfile работает как раньше (build-context задачи).
+        _maybe_use_patched_image(overlay_path, task_id)
 
         print(f"── harbor trial: {task_id} ──", file=sys.stderr)
         print(f"  task: {task_path}", file=sys.stderr)
