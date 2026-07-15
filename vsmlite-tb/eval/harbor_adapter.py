@@ -82,49 +82,15 @@ class ProductAdapter(BaseAgent):
         return "0.1.0"
 
     async def setup(self, environment: BaseEnvironment) -> None:
-        """Install deps the product + its goose sub-agents need inside the container.
+        """No-op. All dependency installation happens in run() instead.
 
-        The TB base image (python:3.13-slim) lacks: PyYAML (taxonomy loader),
-        goose binary + its shared libs (triad sub-agents), and curl (goose installer).
-        Installs are idempotent; goose lands in ~/.local/bin/goose.
+        Harbor wraps setup() in its own timeout (trial.py:1129, default ~300s)
+        which is too short for apt + goose install on a fresh ubuntu base image.
+        run() runs under the trial's agent-execution timeout (much longer), so we
+        install everything there as one combined command. This also makes every
+        run() self-contained regardless of container recreation.
         """
-        # 1. apt deps: python3 + pip (orchestrator_runner needs python; some TB
-        #    base images are ubuntu:24.04 without it), curl (goose installer),
-        #    goose shared libs (libxcb1, libgomp1).
-        await environment.exec(
-            command=(
-                "apt-get update -qq && "
-                "DEBIAN_FRONTEND=noninteractive apt-get install -y -qq python3 "
-                "python3-pip curl bzip2 libxcb1 libgomp1 > /dev/null 2>&1"
-            ),
-            timeout_sec=300,
-        )
-
-        # 2. Python deps: PyYAML (product taxonomy loader).
-        await environment.exec(
-            command="pip install --quiet pyyaml",
-            timeout_sec=120,
-        )
-
-        # 3. goose binary (triad sub-agents). curl-pipe-bash, as harbor's own
-        # goose agent does (harbor/agents/installed/goose.py:install). Lands in
-        # ~/.local/bin/goose. GOOSE_DISABLE_KEYRING avoids keyring prompts in CI.
-        # Pinning "stable" keeps it current; the product's goose_runner is
-        # version-tolerant (uses --text/--no-session/--with-extension, all stable).
-        await environment.exec(
-            command=(
-                'GOOSE_DISABLE_KEYRING=true '
-                'curl -fsSL https://github.com/block/goose/releases/download/stable/download_cli.sh | bash'
-            ),
-            timeout_sec=180,
-        )
-        # Verify goose is on PATH for the agent user (it installs to ~/.local/bin).
-        check = await environment.exec(
-            command='export PATH="$HOME/.local/bin:$PATH" && goose --version',
-            timeout_sec=30,
-        )
-        if check.return_code != 0:
-            logger.warning("goose install verification failed: %s", check.stderr)
+        return None
 
     async def run(
         self,
@@ -151,22 +117,28 @@ class ProductAdapter(BaseAgent):
             timeout_sec=15,
         )
 
-        # 3. Ensure goose is available. setup() installs it, but harbor may spin a
-        # fresh container between trials without re-running setup (image cached,
-        # container recreated). If goose is missing, the triad silently falls back
-        # to in-process stubs (2s "task_resolved" with no real work). Install here
-        # so every run() is self-contained. No-op if goose is already present.
+        # 3. Ensure all deps are present (python3, pip, pyyaml, goose). setup() is
+        # a no-op (harbor's setup timeout is too short for apt+goose on fresh
+        # images), so run() installs everything it needs. The check-and-install is
+        # idempotent: goose --version succeeds → skip the whole block.
         goose_check = await environment.exec(
-            command='export PATH="$HOME/.local/bin:$PATH" && goose --version',
+            command='export PATH="$HOME/.local/bin:$PATH" && goose --version 2>/dev/null',
             timeout_sec=15,
         )
         if goose_check.return_code != 0:
+            # Combined install: apt (python3+pip+curl+libs) + pip (pyyaml) + goose.
+            # One exec so it runs under the trial agent-execution timeout, not
+            # harbor's separate setup timeout.
             await environment.exec(
                 command=(
-                    'GOOSE_DISABLE_KEYRING=true '
-                    'curl -fsSL https://github.com/block/goose/releases/download/stable/download_cli.sh | bash'
+                    'export DEBIAN_FRONTEND=noninteractive && '
+                    'apt-get update -qq && '
+                    'apt-get install -y -qq python3 python3-pip curl bzip2 libxcb1 libgomp1 && '
+                    'pip install --quiet pyyaml && '
+                    'GOOSE_DISABLE_KEYRING=true curl -fsSL '
+                    'https://github.com/block/goose/releases/download/stable/download_cli.sh | bash'
                 ),
-                timeout_sec=180,
+                timeout_sec=480,
             )
 
         # 4. Launch orchestrator_runner inside the container. PYTHONPATH makes the
