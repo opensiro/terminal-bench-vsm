@@ -1,13 +1,49 @@
-# `eval/` — Terminal-Bench Dev Set v2 пайплайн оценки продукта
+# `eval/` — Terminal-Bench пайплайн оценки продукта
 
-> Оценивает продукт (`../src/` — failure-aware harness) на 100 задачах
-> [Terminal-Bench Dev Set v2](https://huggingface.co/datasets/open-thoughts/OpenThoughts-TB-dev-v2),
-> записывает pass-rate в `state/dev_metrics.json` как метрику автономности A(t)
-> (VSM-004/005).
+> Оценивает продукт (`../src/` — failure-aware harness) на задачах Terminal-Bench,
+> записывает pass-rate в `state/` как метрику автономности A(t) (VSM-004/005).
 >
 > Живёт в **родителе** (`vsmlite-tb/`): знает про Terminal Bench. Продукт
 > (`../src/`, `../vsm/`) остаётся **benchmark-agnostic** — мембрана VSM-002
 > снимает TB-фрейминг до пересечения границы.
+
+## Режимы (VSM-026): train / eval-test / eval-dataset
+
+Профиль (`--profile` / `EVAL_PROFILE`) задаёт источник данных + файл метрик.
+Ортогонален раннеру (VSM-024 harbour) — питает любой пайплайн через `EvalConfig`.
+Метрики изолированы по файлам, A(t) не смешивается.
+
+| Профиль | Датасет | Размер | Метрика | Назначение |
+|---|---|---|---|---|
+| `train` (default) | [TB Dev Set v2](https://huggingface.co/datasets/open-thoughts/OpenThoughts-TB-dev-v2) | 100 | `dev_metrics.json` | Батчи/обучение, A(t) |
+| `eval-test` | [TB-2.1 verified](https://huggingface.co/datasets/zai-org/terminal-bench-2-verified) | 20 (сэмпл) | `eval_test_metrics.json` | Оценка репрезентативности (seed=42) |
+| `eval-dataset` | [TB-2.1 verified](https://huggingface.co/datasets/zai-org/terminal-bench-2-verified) | 89 (все) | `eval_dataset_metrics.json` | Финальный test |
+
+TB-2.1 verified = `zai-org/terminal-bench-2-verified` (релиз 2026-05-08, коллаборация
+с официальной TB-командой). Folder-based Harbor format, идентичен dev-v2; новые поля
+`[environment] docker_image/cpus/memory/storage`. Harbour-Index (4-й профиль) —
+[VSM-027](../issues/VSM-027.yaml), future work (separate-verifier).
+
+```bash
+# train (существующее поведение, backward-compat)
+make eval-list && make eval-run TASK=jsonl-aggregator && make eval-summary
+
+# eval-test: N сэмплов TB-2.1 (default 20, seed=42)
+make eval-test
+make eval-test SAMPLE=5
+
+# eval-dataset: все 89 TB-2.1 (финальный test)
+make eval-dataset
+
+# sanity: структурная проверка датасета (без агента, без Docker)
+make eval-sanity
+make eval-sanity PROFILE=eval-test
+
+# любой профиль через CLI
+python3 -m eval --profile eval-test list
+python3 -m eval --profile eval-dataset summary
+```
+
 
 ## Архитектура: docker-exec MCP bridge
 

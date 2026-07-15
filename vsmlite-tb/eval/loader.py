@@ -1,23 +1,25 @@
-"""loader — скачивание и парсинг Terminal-Bench Dev Set v2.
+"""loader — скачивание и парсинг Terminal-Bench датасетов.
 
-Датасет НЕ табличный — это 100 папок задач на диске, скачиваемых через
-snapshot_download. Каждая папка:
+Датасет НЕ табличный — это папки задач на диске, скачиваемые через
+snapshot_download. Формат идентичен между dev-v2 (train) и TB-2.1 verified
+(eval-test/eval-dataset) — Harbor task-format. Каждая папка:
   task.toml            — метаданные (slug = task_id = имя папки)
   instruction.md       — промпт агенту
   environment/Dockerfile — песочница
   solution/solve.sh    — эталонное решение
   tests/test.sh        — verifier (пишет 1/0 в /logs/verifier/reward.txt)
-  tests/test_outputs.py — pytest assertions (опц., ~94/100)
+  tests/test_outputs.py — pytest assertions (опц.)
 
 task.toml (TOML, парсится stdlib tomllib):
   version = "1.0"
   [metadata] difficulty/category/tags/author_*/expert_time_estimate_min
   [agent] timeout_sec
   [verifier] timeout_sec / restart_environment
-  [environment] build_timeout_sec
+  [environment] build_timeout_sec [+ TB-2.1: docker_image/cpus/memory/storage]
 """
 from __future__ import annotations
 
+import random
 import sys
 import tomllib
 from dataclasses import dataclass, field
@@ -39,6 +41,12 @@ class TaskMeta:
     verifier_timeout_sec: float = 900.0
     verifier_restart_environment: bool = False
     build_timeout_sec: float = 600.0
+    # TB-2.1 verified (schema 1.0 + расширенный [environment]). Опциональны —
+    # dev-v2 их не имеет, TB-2.1 имеет на всех 89. None = поле отсутствует.
+    docker_image: str | None = None   # prebuilt image (harbour тянет с Docker Hub)
+    cpus: int | None = None
+    memory: str | None = None         # строка вида "2G" (TB-2.1 convention)
+    storage: str | None = None        # строка вида "10G"
 
 
 @dataclass
@@ -106,6 +114,18 @@ def _parse_task_toml(task_dir: Path) -> TaskMeta:
 
     env = data.get("environment", {})
     meta.build_timeout_sec = float(env.get("build_timeout_sec", meta.build_timeout_sec))
+    # TB-2.1 расширенный [environment]. Толерантно: отсутствуют в dev-v2.
+    if "docker_image" in env and env["docker_image"]:
+        meta.docker_image = str(env["docker_image"])
+    if "cpus" in env and env["cpus"] is not None:
+        try:
+            meta.cpus = int(env["cpus"])
+        except (TypeError, ValueError):
+            pass
+    if "memory" in env and env["memory"]:
+        meta.memory = str(env["memory"])
+    if "storage" in env and env["storage"]:
+        meta.storage = str(env["storage"])
 
     return meta
 
@@ -170,6 +190,23 @@ def _apply_filters(tasks: list[TBTask], config: EvalConfig) -> list[TBTask]:
     if config.limit is not None:
         tasks = tasks[: config.limit]
     return tasks
+
+
+def sample_tasks(tasks: list[TBTask], n: int, seed: int = 42) -> list[TBTask]:
+    """Детерминированный случайный сэмпл n задач (VSM-026 eval-test).
+
+    random.Random(seed).sample → воспроизводимо между запусками (точки T0/T1
+    сравнимы). n >= len → все задачи (без перемешивания порядка вывода —
+    сохраняем отсортированный вид для читаемости лога). n <= 0 → пустой список.
+    """
+    if n <= 0:
+        return []
+    if n >= len(tasks):
+        return tasks
+    rng = random.Random(seed)
+    picked = rng.sample(tasks, n)
+    # Отсортировать выбранные по task_id — стабильный порядок в логе/метриках.
+    return sorted(picked, key=lambda t: t.task_id)
 
 
 def list_tasks(config: EvalConfig) -> None:

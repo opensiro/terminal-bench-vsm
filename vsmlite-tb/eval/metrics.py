@@ -44,6 +44,7 @@ def load(config: EvalConfig) -> dict:
 def _empty_skeleton(config: EvalConfig) -> dict:
     return {
         "generated": None,
+        "profile": config.profile,        # VSM-026: режим (train/eval-test/eval-dataset)
         "dataset": config.dataset_repo,
         "harness": config.harness_type,
         "summary": {"total": 0, "passed": 0, "failed": 0, "error": 0, "pass_rate": 0.0},
@@ -62,6 +63,7 @@ def record(config: EvalConfig, task_result: dict) -> dict:
     """
     data = load(config)
     data["generated"] = date.today().isoformat()
+    data["profile"] = config.profile      # VSM-026: режим
     data["dataset"] = config.dataset_repo
     data["harness"] = config.harness_type
 
@@ -93,6 +95,7 @@ def record_run(config: EvalConfig) -> dict:
     summary = data.get("summary", {})
     snapshot = {
         "date": date.today().isoformat(),
+        "profile": config.profile,        # VSM-026: режим (trend не смешивается)
         "pass_rate": summary.get("pass_rate", 0.0),
         "total": summary.get("total", 0),
         "passed": summary.get("passed", 0),
@@ -160,8 +163,14 @@ def compute_trend(config: EvalConfig) -> dict:
 
 
 def _history_path(config: EvalConfig) -> Path:
-    """state/eval_history.json (рядом с dev_metrics.json)."""
-    return config.results_dir / "eval_history.json"
+    """state/eval_history[_<profile>].json — trend per-режима (VSM-026).
+
+    train → eval_history.json (backward-compat: существующее имя).
+    eval-test / eval-dataset → eval_history_<profile>.json (изоляция trend'ов).
+    """
+    if config.profile == "train":
+        return config.results_dir / "eval_history.json"
+    return config.results_dir / f"eval_history_{config.profile}.json"
 
 
 def _compute_summary(tasks: list[dict]) -> dict:
@@ -212,7 +221,7 @@ def print_summary(config: EvalConfig) -> None:
     """CLI: вывести человекочитаемый pass-rate + разбивку."""
     data = load(config)
     summary = data.get("summary", {})
-    print(f"── dev_metrics.json ──")
+    print(f"── {config.profile_meta.metrics_filename} (profile={config.profile}) ──")
     print(f"  dataset: {data.get('dataset', '?')}")
     print(f"  harness: {data.get('harness', '?')}")
     print(f"  generated: {data.get('generated', '—')}")

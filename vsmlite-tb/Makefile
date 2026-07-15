@@ -4,7 +4,7 @@ SHELL := /usr/bin/env bash
 
 MODE ?= normal
 
-.PHONY: help prompt-% run-% all-prompts validate telemetry autonomy digest init-check eval-list eval-run eval-all eval-summary logs
+.PHONY: help prompt-% run-% all-prompts validate telemetry autonomy digest init-check eval-list eval-run eval-all eval-summary eval-test eval-dataset eval-sanity logs
 
 help: ## показать это сообщение
 	@grep -E '^[a-zA-Z_-]+:.*?## ' $(MAKEFILE_LIST) | awk 'BEGIN{FS=":.*?## "}{printf "  \033[36m%-18s\033[0m %s\n", $$1, $$2}'
@@ -51,5 +51,14 @@ eval-run: ## прогнать одну задачу: make eval-run TASK=<task_id
 eval-all: ## прогнать все задачи (по фильтру: FILTER=difficulty=medium LIMIT=5)
 	@python3 -m eval run-all $(if $(FILTER),--filter $(FILTER)) $(if $(LIMIT),--limit $(LIMIT))
 
-eval-summary: ## вывести pass-rate из state/dev_metrics.json
-	@python3 -m eval summary
+eval-summary: ## вывести pass-rate (PROFILE=train|eval-test|eval-dataset)
+	@python3 -m eval $(if $(PROFILE),--profile $(PROFILE)) summary
+
+eval-test: ## TB-2.1 verified: N сэмплов для оценки репрезентативности (SAMPLE=5)
+	@python3 -m eval --profile eval-test eval-test $(if $(SAMPLE),--sample $(SAMPLE))
+
+eval-dataset: ## TB-2.1 verified: все 89 задач (финальный test)
+	@python3 -m eval --profile eval-dataset eval-dataset
+
+eval-sanity: ## структурная проверка датасета (PROFILE=train|eval-test|eval-dataset)
+	@python3 -m eval $(if $(PROFILE),--profile $(PROFILE)) sanity

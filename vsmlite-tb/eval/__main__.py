@@ -1,19 +1,26 @@
-"""eval CLI: python3 -m eval {list,run,run-all,summary} [options].
+"""eval CLI: python3 -m eval [options] <command> [command-options].
+
+Режимы (VSM-026): профиль задаёт источник данных + файл метрик.
+  list, run, run-all, summary   # train (backward-compat, существующее поведение)
+  eval-test [--sample N]        # TB-2.1 verified N сэмплов (seed=42)
+  eval-dataset                  # TB-2.1 verified все 89 (финальный test)
+  sanity                        # структурная проверка датасета (без агента)
 
 Примеры:
-  python3 -m eval list
-  python3 -m eval list --filter difficulty=medium
-  python3 -m eval run --task acl-permissions-inheritance
-  python3 -m eval run --filter difficulty=easy --limit 5
-  python3 -m eval run-all --filter category=system-administration
-  python3 -m eval summary
+  python -m eval list
+  python -m eval list --profile eval-test
+  python -m eval run --task acl-permissions-inheritance
+  python -m eval eval-test --sample 5
+  python -m eval eval-dataset
+  python -m eval sanity --profile eval-test
+  python -m eval summary --profile eval-test
 """
 from __future__ import annotations
 
 import argparse
 import sys
 
-from .config import EvalConfig
+from .config import DATASET_PROFILES, DEFAULT_PROFILE, EvalConfig
 
 
 def _parse_filter(value: str | None) -> tuple[str | None, str | None]:
@@ -40,7 +47,10 @@ def _apply_filter_to_config(config: EvalConfig, key: str | None, val: str | None
 
 
 def _build_config(args: argparse.Namespace) -> EvalConfig:
+    """Собрать EvalConfig из глобальных опций + --filter/--dataset-dir."""
+    profile = getattr(args, "profile", DEFAULT_PROFILE) or DEFAULT_PROFILE
     config = EvalConfig(
+        profile=profile,
         harness_type=args.harness,
         harness_binary=args.harness_binary or "",
         limit=args.limit,
@@ -50,14 +60,19 @@ def _build_config(args: argparse.Namespace) -> EvalConfig:
         _apply_filter_to_config(config, k, v)
     if args.dataset_dir:
         config.dataset_dir = args.dataset_dir
+    if getattr(args, "no_sanity", False):
+        config.sanity_check = False
     return config
 
 
 def main() -> None:
     parser = argparse.ArgumentParser(
         prog="eval",
-        description="Terminal-Bench Dev Set v2 пайплайн оценки продукта",
+        description="Terminal-Bench eval-пайплайн: train / eval-test / eval-dataset",
     )
+    parser.add_argument("--profile", "-P", default=DEFAULT_PROFILE,
+                        choices=list(DATASET_PROFILES.keys()),
+                        help=f"режим: {', '.join(DATASET_PROFILES)} (default: {DEFAULT_PROFILE})")
     parser.add_argument("--harness", default="claude-code",
                         help="harness: claude-code | goose | custom (default: claude-code)")
     parser.add_argument("--harness-binary", default="",
@@ -68,17 +83,30 @@ def main() -> None:
                         help="максимум задач в батче")
     parser.add_argument("--dataset-dir", default=None,
                         help="путь к локальной копии датасета (override EVAL_DATASET_DIR)")
+    parser.add_argument("--no-sanity", action="store_true",
+                        help="отключить sanity-проверку перед агентом (default: вкл)")
 
     sub = parser.add_subparsers(dest="command", required=True)
 
-    sub.add_parser("list", help="список задач в датасете")
-    sub.add_parser("summary", help="вывести pass-rate из state/dev_metrics.json")
+    sub.add_parser("list", help="список задач в датасете профиля")
+    sub.add_parser("summary", help="вывести pass-rate из файла метрик профиля")
 
-    p_run = sub.add_parser("run", help="прогнать задачи")
+    p_run = sub.add_parser("run", help="прогнать задачи (train по умолчанию)")
     p_run.add_argument("--task", default=None, action="append",
                        help="task_id (можно повторять); без --task — все по фильтру")
 
-    sub.add_parser("run-all", help="прогнать все задачи (по фильтру)")
+    sub.add_parser("run-all", help="прогнать все задачи по фильтру (train)")
+
+    p_et = sub.add_parser("eval-test",
+                          help="TB-2.1 verified: N сэмплов (seed=42) для оценки репрезентативности")
+    p_et.add_argument("--sample", type=int, default=None,
+                      help="размер выборки (default: 20, env EVAL_TEST_SAMPLE_SIZE)")
+
+    sub.add_parser("eval-dataset",
+                   help="TB-2.1 verified: все 89 задач (финальный test)")
+
+    sub.add_parser("sanity",
+                   help="структурная проверка датасета профиля (без агента)")
 
     args = parser.parse_args()
     config = _build_config(args)
@@ -89,7 +117,18 @@ def main() -> None:
     elif args.command == "summary":
         from .metrics import print_summary
         print_summary(config)
+    elif args.command == "sanity":
+        from .sanity import sanity_check_dataset, print_sanity_report
+        summary = sanity_check_dataset(config)
+        sys.exit(print_sanity_report(summary))
+    elif args.command == "eval-test":
+        from .modes import run_eval_test
+        run_eval_test(config, sample_size=args.sample)
+    elif args.command == "eval-dataset":
+        from .modes import run_eval_dataset
+        run_eval_dataset(config)
     elif args.command in ("run", "run-all"):
+        # train: backward-compat — существующий runner (superseded VSM-024, рабочий).
         from .runner import run_single, run_all
         if args.command == "run" and args.task:
             config.filter_task_ids = args.task
@@ -101,13 +140,10 @@ def main() -> None:
             from .metrics import record_run, compute_trend
             snapshot = record_run(config)
             trend = compute_trend(config)
-            import sys as _sys
             print(f"batch snapshot: pass_rate={snapshot['pass_rate']:.1%} "
                   f"({snapshot['passed']}/{snapshot['total']})  "
                   f"trend: {trend['direction']} ({trend['delta']:+.1%})",
-                  file=_sys.stderr)
-        elif args.command == "run" and not args.task:
-            run_all(config)
+                  file=sys.stderr)
         else:
             run_all(config)
     else:  # unreachable — argparse required=True
