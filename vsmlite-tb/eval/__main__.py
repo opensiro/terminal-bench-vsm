@@ -128,24 +128,12 @@ def main() -> None:
         from .modes import run_eval_dataset
         run_eval_dataset(config)
     elif args.command in ("run", "run-all"):
-        # train: backward-compat — существующий runner (superseded VSM-024, рабочий).
-        from .runner import run_single, run_all
+        # train: harbor batch (VSM-024 Phase 3). run/run-all делегируют в modes,
+        # который идёт через harbor_run.run_trial (triad goose sub-agents).
+        from .modes import run_train
         if args.command == "run" and args.task:
             config.filter_task_ids = args.task
-            for tid in args.task:
-                run_single(tid, config)
-            # run --task (батч) не идёт через run_all, поэтому eval_history.json
-            # (trend для S4/autonomy) не пишется. Фиксируем снэпшот явно — это
-            # нужно для canary-set прогонов (T0/T1), которые идут через --task.
-            from .metrics import record_run, compute_trend
-            snapshot = record_run(config)
-            trend = compute_trend(config)
-            print(f"batch snapshot: pass_rate={snapshot['pass_rate']:.1%} "
-                  f"({snapshot['passed']}/{snapshot['total']})  "
-                  f"trend: {trend['direction']} ({trend['delta']:+.1%})",
-                  file=sys.stderr)
-        else:
-            run_all(config)
+        run_train(config)
     else:  # unreachable — argparse required=True
         parser.error(f"неизвестная команда: {args.command}")
 

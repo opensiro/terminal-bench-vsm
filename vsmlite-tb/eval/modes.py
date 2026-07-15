@@ -108,13 +108,17 @@ def run_eval_dataset(config: EvalConfig) -> dict:
 
 
 def run_train(config: EvalConfig) -> dict:
-    """train: dev-v2. Делегирует существующему runner.run_all (backward-compat).
+    """train: dev-v2 все (или по фильтру) → harbor batch (VSM-024 Phase 3).
 
-    train не идёт через harbor batch — используется старый пайплайн (runner.py,
-    superseded VSM-024, но рабочий). Когда VSM-024 Phase 3 cleanup удалит
-    runner.py, train переключится на _run_batch (harbour). До тех пор — как есть.
+    Раньше делегировала runner.run_all (старый пайплайн container/agent_phase/
+    grader). Phase 3 cleanup переключил train на harbour — тот же _run_batch, что
+    eval-test/eval-dataset. runner.py/container.py/agent_phase.py/grader.py
+    удалены как устаревшие (superseded VSM-024).
     """
-    from .runner import run_all  # lazy: старый пайплайн (superseded, но рабочий)
-
-    _log(f"── train: profile={config.profile} (существующий пайплайн) ──")
-    return run_all(config)
+    _log(f"── train: profile={config.profile} (harbour batch) ──")
+    tasks = load_tasks(config)
+    if not tasks:
+        _log("нет задач для train (проверьте dataset_dir и фильтры)")
+        return {}
+    _log(f"задач к прогону: {len(tasks)}")
+    return _run_batch([t.task_id for t in tasks], config)
