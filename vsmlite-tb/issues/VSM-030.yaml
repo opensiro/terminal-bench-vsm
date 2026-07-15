@@ -1,0 +1,119 @@
+id: VSM-030
+source_system: S5            # policy gap: нет observability работы vsmlite над eval-батчами
+signal_type: gap             # gap — цикл «наблюдал батч → принял решение» не реализован
+severity: S2                 # бьёт по核心-ценности: A(t) не self-correcting без обратной связи от батчей
+target_unit: meta            # vsmlite meta-уровень (S2-S5 цикл над eval-пайплайном)
+
+title: "Eval-batch observability: vsmlite не наблюдает результаты батчей и не решает"
+
+summary: |
+  После eval-батча (make eval-all / run_train, напр. 21 trial) vsmlite НЕ
+  реагирует: системы S2-S5 idle, наблюдения/решения по результатам батча не
+  фиксируются. Пользователь хочет видеть «что vsmlite увидел в логах батча и
+  какое решение принял» — для human-оценки работы самого vsmlite (не продукта).
+
+  Контур «батч → наблюдение → решение» сейчас РАЗОРВАН:
+    - eval/modes.py (_run_batch) пишет dev_metrics.json + harbor-trials, НО не
+      триггерит vsmlite-цикл (grep cycle/intel/s4/s5/maturation/decision → пусто).
+    - state/intel.json (S4 — «глаза» vsmlite) → signals: [] (пусто).
+    - state/interventions.json (S5 решения) → interventions: [] (пусто).
+    - state/maturation.json → cycle_count: 0, autonomy.signs.s4_sign.value: 0.
+    - agent_eval: «6 системных агентов idle — не оценивались».
+    - process.log → есть product-scoring (agent eval), НЕТ vsmlite-decision блоков.
+
+  Что должно быть (контур):
+    1. ТРИГГЕР: после _run_batch (modes.py:31) vsmlite видит summary батча
+       (pass_rate, per-task results, score, trend vs previous).
+    2. НАБЛЮДЕНИЕ (S4-scout): классификация — напр. «продукт не справляется с
+       easy 0/X», «регрессия на category Y», «infra_error у Z%».
+    3. РЕШЕНИЕ (S5-guardian / S3-optimizer): одно из — создать VSM-issue (gap),
+       изменить phase readiness, отметить algedonic signal, или «ok, no action».
+    4. АРТЕФАКТ: state/batch_summaries/<id>.json — per-batch human-readable
+       отчёт {batch_id, timestamp, tasks, pass_rate, score, observations[],
+       decision, rationale, issues_raised[]}.
+    5. UI: monitor/batches.html — таймлайн батчей с развёрткой «что увидел →
+       что решил». Отдельно от runs.html (runs = per-task; batches = per-eval-run).
+
+  Отделяется от существующего:
+    - VSM-025 (process log + agent eval) — скоринг ПРОДУКТА (TB-агента в
+      контейнере). Это — скоринг VSMLITE (meta-уровень над продуктом).
+    - VSM-029 (runs.html) — per-task детали. Это — per-batch мета-саммари.
+    - runs.html блок «по задачам» — статичная агрегация, НЕ observability
+      решений vsmlite (пользователь пометил как «не в тему»).
+
+evidence:
+  - "eval/modes.py:31 _run_batch() — пишет dev_metrics + harbor-trials, не триггерит vsmlite-цикл"
+  - "eval/modes.py grep 'cycle|intel|s4|s5|maturation|decision|digest' → ПУСТО (нет связи batch→cycle)"
+  - "state/intel.json → signals: [] (S4 «глаза» vsmlite пусты после 21 trial)"
+  - "state/interventions.json → interventions: [] (S5 не принимал решений по батчам)"
+  - "state/maturation.json → cycle_count: 0, autonomy.signs.s4_sign.value: 0 (meets: false)"
+  - "state/agent_eval.json → systems: [] (6 системных агентов idle — не оценивались)"
+  - "logs/process.log — есть 'agent eval' блоки (product scoring), НЕТ 'vsmlite decision' блоков"
+
+proposal: |
+  Future work. Реализация по слоям (когда берётся в работу):
+
+  Слой 1 — BATCH ARTEFACT (минимум, без vsmlite-цикла):
+    - eval/metrics.py: после _run_batch пишет state/batch_summaries/<ts>.json
+      со светлыми полями (batch_id, profile, timestamp, tasks[], pass_rate,
+      score_avg, trend_delta).
+    - render_data.py поднимает batch_summaries → data.js eval.batches[].
+    - monitor/batches.html — таймлайн батчей (пока без observations/decision).
+
+  Слой 2 — OBSERVATION (S4-scout триггерится батчем):
+    - После _run_batch вызывается S4-scout → читает batch_summary → классифицирует
+      (regression/cluster/infra), пишет в batch_summary.observations[] + intel.json.
+    - S4 SKILL.md: добавить «batch-обзор» как новую scan-модальность.
+
+  Слой 3 — DECISION (S5-guardian / S3-optimizer реагируют):
+    - S5 читает observations → одно из: VSM-issue / phase-readiness / algedonic /
+      no-action. Запись в batch_summary.decision + rationale.
+    - Это замыкает A(t) как self-correcting: плохой батч → решение → коррекция.
+
+  MVP = слой 1 (без vsmlite-цикла, но артефакт есть для UI). Слои 2-3 —
+  полноценный контур наблюдения/решения.
+
+acceptance:
+  - "после eval-батча создаётся state/batch_summaries/<id>.json с pass_rate + tasks + score"
+  - "monitor/batches.html отображает таймлайн батчей"
+  - "(слой 2) batch_summary содержит observations[] от S4 (non-empty после батча)"
+  - "(слой 3) batch_summary содержит decision + rationale от S5"
+  - "контур разорван более: grep modes.py → есть триггер vsmlite-цикла после батча"
+
+needs_human_decision: true   # scope (слой 1 MVP vs полный контур 2-3) + кто наблюдает (S4 auto vs human-triggered)
+
+policy_question: |
+  Какой scope для eval-batch observability и кто должен «наблюдать»?
+
+options:
+  - id: mvp-artifact
+    label: "MVP: только batch-артефакт + batches.html"
+    hint: "Слой 1. После батча пишется batch_summary.json, в мониторе — таймлайн. Без vsmlite-цикла. Быстро, но наблюдения/решения пока пустые."
+  - id: full-s4-auto
+    label: "Полный: S4 авто-наблюдение + S5 решение"
+    hint: "Слои 1-3. После батча S4-scout классифицирует, S5 решает (issue/phase/algedonic/no-action). Полный self-correcting контур A(t)."
+  - id: full-s4-manual
+    label: "Полный, но S4 по триггеру человека"
+    hint: "Слои 1-3, но наблюдение запускается явно (make batch-review), не auto после каждого батча. Контроль частоты."
+  - id: defer
+    label: "Defer"
+    hint: "Не сейчас. Eval-батчи идут, но vsmlite на них не реагирует (системы idle). Принять как known-gap."
+
+status: triage                # ждёт решения по scope
+decision: ""
+selected_options: []
+
+references:
+  - VSM-029   # runs.html (per-task) — это per-batch мета-саммари, отдельный слой
+  - VSM-025   # process log + agent eval — скоринг ПРОДУКТА; это скоринг VSMLITE над ним
+  - VSM-005   # A(t) как индикатор автономности — батч-observability делает его self-correcting
+  - VSM-004   # Dev Set как индикатор автономности — eval_sign сейчас всегда 0 без обратной связи
+
+notes:
+  - "21 trial в harbor-trials/ прогнан, но vsmlite (S2-S5) на них не реагировал — системы idle по agent_eval."
+  - "runs.html блок «по задачам» — статичная агрегация, НЕ observability решений; пользователь пометил «не в тему». Возможна замена на batches.html (слой 1)."
+  - "Ортогонален VSM-025: тот скорит продукт (TB-агента в контейнере), это — мета-скоринг vsmlite над батчем."
+  - "cycle_count: 0 в maturation.json — формально циклы вообще не выполнялись после eval, только product-scoring."
+
+created: 2026-07-15
+updated: 2026-07-15
