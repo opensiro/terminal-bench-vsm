@@ -4,72 +4,46 @@
   "dataset": "open-thoughts/OpenThoughts-TB-dev-v2",
   "harness": "claude-code",
   "summary": {
-    "total": 2,
-    "passed": 0,
-    "failed": 2,
+    "total": 1,
+    "passed": 1,
+    "failed": 0,
     "error": 0,
-    "pass_rate": 0.0
+    "pass_rate": 1.0
   },
   "by_category": {
     "file-operations": {
       "total": 1,
-      "passed": 0,
-      "pass_rate": 0.0
-    },
-    "system-administration": {
-      "total": 1,
-      "passed": 0,
-      "pass_rate": 0.0
+      "passed": 1,
+      "pass_rate": 1.0
     }
   },
   "by_difficulty": {
     "easy": {
-      "total": 2,
-      "passed": 0,
-      "pass_rate": 0.0
+      "total": 1,
+      "passed": 1,
+      "pass_rate": 1.0
     }
   },
   "tasks": [
     {
-      "task_id": "jsonl-aggregator",
-      "status": "failed",
-      "passed": false,
+      "task_id": "task",
+      "status": "passed",
+      "passed": true,
       "category": "file-operations",
       "difficulty": "easy",
-      "agent_duration_sec": 179.5,
-      "trace_len": 2,
+      "agent_duration_sec": 163.1,
+      "trace_len": 6,
       "failure_obs_count": 0,
-      "timestamp": "2026-07-15T16:09:39",
+      "timestamp": "2026-07-15T18:26:32",
       "error": null,
       "agent_exit_code": 0,
       "timed_out": false,
       "harbor": {
-        "trial_name": "jsonl-aggregator__dKkAb3W",
-        "terminated_by": "no_observations",
-        "verdict": "task_failed",
+        "trial_name": "jsonl-aggregator__FzUJhfY",
+        "terminated_by": "task_resolved",
+        "verdict": "task_resolved",
         "attempts": 1,
-        "reward": 0.0
-      }
-    },
-    {
-      "task_id": "log-summary",
-      "status": "failed",
-      "passed": false,
-      "category": "system-administration",
-      "difficulty": "easy",
-      "agent_duration_sec": 1.2,
-      "trace_len": 2,
-      "failure_obs_count": 0,
-      "timestamp": "2026-07-15T16:14:43",
-      "error": null,
-      "agent_exit_code": 0,
-      "timed_out": false,
-      "harbor": {
-        "trial_name": "log-summary__LbjKRpk",
-        "terminated_by": "infra_error",
-        "verdict": "unknown",
-        "attempts": 0,
-        "reward": 0.0
+        "reward": 1.0
       }
     }
   ]

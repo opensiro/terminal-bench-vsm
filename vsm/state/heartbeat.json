@@ -3,7 +3,7 @@
   "generated": "2026-07-13",
   "mode": "optional",
   "systems": {
-    "S1":  { "cadence": "on_demand", "last_run": null, "active": true },
+    "S1":  { "cadence": "on_demand", "last_run": "2026-07-14T21:15:00Z", "active": true },
     "S2":  { "cadence": "on_demand", "last_run": null, "active": false },
     "S3":  { "cadence": "on_demand", "last_run": null, "active": false },
     "S3*": { "cadence": "on_demand", "last_run": null, "active": false },

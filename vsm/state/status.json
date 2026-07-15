@@ -1,9 +1,9 @@
 {
   "_comment": "status.json — health систем дочернего VSM (S1-S5+S3*). summary — человекочитаемо; current_task — технически. На Phase 1 активен только S1; S2-S5+S3* dormant.",
-  "generated": "2026-07-13",
+  "generated": "2026-07-14",
   "operational_mode": "normal",
   "systems": {
-    "S1":  { "name": "s1-dispatcher",    "summary": "Phase 1 активен; ../src/ подключён как operational unit solver", "current_task": "awaiting first cycle", "health": "green",   "active": true  },
+    "S1":  { "name": "s1-dispatcher",    "summary": "Phase 1 активен; ../src/ подключён как operational unit solver. Run task-47988 (retry, policy_attempt=1, InstallDependency dry_run): task_failed — ModuleNotFoundError persists (recovery directive env_changes were dry_run, no real side-effect). Exit code 1. Failure observations reported for S3 classification.", "current_task": "task-47988 retry-1 completed — verdict: task_failed", "health": "green",   "active": true  },
     "S2":  { "name": "s2-coordinator",   "summary": "dormant (проявляется на Phase 2)", "current_task": "", "health": "unknown", "active": false },
     "S3":  { "name": "s3-optimizer",     "summary": "dormant (проявляется на Phase 3)", "current_task": "", "health": "unknown", "active": false },
     "S3*": { "name": "s3-star-auditor",  "summary": "dormant (проявляется на Phase 4)", "current_task": "", "health": "unknown", "active": false },

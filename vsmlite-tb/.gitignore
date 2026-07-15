@@ -41,3 +41,6 @@ state/harbor-trials/
 # ── process log (VSM-025): regenerable from state/events.json, runtime-only ──
 logs/process.log
 state/_events_snapshot.json
+
+# ── backup files ──
+*.bak

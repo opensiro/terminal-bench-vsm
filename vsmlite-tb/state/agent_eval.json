@@ -1,48 +1,18 @@
 {
   "_comment": "agent_eval.json — скоринг 0-10 (A-E, D<0.5=FAIL) работы агентов (VSM-025). Пишет export_logs.py из agent_eval.evaluate().",
-  "generated": "2026-07-15T16:48:12",
+  "generated": "2026-07-15T17:20:28",
   "grade_scale": "A≥9.0 | B≥7.5 | C≥5.0 (pass) | D≥2.5 (FAIL) | E<2.5",
   "trace_note": "trace_len info-only (VSM-022 superseded→VSM-024); harbor block — progressive enhancement",
   "token_note": "token-spend deferred→VSM-024 (instrumentation pending)",
-  "product": [
-    {
-      "task_id": "jsonl-aggregator",
-      "score": 2.8,
-      "grade": "D",
-      "passed": false,
-      "components": {
-        "verdict": 1.0,
-        "pytest": 0.0,
-        "efficiency": 1.5,
-        "harbor_bonus": 0.3,
-        "penalty_timeout": 0.0,
-        "penalty_exit": 0.0
-      },
-      "summary": "jsonl-aggregator [2.8/D] file-operations·easy · 20s · trace2 · pytest0/0 · exit0. harbor(terminated_by=task_resolved, attempts=1).",
-      "category": "file-operations",
-      "difficulty": "easy"
-    }
-  ],
+  "product": [],
   "systems": [],
   "breakdown": {
-    "by_difficulty": {
-      "easy": {
-        "total": 1,
-        "passed": 0,
-        "pass_rate": 0.0
-      }
-    },
-    "by_category": {
-      "file-operations": {
-        "total": 1,
-        "passed": 0,
-        "pass_rate": 0.0
-      }
-    }
+    "by_difficulty": {},
+    "by_category": {}
   },
   "summary": {
-    "product_count": 1,
-    "product_avg": 2.8,
+    "product_count": 0,
+    "product_avg": null,
     "product_pass": 0,
     "system_count": 0,
     "system_avg": null,

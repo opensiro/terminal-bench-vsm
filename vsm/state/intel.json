@@ -1,8 +1,57 @@
 {
   "_comment": "intel.json — S4 signals (скан среды домена). Пишет s4-scout начиная с Phase 5. Scope дочернего VSM: coding patterns и recovery-policy expansions (см. ../vsm/.intent.yaml → autonomy).",
-  "generated": "2026-07-13",
+  "generated": "2026-07-14",
   "scanner": "s4-scout",
-  "signals": [],
+  "signals": [
+    {
+      "type": "gap",
+      "severity": "critical",
+      "summary": "Taxonomy gap: no class for runtime errors (TypeError, AttributeError, KeyError, ValueError, IndexError, NameError) — likely primary contributor to 18% Unknown rate",
+      "detail": "Current taxonomy has SyntaxError, TestFailure, FileLocalizationError in 'code' category but no class for Python/JS runtime exceptions that pass compilation but fail at runtime. These are the most common coding errors (TypeError: unsupported operand, AttributeError: 'NoneType' object has no attribute, KeyError, ValueError, IndexError, NameError). They are distinct from SyntaxError (code parses fine), TestFailure (no test may be running), and ImportError. Estimated contribution to Unknown: 8-12% of total. Candidate class: RuntimeError, category: code. Candidate recovery: DiagnoseAndPatch (reuse existing policy — read traceback, isolate fault, patch). Source: Python 3.14 built-in exceptions hierarchy analysis.",
+      "status": "triage",
+      "added": "2026-07-14T22:35:30"
+    },
+    {
+      "type": "gap",
+      "severity": "warn",
+      "summary": "Taxonomy gap: no class for context window overflow — common in long-horizon coding agents",
+      "detail": "LLM-based coding agents frequently exceed context window limits ('maximum context length', 'context_length_exceeded', 'token limit exceeded'). This is NOT ResourceLimit (memory/disk), NOT TimeoutExpired, NOT NetworkError. Currently falls to Unknown. Estimated contribution to Unknown: 3-5%. Candidate class: ContextOverflow, category: resource. Candidate recovery: CompactContext (summarize/compress conversation history, retain key decisions, retry with reduced context). Source: general-purpose agentic coding patterns.",
+      "status": "triage",
+      "added": "2026-07-14T22:35:30"
+    },
+    {
+      "type": "gap",
+      "severity": "warn",
+      "summary": "Taxonomy gap: no class for LLM API errors (rate limit 429, service unavailable 503) — distinct from NetworkError",
+      "detail": "NetworkError covers connection-level failures (ConnectionError, Connection refused, SSLError) but NOT application-level API rejections: 429 Too Many Requests, 503 Service Unavailable, 'rate_limit_exceeded', 'model_overloaded'. The connection succeeds but the API rejects the request. Recovery differs: needs backoff + possible provider switch, not just connection retry. Candidate class: APIError, category: network. Candidate recovery: RetryWithBackoff (reuse, with longer delays) or ThrottleAndRetry. Source: general-purpose LLM API integration patterns.",
+      "status": "triage",
+      "added": "2026-07-14T22:35:30"
+    },
+    {
+      "type": "gap",
+      "severity": "info",
+      "summary": "Taxonomy gap: no class for encoding/serialization errors (UnicodeDecodeError, JSONDecodeError)",
+      "detail": "UnicodeDecodeError, UnicodeEncodeError, JSONDecodeError, codec lookup failures are not covered by any existing taxonomy class. These occur when reading/writing files or parsing responses with wrong encoding assumptions. Currently falls to Unknown. Candidate class: EncodingError, category: code. Candidate recovery: FixEncoding (detect correct encoding, re-read/re-write). Source: Python built-in exceptions (UnicodeError hierarchy, LookupError→codecs).",
+      "status": "triage",
+      "added": "2026-07-14T22:35:30"
+    },
+    {
+      "type": "pattern",
+      "severity": "info",
+      "summary": "Recovery pattern: CircularImport as sub-class of ImportError needing distinct recovery (restructure imports vs install dependency)",
+      "detail": "ImportError currently maps to InstallDependency, but 'circular import' / 'partially initialized module' errors are NOT missing dependencies — they are structural issues requiring import restructuring (lazy imports, module reorganization). This is a policy_expansion candidate: either split ImportError into ImportError_Missing (InstallDependency) and ImportError_Circular (RestructureImports), or add CircularImport signal to existing class with conditional recovery. Source: Python circular import patterns, general-purpose module system analysis.",
+      "status": "triage",
+      "added": "2026-07-14T22:35:30"
+    },
+    {
+      "type": "weak_signal",
+      "severity": "warn",
+      "summary": "Premise invalidated: 'Failure taxonomy covers observable failure classes' — 18% Unknown > 15% threshold",
+      "detail": "premises_register[1] check_frequency=per_cycle, invalidation_signal='>=X% failures classified as unknown per cycle'. Current unknown_share=0.18 exceeds threshold_percent=15. Consequence per vsm.yaml: 'S4 ищет новый класс → S3 предлагает добавить (new_failure_class_introduction — basta)'. Analysis identifies RuntimeError (code category) as the most significant gap, followed by ContextOverflow (resource), APIError (network), and EncodingError (code). Combined estimated coverage of current Unknown: 15-20% of total failures.",
+      "status": "done",
+      "added": "2026-07-14T22:35:30"
+    }
+  ],
   "coverage": {
     "domain_environment": [],
     "vsmforge_roadmap": [],
