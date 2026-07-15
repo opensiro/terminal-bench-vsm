@@ -87,14 +87,16 @@ class ProductAdapter(BaseAgent):
         goose binary + its shared libs (triad sub-agents), and curl (goose installer).
         Installs are idempotent; goose lands in ~/.local/bin/goose.
         """
-        # 1. apt deps: curl (goose installer), goose shared libs (libxcb1, libgomp1).
+        # 1. apt deps: python3 + pip (orchestrator_runner needs python; some TB
+        #    base images are ubuntu:24.04 without it), curl (goose installer),
+        #    goose shared libs (libxcb1, libgomp1).
         await environment.exec(
             command=(
                 "apt-get update -qq && "
-                "DEBIAN_FRONTEND=noninteractive apt-get install -y -qq curl bzip2 "
-                "libxcb1 libgomp1 > /dev/null 2>&1"
+                "DEBIAN_FRONTEND=noninteractive apt-get install -y -qq python3 "
+                "python3-pip curl bzip2 libxcb1 libgomp1 > /dev/null 2>&1"
             ),
-            timeout_sec=180,
+            timeout_sec=240,
         )
 
         # 2. Python deps: PyYAML (product taxonomy loader).
