@@ -82,13 +82,75 @@ def _read_goose_secrets() -> list[str]:
 _GOOSE_VERSION = "stable"
 
 
+# ── VSM-033: dependency profiles (mirrors scripts/prebuild_images.py) ─────────
+# 4 кумулятивных профиля: core ⊂ sci ⊂ ml; core ⊂ web. Auto-detect'ится по
+# import-scan задачи. Применяется к build-context датасетам (TB Dev v2 / train);
+# prebuilt (TB-2.1 verified) использует vsm/<task>:patched через _maybe_use_patched_image.
+_PROFILE_DEPS: dict[str, list[str]] = {
+    "core": ["requests", "pillow"],
+    "sci":  ["numpy", "scipy", "pandas", "matplotlib"],
+    "ml":   ["torch", "transformers"],
+    "web":  ["selenium", "beautifulsoup4"],
+}
+_PROFILE_IMPORT_MAP: dict[str, str] = {
+    "numpy": "sci", "scipy": "sci", "pandas": "sci", "matplotlib": "sci",
+    "torch": "ml", "transformers": "ml", "datasets": "ml",
+    "selenium": "web", "bs4": "web",
+}
+_STDLIB_MODULES = frozenset({
+    "os","sys","json","re","pathlib","datetime","time","math","random","collections",
+    "itertools","functools","typing","subprocess","shutil","tempfile","argparse","io","csv",
+    "base64","hashlib","urllib","logging","traceback","copy","enum","dataclasses","contextlib",
+    "abc","unittest","string","textwrap","platform","glob","inspect","importlib","warnings",
+    "signal","threading","asyncio","concurrent","queue","socket","struct","codecs","unicodedata",
+    "fractions","decimal","statistics","operator","heapq","bisect","array","weakref","gc","ctypes",
+    "pprint","uuid","secrets","configparser","sqlite3","xml","html","email","http","zipfile",
+    "gzip","tarfile","platform","distutils","site","__future__","types","numbers","locale",
+    "calendar","difflib","token","tokenize","ast","dis","compileall","fcntl","fnmatch","venv","stat",
+})
+
+
+def _detect_dep_profile(task_dir: Path) -> str:
+    """Auto-detect dependency profile (core/sci/ml/web) by import-scan of task.
+
+    Mirror of scripts/prebuild_images.py:_detect_profile. Returns the highest-
+    priority profile found: ml > sci > web > core. pyyaml+pytest всегда ставятся
+    (product runtime) независимо от профиля.
+    """
+    found: set[str] = set()
+    for root, dirs, files in os.walk(task_dir):
+        for f in files:
+            if not (f.endswith(".py") or f.endswith(".md") or f.endswith(".sh")):
+                continue
+            try:
+                txt = open(os.path.join(root, f), encoding="utf-8", errors="replace").read()
+            except OSError:
+                continue
+            for m in re.finditer(r"^\s*(?:from\s+([\w.]+)\s+import|import\s+([\w.]+))", txt, re.M):
+                mod = (m.group(1) or m.group(2) or "").split(".")[0]
+                if mod in _PROFILE_IMPORT_MAP:
+                    found.add(_PROFILE_IMPORT_MAP[mod])
+    if "ml" in found:
+        return "ml"
+    if "sci" in found:
+        return "sci"
+    if "web" in found:
+        return "web"
+    return "core"
+
+
 def _prepare_overlay_task(original_task_dir: Path, overlay_dir: Path) -> Path:
     """Copy a task dir and replace its Dockerfile with a goose-enabled overlay.
 
     The overlay uses a multi-stage build: stage 1 builds the original task image
-    (unchanged), stage 2 FROM stage-1 + installs goose, python3, pip, pyyaml.
+    (unchanged), stage 2 FROM stage-1 + installs goose, python3, pip, profile-deps.
     Harbor content-addresses the image by build-context hash, so the overlay
     image is built ONCE (cached) and reused for every trial of that task.
+
+    VSM-033: dependency profile auto-detected per-task (core/sci/ml/web) by
+    import scan — same logic as scripts/prebuild_images.py. Applies to build-
+    context datasets (TB Dev v2 / train); prebuilt datasets (TB-2.1 verified)
+    use vsm/<task>:patched via _maybe_use_patched_image instead.
 
     Layering rationale (best-practice, cache-friendly):
       - apt-get on its own line (changes rarely → cached)
@@ -97,6 +159,9 @@ def _prepare_overlay_task(original_task_dir: Path, overlay_dir: Path) -> Path:
     Each RUN is a separate Docker layer; changing one doesn't invalidate others.
     """
     import shutil as _shutil
+
+    profile = _detect_dep_profile(original_task_dir)
+    profile_deps = _PROFILE_DEPS[profile]
 
     # Copy the entire task dir (task.toml, instruction.md, environment/, tests/,
     # solution/) — harbor needs the full structure to build + verify.
@@ -141,7 +206,8 @@ def _prepare_overlay_task(original_task_dir: Path, overlay_dir: Path) -> Path:
         # SAME interpreter the orchestrator runs under. Base image python:3.13 has
         # python3.13 in /usr/local/bin; apt's python3 is /usr/bin/python3 (3.11).
         # Bare `pip install` targeted 3.11 → yaml missing in 3.13 → infra_error.
-        "RUN python3 -m pip install --no-cache-dir --quiet --break-system-packages pyyaml pytest\n"
+        # VSM-033: pip install profile-deps (core/sci/ml/web auto-detected).
+        f"RUN python3 -m pip install --no-cache-dir --quiet --break-system-packages pyyaml pytest {' '.join(profile_deps)}\n"
         "RUN apt-get update -qq && DEBIAN_FRONTEND=noninteractive apt-get install -y -qq \\\n"
         "    --no-install-recommends jq make file tree > /dev/null 2>&1 && \\\n"
         "    rm -rf /var/lib/apt/lists/*\n"
