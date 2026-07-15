@@ -1,0 +1,82 @@
+id: VSM-027
+source_system: S4            # intelligence: gap — нет профиля для frontier-сравнения
+signal_type: gap             # gap — Harbor-Index не подключён (future work)
+severity: S3                 # не ломает viability; enhances калибровку
+target_unit: meta            # eval-пайплайн vsmlite (родитель)
+
+title: "Harbor-Index 1.0 как 4-й eval-профиль (future work): separate-verifier + subject-filtration"
+summary: |
+  Harbor-Index 1.0 (harbor-framework/harbor-index, 80 задач) — компактный
+  high-signal бенчмарк: 80 задач отобраны из 6627 кандидатов по 54 бенчмаркам
+  через automated audit + human reviewer fixes. Frontier-агенты не превышают
+  30% — ceiling-метрика для сравнения продукта с SOTA. Источник:
+  https://harbor-index.org, github.com/harbor-framework/harbor-index.
+
+  Domain-fit вердикт (исследован в сессии):
+    - МОДАЛЬНОСТЬ: ✅ все 80 terminal/CLI (Linux-контейнер, shell+файлы, /app +
+      /logs/artifacts). НОЛЬ GUI/OSWorld/computer-use сигналов.
+    - ПРЕДМЕТ: ⚠️ шире coding — ~30/80 SWE/coding (SWE-bench*, GSO, FeatureBench,
+      SWT-bench, +3 Terminal-Bench), ~50/80 science/math/QA/bioinformatics
+      (HLE, ARC-AGI, GAIA, OmniMath, Bix, LabBench).
+
+  Решение пользователя: брать ВСЕ 80 задач; не-terminal (science/QA/...) пометить
+  в отдельную category + отдельную метрику (не смешивать с coding pass_rate).
+
+  Два blocker'а для интеграции (почему future work, не сейчас):
+  1. separate-verifier: Harbor-Index использует environment_mode="separate" —
+     verifier работает в ОТДЕЛЬНОМ контейнере (свой tests/Dockerfile), не в том
+     где работал агент. Текущий grader.py копирует tests/ в рабочий контейнер.
+     Требует правок grader.py + container.py (или harbour-config под separate).
+  2. subject-filtration: ~50/80 не coding — нужна category-разметка
+     (по name-prefix: hle/arcagi2/gaia/... → "science-qa"; swebench*/gso/... →
+     "coding") + отдельный metrics-файл или by_category изоляция.
+
+  Скачивание: git clone github.com/harbor-framework/harbor-index (HF-зеркало
+  имеет ошибки загрузки). Формат — Harbor schema 1.3 (надмножество TB-2.1,
+  loader толерантен к лишним ключам [verifier.collect]/environment_mode).
+
+evidence:
+  - "harbor-index.org: 80 задач, distilled from 6000+ candidates across 54 benchmarks, frontier ≤30%"
+  - "github.com/harbor-framework/harbor-index: 80 task dirs, task.toml schema_version 1.3, environment_mode=separate"
+  - "domain-fit исследование: 0 GUI сигналов в 79/80 instruction.md; terminal-модальность подтверждена"
+  - "subject breakdown по name-prefix: ~30 coding, ~50 science/QA/bioinformatics"
+  - "grader.py:64-75 копирует tests/ в рабочий контейнер (НЕ separate-verifier) — blocker для Harbor-Index"
+  - "config.py DATASET_PROFILES (VSM-026): Harbour-Index добавится как 4-й профиль 'harbor-index'"
+
+proposal: |
+  Future work. План реализации (когда берётся в работу):
+  1. Профиль 'harbor-index' в DATASET_PROFILES (config.py) → harbor-index_metrics.json.
+     Источник: git clone (не snapshot_download — HF-зеркало битое).
+  2. Category-разметка по name-prefix в loader (hle/arcagi2/gaia/... →
+     "science-qa"; swebench*/gso/featurebench/... → "coding") — для изоляции
+     метрики. Или отдельный metrics-file per subject.
+  3. Адаптация grader/container под environment_mode="separate" (verifier в
+     отдельном контейнере) — либо через harbour-config, либо extend grader.py.
+  4. CLI subcommand `harbor-index` (или --profile harbor-index eval-dataset).
+
+acceptance:
+  - "профиль 'harbor-index' в DATASET_PROFILES, git-clone источник"
+  - "category-разметка (coding vs science-qa) + изолированная метрика"
+  - "separate-verifier поддержан (grader/container или harbour-config)"
+  - "sanity 80/80 runnable (hard checks)"
+  - "make validate GREEN"
+
+needs_human_decision: false   # решение пользователя зафиксировано: все 80, не-terminal в отдельную метрику
+
+status: triage                # future work — не в текущем scope (separate-verifier blocker)
+decision: ""
+selected_options: []
+
+references:
+  - VSM-026   # 3-режимная архитектура — Harbour-Index добавится как 4-й профиль
+  - VSM-024   # harbour-раннер — может упростить separate-verifier (harbour управляет средой)
+
+notes:
+  - "Harbor-Index 1.0 = github.com/harbor-framework/harbor-index (80 задач, schema 1.3)."
+  - "Alex Shaw announcement: x.com/alexgshaw — '82 high-signal tasks' (репо сейчас 80 после PR #47)."
+  - "3 задачи явно Terminal-Bench-derived: tb-dna-insert, tb-make-doom-for-mips, tb-train-fasttext."
+  - "Coding subject (~30/80): swebenchverified/swebenchpro/gso/featurebench/swtbenchverified/swesmith/build + 3 tb-*. Science/QA (~50/80): hle/arcagi2/gaia/gaia2/omnimath/bix/labbench/scicode/..."
+  - "Не блокирует VSM-026 (3 режима train/eval-test/eval-dataset) — отдельный scope."
+
+created: 2026-07-15
+updated: 2026-07-15

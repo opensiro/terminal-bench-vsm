@@ -1,0 +1,78 @@
+id: VSM-026
+source_system: S4            # intelligence: gap — нет разделения train/eval метрик
+signal_type: gap             # gap — A(t) смешивалась бы с финальным test
+severity: S2                 # не ломает viability, но тормозит честную оценку
+target_unit: meta            # eval-пайплайн vsmlite (родитель)
+
+title: "eval: 3-режимная архитектура train/eval-test/eval-dataset + TB-2.1 verified профиль"
+summary: |
+  До VSM-026 eval-пайплайн знал один источник данных (TB Dev Set v2, 100 задач)
+  и один файл метрик (dev_metrics.json). Не было режима для финальной оценки на
+  полном TB-2.1 verified (89 задач, zai-org/terminal-bench-2-verified, релиз
+  2026-05-08) без смешивания с train-метрикой A(t). Также не было встроенной
+  структурной проверки датасета «из-под коробки» перед дорогим agent-прогоном.
+
+  Решение (запрошено пользователем): 3 режима через DATASET_PROFILES в
+  config.py — профиль задаёт источник данных + файл метрик, ортогонально
+  раннеру (VSM-024 harbour). Метрики изолированы по файлам, A(t) не смешивается:
+    train        dev-v2 (100)               → dev_metrics.json         (A(t))
+    eval-test    TB-2.1 verified N=20       → eval_test_metrics.json   (seed=42)
+    eval-dataset TB-2.1 verified все 89     → eval_dataset_metrics.json (финал)
+
+  eval-test = random seed=42 (детерминированный, точки T0/T1 сравнимы) — оценка
+  репрезентативности A(t) на новых сэмплах. eval-dataset = полный прогон для
+  финальной метрики. Sanity (eval/sanity.py) — встроенная локальная проверка
+  структуры (5 hard checks: instruction/Dockerfile/task.toml/tests/solution),
+  без Docker-build; запускается перед агентом и отдельно через `eval sanity`.
+
+evidence:
+  - "eval/config.py: DATASET_PROFILES (train/eval-test/eval-dataset), EvalConfig.profile + __post_init__ resolution"
+  - "eval/loader.py: sample_tasks(tasks, n, seed=42) — детерминированный random для eval-test"
+  - "eval/sanity.py: sanity_check_task (5 hard checks) + sanity_check_dataset + print_sanity_report"
+  - "eval/metrics.py: _empty_skeleton/record/record_run — profile в skeleton + history per-режима (eval_history[_<profile>].json)"
+  - "eval/modes.py: batch-фасад (run_eval_test/run_eval_dataset) поверх harbor_run.run_trial (VSM-024, НЕ модифицируется)"
+  - "eval/__main__.py: --profile/-P global + subcommands eval-test/eval-dataset/sanity; list/run/run-all/summary backward-compat"
+  - "TB-2.1 verified sanity: 89/89 runnable, 0 fail, 0 warnings (все метаданные заполнены)"
+  - "dev-v2 sanity: 100/100 runnable, 0 fail, 11 warnings (category gaps — non-blocking)"
+
+proposal: |
+  Реализовано в этой сессии (user-requested). Профили ортогональны раннеру —
+  питают оба пайплайна (VSM-024 harbour + superseded runner.py) через EvalConfig.
+  batch-фасад modes.py зависит только от публичного API harbor_run.run_trial
+  (signature), не трогая internals VSM-024. Когда VSM-024 Phase 3 cleanup удалит
+  runner.py, train переключится на _run_batch (harbour) — modes.run_train уже
+  изолирует эту точку переключения.
+
+acceptance:
+  - "DATASET_PROFILES в config.py: train/eval-test/eval-dataset (источник + metrics_filename)"
+  - "EvalConfig.profile вычисляет dataset_repo/dir/dev_metrics_file; env override backward-compat"
+  - "sample_tasks(n, seed=42) детерминирован и воспроизводим"
+  - "eval/sanity.py: 5 hard checks (runnable) + warnings (metadata gaps non-blocking)"
+  - "метрики изолированы: dev_metrics.json / eval_test_metrics.json / eval_dataset_metrics.json"
+  - "history per-режима: eval_history.json (train) / eval_history_eval-test.json / eval_history_eval-dataset.json"
+  - "CLI: --profile global + eval-test/eval-dataset/sanity subcommands; backward-compat list/run/run-all/summary"
+  - "make eval-test / eval-dataset / eval-sanity targets"
+  - "make validate GREEN (мембрана VSM-002 + parent isolation VSM-005 не нарушены)"
+  - "harbor_*.py / orchestrator_runner.py / membrane.py / agent_phase.py НЕ модифицированы (изоляция VSM-024)"
+
+needs_human_decision: false   # решение принято пользователем в сессии (3 режима, seed=42, изоляция)
+
+status: accepted
+decision: "requested by user in-session: 3 режима (train=dev-v2 для батчей/обучения, eval-test=TB-2.1 N сэмплов seed=42 для оценки репрезентативности A(t), eval-dataset=TB-2.1 полный для финального test). Раздельные файлы метрик. Sanity встроенная (из-под коробки ок). CLI: 3 subcommand'а."
+selected_options: []
+
+references:
+  - VSM-024   # harbour pivot — раннер; профили VSM-026 ортогональны (питают через EvalConfig)
+  - VSM-004   # Dev Set как входной индикатор автономности A(t)
+  - VSM-005   # parent isolation — метрики в vsmlite-tb/state, не в продукте
+  - VSM-002   # мембрана — sanity/modes вызывают translate/verify_neutrality
+  - VSM-008   # eval-пайплайн (superseded архитектурой VSM-024, но loader/metrics переиспользуются)
+
+notes:
+  - "TB-2.1 = zai-org/terminal-bench-2-verified (релиз 2026-05-08, коллаборация с официальной TB-командой). Folder-based Harbor format, идентичен dev-v2; новые поля [environment] docker_image/cpus/memory/storage."
+  - "eval-test N=20 default (config.eval_test_sample_size); override через --sample или env EVAL_TEST_SAMPLE_SIZE."
+  - "ID VSM-026: 023 (goose gap), 024 (harbour pivot), 025 (observability) — заняты другим агентом в параллельной сессии."
+  - "ID VSM-027 (Harbor-Index future work) заведён в той же сессии — separate-verifier + subject-filtration."
+
+created: 2026-07-15
+updated: 2026-07-15
