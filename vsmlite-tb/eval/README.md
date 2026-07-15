@@ -139,8 +139,41 @@ python3 -m eval {list,run,run-all,summary} [options]
   --harness claude-code|goose|custom   (default: claude-code, env EVAL_HARNESS)
   --filter difficulty=<e|m|h>|category=<name>
   --limit N                            максимум задач в батче
+  --workers N | -W N                   параллельных trial'ов (default: 1, env EVAL_WORKERS)
   --dataset-dir <path>                 override кеша (env EVAL_DATASET_DIR)
 ```
+
+## Параллельные раны (VSM-031)
+
+Батч (train / eval-test / eval-dataset) по умолчанию идёт последовательно
+(`workers=1`, zero-risk regression). `--workers N` (или `make ... WORKERS=N`,
+или `EVAL_WORKERS`) гоняет N задач одновременно через `ThreadPoolExecutor`.
+
+```bash
+make eval-test SAMPLE=10 WORKERS=3     # 3 trial'а параллельно
+python3 -m eval --profile eval-test eval-test --sample 10 --workers 3
+EVAL_WORKERS=5 python3 -m eval --profile eval-dataset eval-dataset
+```
+
+**Что безопасно.** Каждый trial = свой Docker-контейнер + свой
+`state/harbor-trials/<task>__<random-id>/` (суффикс рандомный, коллизий нет);
+бинд-маунты `src/vsm/eval` — read-only. Параллельные trial'ы не затирают друг
+другу workspace.
+
+**Потолок = rate-limit Z.AI**, не CPU/RAM: каждый trial крутит 3 goose-сабпроцесса
+(триада) × workers × `GOOSE_THINKING_EFFORT=max` (glm-5.2). Начинать с
+`--workers 3`, подбирать под tier. Secondary-bottleneck под WSL2 — drvfs `/mnt/e`
+(5–10 контейнеров читают бинд-маунты через 9P).
+
+**Concurrency-безопасность.** `metrics.record()` под `flock` + atomic write
+(tempfile + `os.replace`) — параллельные writers не теряют результаты (эталон —
+`src/agent_runtime/state_bus.py`). Читатели lock-free.
+
+**Batch-саммари (VSM-030 seam).** Каждый батч пишет
+`state/batch_summaries/<profile>__<ts>.json` (`workers`, `wall_clock_sec`,
+`per_task[]`, `pass_rate`, `trend_delta`). Поля `observations` / `decision` /
+`issues_raised` — светлые плейсхолдеры для будущих layer-2 (S4-наблюдение) /
+layer-3 (S5-решение) в [VSM-030](../issues/VSM-030.yaml).
 
 ## Модули
 

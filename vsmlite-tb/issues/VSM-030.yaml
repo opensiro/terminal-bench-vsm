@@ -104,6 +104,7 @@ decision: ""
 selected_options: []
 
 references:
+  - VSM-031   # parallel trials — заложил batch_summary seam (record_batch → state/batch_summaries/), частично закрывает слой 1
   - VSM-029   # runs.html (per-task) — это per-batch мета-саммари, отдельный слой
   - VSM-025   # process log + agent eval — скоринг ПРОДУКТА; это скоринг VSMLITE над ним
   - VSM-005   # A(t) как индикатор автономности — батч-observability делает его self-correcting
@@ -114,6 +115,7 @@ notes:
   - "runs.html блок «по задачам» — статичная агрегация, НЕ observability решений; пользователь пометил «не в тему». Возможна замена на batches.html (слой 1)."
   - "Ортогонален VSM-025: тот скорит продукт (TB-агента в контейнере), это — мета-скоринг vsmlite над батчем."
   - "cycle_count: 0 в maturation.json — формально циклы вообще не выполнялись после eval, только product-scoring."
+  - "VSM-031 (parallel trials) заложил seam: _run_batch возвращает rich batch-кортеж + metrics.record_batch пишет state/batch_summaries/<id>.json со светлыми плейсхолдерами observations/decision/issues_raised. Слой 1 (артефакт) начат; layer-2 (S4-наблюдение) и layer-3 (S5-решение) — будущие заходы."
 
 created: 2026-07-15
 updated: 2026-07-15

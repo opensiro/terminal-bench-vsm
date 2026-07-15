@@ -1,0 +1,100 @@
+id: VSM-031
+source_system: S3            # optimizer: throughput/wall-clock — bottleneck в _run_batch
+signal_type: gap             # gap — последовательный батч не использует доступную parallel-ёмкость
+severity: S2                 # бьёт по cycle-time A(t); 21 trial × ~280s ≈ 100+ min sequentially
+target_unit: meta            # eval-пайплайн vsmlite (modes.py/_run_batch)
+
+title: "Parallel trial runs in _run_batch (ThreadPoolExecutor over harbor trials)"
+
+summary: |
+  Eval-батч (make eval-test / eval-all / eval-dataset) гоняет задачи строго
+  последовательно — plain `for` в eval/modes.py:46. При медиане ~280s/trial (21
+  recorded trial) батч из 20 сэмплов ≈ 90+ min wall-clock. Контейнерная изоляция
+  уже безопасна для параллелизма (каждый trial = свой Docker + свой
+  state/harbor-trials/<task>__<random-id>/, бинд-маунты read-only), но два
+  блокера мешают распараллелить «в лоб»:
+
+    1. metrics.record (eval/metrics.py:57) — non-atomic read-modify-rewrite
+       (load → mutate tasks[] → _write перезаписывает весь файл). Гонка тихо
+       теряет результаты даже РАЗНЫХ задач (last-writer-wins). Нет flock, нет
+       os.replace. Эталон безопасной записи уже есть: src/agent_runtime/state_bus.
+    2. Нет workers-cap / CLI-флага — некуда повесить степень параллелизма.
+
+  Реальный потолок = rate-limit Z.AI, не CPU/RAM: каждый trial крутит 3 goose-
+  сабпроцесса (триада) × workers × GOOSE_THINKING_EFFORT=max (glm-5.2).
+
+  Orthogonal к VSM-030 (batch observability): параллелизм naturally производит
+  batch-данные (workers, wall_clock, per-task durations) — это ровно то, что
+  layer-1 VSM-030 хочет в state/batch_summaries/<id>.json. VSM-031 закладывает
+  seam (rich batch-кортеж + record_batch), частично закрывая acceptance VSM-030.
+
+evidence:
+  - "eval/modes.py:46 — plain sequential `for tid in task_ids` (нет concurrency)"
+  - "eval/metrics.py:57-83 record() — load→mutate→_write, перезапись всего tasks[] без лока"
+  - "eval/metrics.py:206 _write() — path.write_text без tempfile+os.replace (нет atomicity)"
+  - "eval/harbor_run.py:100 run_trial() — blocking subprocess.run (GIL освобождается на I/O → threads подходят)"
+  - "state/harbor-trials/ — 21 trial, рандомный __<id> суффикс → разные task_id не интерферируют"
+  - "src/agent_runtime/state_bus.py:218-245 — эталон flock + os.replace (переиспользуем)"
+  - "21 trial timing: median 280s, max 406s → 5-way parallelism ≈ 90min → ~20min"
+
+proposal: |
+  1. Блокер: flock + atomic write в metrics.record/record_run/_write (эталон —
+     state_bus.py). Читатели остаются lock-free (видят цельный old/new файл).
+  2. workers-поле (config.py, env EVAL_WORKERS, default 1 = zero-risk regression)
+     + CLI --workers/-W.
+  3. ThreadPoolExecutor в _run_batch (threads ок — работа = blocking I/O). После
+     executor.shutdown — существующие post-batch вызовы (record_run/compute_trend)
+     однопоточные, как есть.
+  4. Rich batch-кортеж из _run_batch + record_batch → state/batch_summaries/
+     (seam для VSM-030 layer-2/3: observations/decision — светлые плейсхолдеры).
+  5. Не трогать схему dev_metrics.json (upsert по task_id достаточен для разных
+     задач), run_trial signature (контракт VSM-024), harbor_bridge.
+
+acceptance:
+  - "--workers N гоняет N задач одновременно (stderr показывает перекрытие start/done)"
+  - "после parallel-батча dev_metrics.json содержит все N результатов (ни один не потерян — проверка блокера)"
+  - "state/batch_summaries/<id>.json создаётся с pass_rate + tasks + workers + wall_clock_sec"
+  - "--workers 1 бит-идентичен текущему sequential поведению (regression-safe)"
+  - "make validate GREEN"
+
+needs_human_decision: true   # ceiling: безопасный workers-cap под rate-limit Z.AI
+
+policy_question: |
+  Какой workers-cap по умолчанию (потолок = rate-limit Z.AI, 3 goose-сабпроцесса × N)?
+
+options:
+  - id: cap-3
+    label: "cap=3 (консервативно)"
+    hint: "3 параллельных trial = 9 goose-сессий одновременно. Безопасный старт, почти наверняка ниже rate-limit."
+  - id: cap-5
+    label: "cap=5 (recommended)"
+    hint: "5 параллельных = 15 goose-сессий. ~5× speedup на батче (90min→~20min). Подобрать под tier Z.AI."
+  - id: cap-10
+    label: "cap=10 (агрессивно)"
+    hint: "10 параллельных = 30 goose-сессий. Может упереться в rate-limit/429. drvfs-нагрузка на /mnt/e."
+  - id: auto
+    label: "auto из rate-limit (future)"
+    hint: "Читать лимит из ответов API (429 backoff) и адаптировать workers динамически. Сложнее, отдельный заход."
+  - id: defer
+    label: "Defer"
+    hint: "Не сейчас. Оставить workers=1 (sequential). Реализация block'а (flock) уже закоммичена как фундамент."
+
+status: done                 # принято + реализовано в feat/vsm-031-parallel-trials
+decision: "accept — выбраны cap-5 (recommended) + cap-3 (безопасный старт). Реализация: ThreadPoolExecutor в _run_batch, default workers=1 (zero-risk regression, явный opt-in через --workers/WORKERS/EVAL_WORKERS). Recommended диапазон для включения 3-5; реальный потолок = rate-limit Z.AI (3 goose-сабпроцесса × workers), подбирается под tier. Блокер гонки закрыт (flock+os.replace в metrics.record). Batch-summary seam для VSM-030 заложен (record_batch → state/batch_summaries/). Default НЕ менялся на 5 — auto-parallel при ближайшем make eval-test мог бы молча упереться в rate-limit; opt-in безопаснее."
+selected_options: ["cap-5", "cap-3"]
+
+references:
+  - VSM-030   # batch observability — VSM-031 закладывает seam (record_batch → batch_summaries)
+  - VSM-029   # runs.html — parallel output должен корректно кормить per-run саммари
+  - VSM-026   # 3-режимная архитектура eval — _run_batch общий для train/eval-test/eval-dataset
+  - VSM-024   # harbor pivot — run_trial signature не меняем (контракт)
+
+notes:
+  - "Контейнерная изоляция уже безопасна: каждый trial = свой Docker-контейнер + свой harbor-trials/ dir (рандомный __<id>). Бинд-маунты src/vsm/eval — read-only."
+  - "Блокер №1 — metrics.record гонка (теряет результаты разных задач). Чинится flock+os.replace, эталон в src/agent_runtime/state_bus.py."
+  - "Реальный потолок — rate-limit Z.AI (api.z.ai), не CPU/RAM. Подбирается экспериментально под tier."
+  - "Secondary: drvfs /mnt/e (WSL2) — 5-10 контейнеров читают бинд-маунты через 9P, многие-мелкие-файлы = bottleneck."
+  - "Orthogonal VSM-030: закладывает batch_summary seam (rich return из _run_batch + record_batch), не трогая layer-2/3 (S4/S5 observability)."
+
+created: 2026-07-15
+updated: 2026-07-15

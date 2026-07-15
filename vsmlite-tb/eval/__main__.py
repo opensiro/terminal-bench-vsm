@@ -54,6 +54,7 @@ def _build_config(args: argparse.Namespace) -> EvalConfig:
         harness_type=args.harness,
         harness_binary=args.harness_binary or "",
         limit=args.limit,
+        workers=args.workers if args.workers else 1,
     )
     if args.filter:
         k, v = _parse_filter(args.filter)
@@ -81,6 +82,9 @@ def main() -> None:
                         help="фильтр задач: difficulty=<easy|medium|hard> | category=<name>")
     parser.add_argument("--limit", type=int, default=None,
                         help="максимум задач в батче")
+    parser.add_argument("--workers", "-W", type=int, default=None,
+                        help="параллельных trial'ов в батче (default: 1; потолок = "
+                             "rate-limit Z.AI, начать с 3). env EVAL_WORKERS.")
     parser.add_argument("--dataset-dir", default=None,
                         help="путь к локальной копии датасета (override EVAL_DATASET_DIR)")
     parser.add_argument("--no-sanity", action="store_true",

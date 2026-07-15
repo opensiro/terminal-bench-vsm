@@ -20,9 +20,15 @@ upsert по task_id (повторный прогон перезаписывае�
 from __future__ import annotations
 
 import json
+import os
+import fcntl
+import tempfile
+import time
 from collections import defaultdict
-from datetime import date
+from contextlib import contextmanager
+from datetime import date, datetime
 from pathlib import Path
+from typing import Iterator
 
 from .config import EvalConfig
 
@@ -60,27 +66,32 @@ def record(config: EvalConfig, task_result: dict) -> dict:
     task_result: {task_id, status, passed, category, difficulty, agent_duration_sec,
                   trace_len, pytest_passed, pytest_failed, timestamp, error}
     Пересчитывает summary/by_*. Возвращает обновлённый data dict.
+
+    VSM-031: read-modify-write под flock — параллельные trial'ы не теряют
+    результаты (раньше last-writer-wins молча дропал чужой task). Атомарный
+    _write (tempfile + os.replace) даёт lock-free читателям цельный файл.
     """
-    data = load(config)
-    data["generated"] = date.today().isoformat()
-    data["profile"] = config.profile      # VSM-026: режим
-    data["dataset"] = config.dataset_repo
-    data["harness"] = config.harness_type
+    with _locked(config):
+        data = load(config)
+        data["generated"] = date.today().isoformat()
+        data["profile"] = config.profile      # VSM-026: режим
+        data["dataset"] = config.dataset_repo
+        data["harness"] = config.harness_type
 
-    # Upsert по task_id
-    tid = task_result["task_id"]
-    tasks = [t for t in data["tasks"] if t.get("task_id") != tid]
-    tasks.append(task_result)
-    # Сортировка для стабильности (task_id — slug, лексикографически стабен)
-    tasks.sort(key=lambda t: t.get("task_id", ""))
-    data["tasks"] = tasks
+        # Upsert по task_id
+        tid = task_result["task_id"]
+        tasks = [t for t in data["tasks"] if t.get("task_id") != tid]
+        tasks.append(task_result)
+        # Сортировка для стабильности (task_id — slug, лексикографически стабен)
+        tasks.sort(key=lambda t: t.get("task_id", ""))
+        data["tasks"] = tasks
 
-    data["summary"] = _compute_summary(tasks)
-    data["by_category"] = _compute_breakdown(tasks, "category")
-    data["by_difficulty"] = _compute_breakdown(tasks, "difficulty")
+        data["summary"] = _compute_summary(tasks)
+        data["by_category"] = _compute_breakdown(tasks, "category")
+        data["by_difficulty"] = _compute_breakdown(tasks, "difficulty")
 
-    _write(config, data)
-    return data
+        _write(config, data)
+        return data
 
 
 def record_run(config: EvalConfig) -> dict:
@@ -110,7 +121,7 @@ def record_run(config: EvalConfig) -> dict:
     }
 
     history = load_history(config)
-    # Заменить снэпшот сегодняшнего дня (один в день), иначе добавить
+    # Заменить снапшот сегодняшнего дня (один в день), иначе добавить
     if history and history[-1].get("date") == snapshot["date"]:
         history[-1] = snapshot
     else:
@@ -118,12 +129,10 @@ def record_run(config: EvalConfig) -> dict:
     # Храним последние 90 дней (как history.json в render_data.py)
     history = history[-90:]
 
-    path = _history_path(config)
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(
-        json.dumps(history, ensure_ascii=False, indent=2) + "\n",
-        encoding="utf-8",
-    )
+    # VSM-031: flock + atomic write для eval_history.json (читается/пишется
+    # per-batch; один батч в моменте, но блокировка страхует future-use).
+    with _locked_path(_history_path(config)) as path:
+        _atomic_write(path, history)
     return snapshot
 
 
@@ -204,12 +213,95 @@ def _compute_breakdown(tasks: list[dict], key: str) -> dict:
 
 
 def _write(config: EvalConfig, data: dict) -> None:
-    path = config.dev_metrics_file
+    """Atomic write: tempfile в той же дир + os.replace (VSM-031).
+
+    Читатели без лока видят либо старый, либо новый цельный файл — без torn
+    reads. Вызывается уже под _locked() (см. record/record_run).
+    """
+    _atomic_write(config.dev_metrics_file, data)
+
+
+@contextmanager
+def _locked_path(path: Path, timeout: float = 30.0) -> Iterator[Path]:
+    """flock на sidecar <path>.lock вокруг write-транзакции (VSM-031).
+
+    Эталон — src/agent_runtime/state_bus.py:218-245 (flock+LOCK_NB+spin).
+    Блокирует до timeout секунд; потом TimeoutError. Возвращает путь —
+    чтобы caller писал именно в него. Lock освобождается в finally.
+    """
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(
-        json.dumps(data, ensure_ascii=False, indent=2) + "\n",
-        encoding="utf-8",
-    )
+    lock_path = Path(str(path) + ".lock")
+    lock_fd = os.open(str(lock_path), os.O_CREAT | os.O_RDWR, 0o644)
+    deadline = time.time() + timeout
+    try:
+        while True:
+            try:
+                fcntl.flock(lock_fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+                break
+            except BlockingIOError:
+                if time.time() > deadline:
+                    raise TimeoutError(f"metrics lock timeout: {path}")
+                time.sleep(0.05)
+        yield path
+    finally:
+        try:
+            fcntl.flock(lock_fd, fcntl.LOCK_UN)
+        except OSError:
+            pass
+        os.close(lock_fd)
+
+
+@contextmanager
+def _locked(config: EvalConfig) -> Iterator[Path]:
+    """flock на dev_metrics.json.lock вокруг read-modify-write (VSM-031)."""
+    with _locked_path(config.dev_metrics_file) as path:
+        yield path
+
+
+def _atomic_write(path: Path, data) -> None:
+    """tempfile в той же директории + os.replace → atomic publish (VSM-031)."""
+    path.parent.mkdir(parents=True, exist_ok=True)
+    payload = json.dumps(data, ensure_ascii=False, indent=2) + "\n"
+    fd, tmp = tempfile.mkstemp(dir=str(path.parent), prefix=path.name + ".", suffix=".tmp")
+    try:
+        with os.fdopen(fd, "w", encoding="utf-8") as f:
+            f.write(payload)
+        os.replace(tmp, path)
+    except BaseException:
+        # Не оставлять мусор (os.replace уже мог пройти — тогда tmp уже нет).
+        try:
+            os.unlink(tmp)
+        except OSError:
+            pass
+        raise
+
+
+# ── Batch summaries (VSM-030 layer-1 seam, VSM-031 закладывает артефакт) ──
+# После eval-батча пишется state/batch_summaries/<batch_id>.json — per-batch
+# саммари с pass_rate/tasks/workers/wall_clock. observations/decision/
+# issues_raised — светлые плейсхолдеры для VSM-030 layer-2 (S4-наблюдение) и
+# layer-3 (S5-решение). VSM-031 только производит артефакт; UI (batches.html) —
+# отдельный scope VSM-030.
+
+def batch_summaries_dir(config: EvalConfig) -> Path:
+    """state/batch_summaries/ — per-batch артефакты (VSM-030/VSM-031)."""
+    return config.results_dir / "batch_summaries"
+
+
+def record_batch(config: EvalConfig, batch: dict) -> Path:
+    """Записать batch-саммари в state/batch_summaries/<batch_id>.json (VSM-031).
+
+    batch: {batch_id, profile, workers, wall_clock_sec, started_at, finished_at,
+            tasks[], summary{...}, trend_delta, ...}. Поля observations/decision/
+    issues_raised — светлые плейсхолдеры для будущих layer-2/3 (VSM-030).
+
+    Возвращает путь к записанному файлу. Atomic write (tempfile + os.replace);
+    батчи не параллелятся между собой, flock страхует future-use.
+    """
+    out = batch_summaries_dir(config) / f"{batch['batch_id']}.json"
+    with _locked_path(out):
+        _atomic_write(out, batch)
+    return out
 
 
 def compute_pass_rate(config: EvalConfig) -> float:
