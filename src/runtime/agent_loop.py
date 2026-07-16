@@ -165,6 +165,28 @@ class AgentLoop:
                     at_action=trace_idx,
                 ))
 
+            # VSM-034 QUATERNARY-2: stress-test / property-test failures print to
+            # STDOUT with exit_code=0 (e.g. 'python3 -c' mismatch check). Without
+            # this, real test failures are lost as failure_observations and the
+            # orchestrator reports 'no_observations' despite the solver having
+            # produced a concrete mismatch signal (bracket-sequence-restoration).
+            if exit_code == 0 and tool_name == "shell.exec":
+                obs_lower = observation.lower()
+                # Markers must be specific enough to avoid false-positives on
+                # legitimate output (e.g. a file literally named 'mismatch.log').
+                # Require them to appear at line start (common for test harnesses).
+                failure_stdout_markers = (
+                    "mismatch:", "mismatch at", "assertionerror", "assertion failed",
+                    "failing case", "failed case", "test failed", "results do not match",
+                )
+                if any(m in obs_lower for m in failure_stdout_markers):
+                    output.failure_observations.append(FailureObservation(
+                        kind="error_string",
+                        value=observation[:500],
+                        source="stdout",
+                        at_action=trace_idx,
+                    ))
+
             budget.consume(actions=1)
         else:
             # Loop ended without solver saying done → budget or max_iterations

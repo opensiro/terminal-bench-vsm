@@ -145,6 +145,7 @@ class S1Dispatcher:
             # Enrich S1Output with triad control_results (auditability, VSM-020).
             if self._solver_mode == "triad":
                 output.control_results = solver.get_control_results()
+                output.verify_result = solver.get_verify_result()
         else:
             output = solve(input, self._mcp_server, budget)
 

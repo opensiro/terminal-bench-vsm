@@ -84,6 +84,7 @@ class TriadSolver:
     _checkpoint: Checkpoint | None = field(default=None, init=False)
     _revert_count: int = field(default=0, init=False)
     _control_results: list[ControlResult] = field(default_factory=list, init=False)
+    _verify_result: "VerifyResult | None" = field(default=None, init=False)
     # Trace cursor: control only inspects trace entries produced since the last
     # SOLVING start (so a revert + re-solve doesn't re-read the stale failed run).
     _trace_cursor: int = field(default=0, init=False)
@@ -255,6 +256,7 @@ class TriadSolver:
         if self.checkpoint_mgr and self._checkpoint:
             artifacts = self.checkpoint_mgr.diff_since(self._checkpoint)
         result = verifier(plan=self._plan, trace=recent_trace, artifacts=artifacts)
+        self._verify_result = result
         self._safe_update("verify_result", {"passed": result.passed, "reason": result.reason})
 
         self._phase = _TriadPhase.DONE
@@ -335,15 +337,14 @@ class TriadSolver:
     def get_control_results(self) -> list[ControlResult]:
         return list(self._control_results)
 
-    def get_verify_result(self, trace: list[TraceEntry]) -> VerifyResult | None:
-        """Return the last verify result, or None if verify hasn't run.
+    def get_verify_result(self, trace: list[TraceEntry] | None = None) -> VerifyResult | None:
+        """Return the verifier result from the last _run_verify call.
 
-        Note: the verifier runs inside decide_next_action, so this is only
-        populated after the solver has emitted __done__. The dispatcher reads
-        control_results via get_control_results(); verify_result is reconstructed
-        from the final verdict in practice.
+        Populated only after the solver has emitted __done__ via _run_verify.
+        Returns None if verify has not run yet (e.g. budget exhausted first).
+        The `trace` arg is accepted for backward-compat but unused.
         """
-        return None
+        return self._verify_result
 
 
 def _serialize_control(result: ControlResult) -> dict:
@@ -511,6 +512,27 @@ def _default_verifier(
         if empty_collection_seen:
             break
     if empty_collection_seen:
+        # VSM-034 QUATERNARY-1: metrics-evaluated tasks (bandit, optimization,
+        # simulation) have pytest 'collected 0' BY DESIGN — they're scored by
+        # output metrics, not test files. If the solver produced real artifacts
+        # AND printed metrics-style output, the empty collection is expected,
+        # not a surrender. Guard against false-rejecting these (submission_a63937a5
+        # bandit: control=pass but verifier rejected → wrong task_failed).
+        has_artifacts = bool(artifacts)
+        trace_text = " ".join((e.observation or "") for e in trace).lower()
+        metrics_markers = (
+            "total_reward=", "regret=", "answer.txt", "score:", "score=",
+            "fitness:", "loss=", "accuracy=", "reward=",
+        )
+        has_metrics_output = any(m in trace_text for m in metrics_markers)
+        if has_artifacts and has_metrics_output:
+            return VerifyResult(
+                passed=True,
+                reason="no error keywords; empty test collection but solver produced "
+                       "artifacts with metrics output (metrics-evaluated task)",
+                checks=[{"name": "metrics-task-guard", "passed": True,
+                         "detail": f"{len(artifacts)} artifacts, metrics output detected"}],
+            )
         return VerifyResult(
             passed=False,
             reason="no error keywords but test collection was empty (collected 0 / "
@@ -783,8 +805,8 @@ def _run_goose_subagent(
     # subprocess timeout / network errors — it returns an AgentResult with
     # timed_out / exit_code set. We classify and retry transient network flaps.
     import time as _time
-    max_attempts = 2  # initial + 1 retry
-    backoff_sec = 4.0
+    max_attempts = 3  # VSM-034 QUATERNARY-3: persistent VPN-TUN flaps need more retries
+    backoff_sec = 6.0  # longer backoff — transient VPN-TUN stalls recover in 10-30s
     for attempt in range(1, max_attempts + 1):
         try:
             result = GooseRunner().run(cfg, task_input, timeout_sec=timeout_sec)

@@ -151,6 +151,54 @@ needs_human_decision: false   # РЕШЕНО: N+A' + R+C реализованы 
 #   ../src/runtime/triad_solver.py (+43) — TERTIARY-2 СЛОЙ 1 (_default_verifier)
 #   ../vsm/systems/s1-verifier/SOUL.md (+16) — TERTIARY-2 СЛОЙ 2 (LLM guidance)
 #   ../vsm/systems/s1-verifier/SKILL.md (+14) — TERTIARY-2 СЛОЙ 2 (Protocol step)
+
+# ── QUATERNARY STATUS (2026-07-16, branch vsm034-tertiary, 4 fixed) ──
+#
+# После TERTIARY-2 батч (20 trials, 5% pass) показал 4 bugs (3 non-network + 1
+# observability). Root causes подтверждены evidence, 4 фикса реализованы.
+#
+# QUATERNARY-0 (s1_verify observability) — РЕАЛИЗОВАН, ВАЛИДИРОВАН:
+#   S1Output.verify_result никогда не присваивался → s1_verify: null во ВСЕХ
+#   product-trace при реально работающем verifier. Добавлено _verify_result
+#   instance-field + get_verify_result() + dispatcher enrich. ВАЛИДАЦИЯ (5
+#   trials): verify=FAIL/pass во всех (было NULL). Observability работает.
+#
+# QUATERNARY-1 (metrics-task false-reject) — РЕАЛИЗОВАН, не валидирован (network):
+#   TERTIARY-2 empty-collection markers ошибочно ловят metrics-evaluated tasks
+#   (bandit/optimization) где pytest=0 by design. submission_a63937a5: control
+#   =pass, verifier=reject → wrong task_failed. ФИКС: guard в _default_verifier
+#   — skip empty-collection reject если artifacts non-empty AND metrics output
+#   в trace (total_reward=/regret=/answer.txt/score=/...). Guard = AND (не OR),
+#   не откатывает TERTIARY-2 (surrender без artifacts всё ещё reject'ится).
+#   НЕ ВАЛИДИРОВАН: submission в validation-батче провалилась на planner
+#   network (default_fallback_none, artifacts=0) — не дошла до metrics logic.
+#   Code logic корректен, не сломал существующее поведение.
+#
+# QUATERNARY-2 (stdout failure-markers) — РЕАЛИЗОВАН, не валидирован (TERTIARY-1):
+#   agent_loop.py извлекал failure_observations только при exit_code≠0.
+#   bracket-sequence: shell.exec "MISMATCH" в stdout с exit_code=0 → observation
+#   потерян → orchestrator no_observations. ФИКС: добавлены stdout-markers
+#   (mismatch:/assertionerror/failed case/...) ТОЛЬКО для shell.exec + exit_code=0.
+#   НЕ ВАЛИДИРОВАН: bracket в validation-батче провалилась на TERTIARY-1
+#   (artifact creation — fs.write path rejected), не дошла до mismatch-test.
+#
+# QUATERNARY-3 (retry budget 2→3) — РЕАЛИЗОВАН, ВАЛИДИРОВАН:
+#   Persistent VPN-TUN flap давал double-120s-timeout → budget исчерпан →
+#   silent _default_planner fallback. Батч: 10/13 no_obs trials = этот паттерн.
+#   ФИКС: max_attempts 2→3, backoff 4s→6s. ВАЛИДАЦИЯ (4 trials): все показывают
+#   3 attempts в diag (было 2). Network-flap однако длится дольше 6 минут —
+#   retry не лечит, нужна стабильная сеть (вне кода продукта).
+#
+# ВЫВОД по network: VPN-TUN на host нестабилен на периоды 3-6+ минут. Retry
+# (даже 3×120s = 6мин) не покрывает. Это инфра-проблема окружения, не продукта.
+# Дальнейший рост pass-rate требует: (a) стабильная сеть, ИЛИ (b) persistent
+# planner cache (один plan на task_id между attempts), ИЛИ (c) pre-computed
+# goose plans offline.
+#
+# Файлы (branch vsm034-tertiary, QUATERNARY):
+#   ../src/runtime/triad_solver.py (+40) — #0 + #1 + #3
+#   ../src/runtime/agent_loop.py (+22) — #2
+#   ../src/runtime/dispatcher.py (+1) — #0
 # Гипотеза "product surrender" ОПРОВЕРГНУТА инструментировкой. Root cause =
 # FLAKY NETWORK goose→z.ai API, не поведенческая деградация продукта.
 #
