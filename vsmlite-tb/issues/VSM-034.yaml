@@ -116,7 +116,41 @@ needs_human_decision: false   # РЕШЕНО: N+A' + R+C реализованы 
 #   ../src/runtime/triad_solver.py (+13) — C
 #   vsmlite-tb/eval/harbor_bridge.py (+16) — S (observability)
 
-# ── DIAGNOSTIC FINDINGS (2026-07-16, branch vsm034-diag) ──
+# ── TERTIARY STATUS (2026-07-16, branch vsm034-tertiary) ──
+#
+# TERTIARY-1 (artifact creation / workspace mismatch) — ROOT CAUSE ИЗУЧЕН, фикс отложен:
+#   Планировщик возвращает absolute path (fs.write path="/workspace/do_merge.py").
+#   Executor AgentLoop вызывает mcp_server.call_tool → filesystem.py _safe_path
+#   reject'ает absolute path вне ws → raises ValueError → MCPServer.call_tool
+#   ловит exception, возвращает {"error": ...} БЕЗ stdout/stderr/exit_code →
+#   AgentLoop видит observation="" exit_code=0 → exception ПОЛНОСТЬЮ проглочен.
+#   Файл не создаётся, но triad думает что шаг прошёл. Двойной баг:
+#     (a) planner возвращает absolute paths (SOUL/SKILL говорят relative, LLM игнорирует)
+#     (b) call_tool/AgentLoop silently swallow exceptions ({"error":...} без exit_code)
+#   Фикс сложнее (тронет mcp_server.call_tool contract + planner prompt) — отложен
+#   в отдельный issue. Проявлялся на csv-json-jsonl-merger (R-фикс раскрыл).
+#
+# TERTIARY-2 (verifier false-PASS) — РЕАЛИЗОВАН, ВАЛИДИРОВАН В LIVE-БАТЧЕ:
+#   После SECONDARY-C test-controller правильно ловит "collected 0 items" →
+#   fail_no_checkpoint. Но triad flow при FAIL_NO_CHECKPOINT идёт в verifier
+#   (final gate), и verifier давал passed=true → task_resolved при reward=0.
+#   Батч-данные (6 trials до фикса): 2/6 = 33% false-PASS (container-registry,
+#   distributed-test-execution-sched).
+#   ФИКС (двухслойный):
+#     СЛОЙ 1: _default_verifier (triad_solver.py) — добавлены empty-collection
+#       markers (collected 0 / no tests ran / exit code 5). Теперь "0 items" =
+#       passed=false (раньше "no error keywords" = passed=true).
+#     СЛОЙ 2: s1-verifier SOUL/SKILL — LLM-guidance "Reject vacuous passes":
+#       collected 0 / NO_TESTS_COLLECTED = NOT a pass. Empty-collection check
+#       шаг добавлен в Protocol.
+#   ВАЛИДАЦИЯ (live batch, 5 trials после фикса через bind-mount): grpc,
+#   html-index, malicious, monorepo, pgn — все task_failed (0% false-PASS vs
+#   33% до фикса). TERTIARY-2 подтверждён.
+#
+# Файлы (branch vsm034-tertiary):
+#   ../src/runtime/triad_solver.py (+43) — TERTIARY-2 СЛОЙ 1 (_default_verifier)
+#   ../vsm/systems/s1-verifier/SOUL.md (+16) — TERTIARY-2 СЛОЙ 2 (LLM guidance)
+#   ../vsm/systems/s1-verifier/SKILL.md (+14) — TERTIARY-2 СЛОЙ 2 (Protocol step)
 # Гипотеза "product surrender" ОПРОВЕРГНУТА инструментировкой. Root cause =
 # FLAKY NETWORK goose→z.ai API, не поведенческая деградация продукта.
 #

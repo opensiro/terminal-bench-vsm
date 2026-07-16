@@ -463,9 +463,22 @@ def _default_verifier(
 ) -> VerifyResult:
     """Rule-based verifier stub (reused from MultiAgentSolver semantics).
 
-    Passes if no error keywords appear in any trace observation; else fails.
+    Passes if no error keywords appear in any trace observation AND the solve
+    pass produced testable artifacts (VSM-034 TERTIARY-2: a pass on an empty
+    workspace with 'collected 0 items' is not a real pass — it masks a
+    surrender where the solver produced nothing). Else fails.
     """
     error_keywords = ["error", "traceback", "failed", "exception", "module not found"]
+    # VSM-034 TERTIARY-2: signals that the solver produced nothing testable.
+    # These appear in pytest output when the workspace has no tests/solution,
+    # and must NOT be accepted as a clean pass (container-registry-optimization,
+    # distributed-test-execution-sched: verifier passed, TB reward=0).
+    empty_collection_markers = [
+        "collected 0", "no tests ran", "no tests collected",
+        "0 selected", "0 items", "exit code 5", "no tests were collected",
+    ]
+
+    # Scan 1 — error keywords (existing semantics).
     failed_checks: list[dict] = []
     for k, entry in enumerate(trace):
         obs = (entry.observation or "").lower()
@@ -482,8 +495,34 @@ def _default_verifier(
             reason=f"{len(failed_checks)} trace entries contain error keywords",
             checks=failed_checks,
         )
+
+    # Scan 2 — empty collection markers (VSM-034 TERTIARY-2). Independent scan
+    # so an empty collection is caught even when no error keyword fired: a
+    # vacuous "no errors because nothing ran" is NOT a pass.
+    empty_collection_seen = False
+    empty_detail = ""
+    for entry in trace:
+        obs = (entry.observation or "").lower()
+        for marker in empty_collection_markers:
+            if marker in obs:
+                empty_collection_seen = True
+                empty_detail = (entry.observation or "")[:200]
+                break
+        if empty_collection_seen:
+            break
+    if empty_collection_seen:
+        return VerifyResult(
+            passed=False,
+            reason="no error keywords but test collection was empty (collected 0 / "
+                   "no tests ran) — solver produced nothing testable",
+            checks=[{
+                "name": "empty-collection", "passed": False,
+                "detail": empty_detail or "pytest reported 0 items collected; vacuous pass rejected",
+            }],
+        )
+
     return VerifyResult(
-        passed=True, reason="no error keywords in any trace observation",
+        passed=True, reason="no error keywords and non-empty test collection in trace",
         checks=[{"name": "trace-scan", "passed": True}],
     )
 
