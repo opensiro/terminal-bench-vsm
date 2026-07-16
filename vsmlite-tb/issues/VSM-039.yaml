@@ -72,20 +72,15 @@ acceptance:
   - "Задачи с WORKDIR≠/app создают артефакты по правильному пути (s1_artifacts path ∈ task WORKDIR)"
   - "Нет регрессии на /app-задачах (broken-python и др. продолжают работать)"
 
-needs_human_decision: false   # infra-фикс, root cause ясен; выбор P1/P2/P3 — технический
+needs_human_decision: false   # РЕШЕНО: P1 (Dockerfile WORKDIR parse). РЕАЛИЗОВАНО + ВАЛИДИРОВАНО.
 
-policy_question: "Какой подход к workspace detection? P1 (Dockerfile parse), P2 (probe reorder), P3 (container native WORKDIR)?"
+decision: "P1 (Dockerfile WORKDIR parse). РЕАЛИЗОВАНО 2026-07-16 в ветке vsm039-workdir. harbor_run._prepare_overlay_task парсит последнюю WORKDIR (после final FROM) из Dockerfile задачи → ENV TASK_WORKDIR=<path> в final stage overlay. harbor_adapter.workspace_probe проверяет $TASK_WORKDIR первым (если задан и существует), fallback на старый probe [/app,/workdir,/workspace,/root]. ВАЛИДАЦИЯ: bracket-sequence-restoration (WORKDIR=/workdir) — PASS reward=1.0 (раньше recovery_blocked:pattern not found в /app). broken-python (WORKDIR=/app) — PASS reward=1.0 (нет регрессии)."
 
-options:
-  - id: P1
-    label: "Dockerfile WORKDIR parse"
-    hint: "Точный: парсить последнюю WORKDIR из Dockerfile задачи. Harbor_run уже парсит Dockerfile. Самый корректный, средняя работа."
-  - id: P2
-    label: "Probe reorder (/workdir first)"
-    hint: "Быстрый: поменять order в probe на [/workdir,/workspace,/root,/app]. Хрупко на custom WORKDIR, но покрывает train (только /workdir,/workspace)."
-  - id: P3
-    label: "Container native WORKDIR (cwd=None)"
-    hint: "Cleanest: использовать container default WORKDIR через cwd=None, MCP binding = task WORKDIR. Требует разделения exec-cwd от MCP-workspace."
+status: done   # P1 implemented and validated
+
+policy_question: ""   # решено: P1
+
+options: []   # убраны — выбор сделан
 
 references:
   - VSM-036   # исходный WORKDIR fix — добавил probe, но /app-first регрессия (этот issue)
