@@ -77,9 +77,44 @@ acceptance:
   - "pass_rate на следующем полном батче растёт (ожидание ~50%+ vs 9.5% baseline, по данным 67% success когда goose работает)."
   - "Отложено (SECONDARY): s1_control различает 'no_attempt' — это proposal C, не в этом цикле."
 
-decision: "N+A' (network retry + permanent observability). РЕАЛИЗОВАНО 2026-07-16 в ветке vsm034-diag. Retry в _run_goose_subagent (max_attempts=2, backoff=4s, _is_network_failure classifier), _diag_goose permanent logging, planner_source observability. Валидировано на 3 канарейках: db-migration PASS (was FAIL), jsonl-aggregator goose (was surrender), floor-plan retry events confirmed. SECONDARY-1 (R: search_pattern) и SECONDARY-2 (C: no_attempt verdict) отложены — проявляются только после N, не приоритет."
+decision: "N+A' (network retry + permanent observability). РЕАЛИЗОВАНО 2026-07-16 в ветке vsm034-diag. Retry в _run_goose_subagent (max_attempts=2, backoff=4s, _is_network_failure classifier), _diag_goose permanent logging, planner_source observability. Валидировано на 3 канарейках: db-migration PASS (was FAIL), jsonl-aggregator goose (was surrender), floor-plan retry events confirmed. SECONDARY-1 (R) и SECONDARY-2 (C) — РЕАЛИЗОВАНЫ в ветке vsm034-secondary, см. SECONDARY_STATUS ниже."
 
-needs_human_decision: false   # РЕШЕНО: N+A' реализован и валидирован (2026-07-16)
+needs_human_decision: false   # РЕШЕНО: N+A' + R+C реализованы и валидированы (2026-07-16)
+
+# ── SECONDARY STATUS (2026-07-16, branch vsm034-secondary, merged after N+A') ──
+#
+# R (search_pattern extraction) — РЕАЛИЗОВАН, ВАЛИДИРОВАН:
+#   relocalize.py: _derive_search_pattern() парсит failure_observations (regex
+#   для "can't open file 'X'", "No module named X", bare-paths). apply() теперь
+#   fallback'ает на extraction если ctx.extra пуст (orchestrator не populate'ит).
+#   ВАЛИДАЦИЯ (csv-json-jsonl-merger): terminated_by изменился с
+#   "recovery_blocked:missing search_pattern" → "recovery_blocked:pattern
+#   'do_merge.py' not found in /app". R-фикс сработал — теперь доходит до grep.
+#   РАСКРЫТ СЛЕДУЮЩИЙ СЛОЙ: goose-planner создал fs.write для do_merge.py, но
+#   файла нет в workspace — продукт создаёт артефакт не там/не полностью. Это
+#   отдельная продуктовая проблема (TERTIARY), не recovery-mechanics.
+#
+# C (false PASS на empty test collection) — РЕАЛИЗОВАН, scope сужен:
+#   triad_solver.py:421 — _default_test_controller: добавлены empty-collection
+#   маркеры ("collected 0", "no tests ran", "0 selected", "0 items", ...).
+#   ВАЛИДАЦИЯ (game-of-stones): в этот раз сработал GOOSE test-controller (не
+#   rule-based), который тоже дал false-PASS ("passes all three failure
+#   criteria", "collected 0 items" в reasoning). C-фикс валиден для rule-based
+#   fallback path (сработает при goose network-fail), но НЕ покрывает
+#   goose-test-controller LLM-judgment. Отдельный candidate: goose-test-controller
+#   prompt needs anti-empty-collection guidance (TERTIARY).
+#
+# S (reward.txt corruption observability) — РЕАЛИЗОВАН (observability only):
+#   harbor_bridge.py:_parse_reward — при ValueError (corrupted reward.txt)
+#   теперь print предупреждение в stderr (раньше silent fallback маскировал
+#   corruption). Source-фикс отложен: воспроизведения corruption в workspace
+#   нет (изначальный grep был артефактом cat *). Observability поймает corruption
+#   в следующем eval-батче если он повторится.
+#
+# Файлы (branch vsm034-secondary):
+#   ../src/recovery_policies/relocalize.py (+44) — R
+#   ../src/runtime/triad_solver.py (+13) — C
+#   vsmlite-tb/eval/harbor_bridge.py (+16) — S (observability)
 
 # ── DIAGNOSTIC FINDINGS (2026-07-16, branch vsm034-diag) ──
 # Гипотеза "product surrender" ОПРОВЕРГНУТА инструментировкой. Root cause =

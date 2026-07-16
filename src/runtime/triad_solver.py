@@ -418,13 +418,22 @@ def _default_test_controller(
         test_obs = trace[-1].observation or ""
 
     obs_lower = test_obs.lower()
-    failed = any(kw in obs_lower for kw in ["error", "traceback", "failed", "exception", "module not found"])
+    failed = any(kw in obs_lower for kw in [
+        "error", "traceback", "failed", "exception", "module not found",
+        # VSM-034 SECONDARY-2: "collected 0 items" / "no tests ran" is NOT a pass —
+        # it means the solver produced nothing testable. Without these markers an
+        # empty workspace passes the controller and masks a surrender (game-of-stones,
+        # git-repo-forensics: verdict=pass but TB reward=0). These specific phrases
+        # cannot match a real passing run ("1 item"/"2 items" don't contain "0 ").
+        "collected 0", "no tests ran", "no tests collected", "0 selected",
+        "0 items", "0 errors", "cannot collect",
+    ])
 
     if not failed:
         return ControlResult(
             verdict=ControlVerdict.PASS, test_output=test_obs,
             checkpoint=checkpoint, revert_count=revert_count,
-            reason="no error keywords in test output",
+            reason="no error keywords and non-empty test collection in output",
         )
 
     # Failed — decide revert.
