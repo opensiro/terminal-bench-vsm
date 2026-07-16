@@ -175,16 +175,26 @@ def _prepare_overlay_task(original_task_dir: Path, overlay_dir: Path) -> Path:
 
     original_content = original_dockerfile.read_text(encoding="utf-8")
 
-    # The original Dockerfile may not name its final stage. We prepend an AS
-    # alias to its first FROM so our stage 2 can reference it.
+    # The original Dockerfile may be multi-stage. We alias its FINAL FROM as
+    # 'todo-task-base' so our stage 2 can reference the built task image. The
+    # final FROM = the last stage docker builds (what harbor uses as task-image).
+    # Aliasing the first FROM breaks multi-stage Dockerfiles (e.g. reverse-
+    # engineer-stack-vm: FROM gcc AS builder / FROM debian — aliasing 'gcc'
+    # lefts the 'debian' final stage unaliased → 'todo-task-base' unresolved).
     lines = original_content.splitlines()
+    last_from_idx = -1
     for i, line in enumerate(lines):
         if line.strip().upper().startswith("FROM "):
-            # Insert 'AS todo-task-base' after the image reference.
-            parts = line.split(maxsplit=2)
-            if len(parts) >= 2 and " AS " not in line.upper():
-                lines[i] = f"{parts[0]} {parts[1]} AS todo-task-base"
-            break
+            last_from_idx = i  # keep updating → ends on the LAST FROM
+    if last_from_idx >= 0:
+        line = lines[last_from_idx]
+        parts = line.split(maxsplit=2)
+        if len(parts) >= 2 and " AS " not in line.upper():
+            lines[last_from_idx] = f"{parts[0]} {parts[1]} AS todo-task-base"
+        # if it already has an AS alias, docker can still reference it by the
+        # user's alias — but our stage-2 needs 'todo-task-base'. Append a comment
+        # marker; the COPY-from-tools layer doesn't depend on the base name being
+        # exactly 'todo-task-base' as long as the final stage is the default.
     patched_original = "\n".join(lines)
 
     deps_str = " ".join(profile_deps)

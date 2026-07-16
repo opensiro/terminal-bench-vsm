@@ -1,13 +1,13 @@
 window.VSM_DATA = {
-  "generated": "2026-07-16T00:09:12",
+  "generated": "2026-07-16T06:33:52",
   "project": "vsmlite-template",
   "operational_mode": "normal",
   "systems": {
     "S1": {
       "name": "synthesis-operator",
       "health": "active",
-      "summary": "cycle #2; orchestrating child maturation",
-      "current_task": "A(t)=0.475 (SEMI-AUTONOMOUS)"
+      "summary": "cycle #8; orchestrating child maturation",
+      "current_task": "A(t)=0.175 (DEPENDENT)"
     },
     "S2": {
       "name": "s2-coordinator",
@@ -17,8 +17,8 @@ window.VSM_DATA = {
     },
     "S3": {
       "name": "s3-optimizer",
-      "health": "healthy",
-      "summary": "A(t)=0.475 verdict=SEMI-AUTONOMOUS",
+      "health": "warn",
+      "summary": "A(t)=0.175 verdict=DEPENDENT",
       "current_task": "op signs: 1/4 meet"
     },
     "S3*": {
@@ -42,7 +42,7 @@ window.VSM_DATA = {
   },
   "units": [],
   "metrics": {
-    "autonomy_score": 0.475,
+    "autonomy_score": 0.175,
     "maturation_phase": "Phase 4",
     "coverage_ratio": 0.0,
     "validate_pass_rate": null,
@@ -62,31 +62,31 @@ window.VSM_DATA = {
     "s5_intervention_count": 0,
     "s5_intervention_cycles": 0,
     "intervention_share": 0.0,
-    "eval_pass_rate": 1.0
+    "eval_pass_rate": 0.0
   },
   "eval": {
     "dataset": "open-thoughts/OpenThoughts-TB-dev-v2",
     "harness": "claude-code",
-    "generated": "2026-07-15",
+    "generated": "2026-07-16",
     "summary": {
       "total": 1,
-      "passed": 1,
+      "passed": 0,
       "failed": 0,
-      "error": 0,
-      "pass_rate": 1.0
+      "error": 1,
+      "pass_rate": 0.0
     },
     "by_difficulty": {
-      "easy": {
+      "medium": {
         "total": 1,
-        "passed": 1,
-        "pass_rate": 1.0
+        "passed": 0,
+        "pass_rate": 0.0
       }
     },
     "by_category": {
-      "file-operations": {
+      "scientific-computing": {
         "total": 1,
-        "passed": 1,
-        "pass_rate": 1.0
+        "passed": 0,
+        "pass_rate": 0.0
       }
     },
     "trend": {
@@ -95,135 +95,33 @@ window.VSM_DATA = {
       "delta": 0.0,
       "direction": "none"
     },
-    "history": [],
+    "history": [
+      {
+        "date": "2026-07-16",
+        "profile": "train",
+        "pass_rate": 0.0,
+        "total": 1,
+        "passed": 0,
+        "failed": 0,
+        "error": 1,
+        "harness": "claude-code",
+        "by_difficulty": {
+          "medium": 0.0
+        }
+      }
+    ],
     "runs": [
       {
-        "trial_name": "torch-pipeline-parallelism__RV35bKQ",
-        "task_id": "task",
-        "status": "failed",
-        "verdict": "task_failed",
-        "reward": 0.0,
-        "terminated_by": "no_observations",
-        "attempts": 1,
-        "started_at": "2026-07-15T20:44:18.314573Z",
-        "finished_at": "2026-07-15T20:48:01.522862Z",
-        "duration_sec": 223,
-        "tokens": {
-          "input": null,
-          "cache": null,
-          "output": null
-        },
-        "cost_usd": null,
-        "config": {
-          "adapter": "eval.harbor_adapter:ProductAdapter",
-          "adapter_name": "vsm-product",
-          "adapter_version": "0.1.0",
-          "model_name": null,
-          "timeout_multiplier": 1.0,
-          "agent_timeout_multiplier": null,
-          "verifier_timeout_multiplier": null,
-          "environment_type": "docker",
-          "install_only": false
-        }
-      },
-      {
-        "trial_name": "constraints-scheduling__2SXTCbE",
-        "task_id": "task",
-        "status": "passed",
-        "verdict": "task_resolved",
-        "reward": 1.0,
-        "terminated_by": "task_resolved",
-        "attempts": 1,
-        "started_at": "2026-07-15T20:38:24.849837Z",
-        "finished_at": "2026-07-15T20:44:15.859864Z",
-        "duration_sec": 351,
-        "tokens": {
-          "input": null,
-          "cache": null,
-          "output": null
-        },
-        "cost_usd": null,
-        "config": {
-          "adapter": "eval.harbor_adapter:ProductAdapter",
-          "adapter_name": "vsm-product",
-          "adapter_version": "0.1.0",
-          "model_name": null,
-          "timeout_multiplier": 1.0,
-          "agent_timeout_multiplier": null,
-          "verifier_timeout_multiplier": null,
-          "environment_type": "docker",
-          "install_only": false
-        }
-      },
-      {
-        "trial_name": "build-cython-ext__MFPs87i",
-        "task_id": "task",
-        "status": "failed",
-        "verdict": "task_failed",
-        "reward": 0.0,
-        "terminated_by": "no_observations",
-        "attempts": 1,
-        "started_at": "2026-07-15T20:35:41.616853Z",
-        "finished_at": "2026-07-15T20:38:21.916316Z",
-        "duration_sec": 160,
-        "tokens": {
-          "input": null,
-          "cache": null,
-          "output": null
-        },
-        "cost_usd": null,
-        "config": {
-          "adapter": "eval.harbor_adapter:ProductAdapter",
-          "adapter_name": "vsm-product",
-          "adapter_version": "0.1.0",
-          "model_name": null,
-          "timeout_multiplier": 1.0,
-          "agent_timeout_multiplier": null,
-          "verifier_timeout_multiplier": null,
-          "environment_type": "docker",
-          "install_only": false
-        }
-      },
-      {
-        "trial_name": "constraints-scheduling__L92J8jH",
-        "task_id": "task",
-        "status": "failed",
-        "verdict": "task_resolved",
-        "reward": 0.0,
-        "terminated_by": "task_resolved",
-        "attempts": 1,
-        "started_at": "2026-07-15T17:57:42.959181Z",
-        "finished_at": "2026-07-15T18:01:39.549440Z",
-        "duration_sec": 236,
-        "tokens": {
-          "input": null,
-          "cache": null,
-          "output": null
-        },
-        "cost_usd": null,
-        "config": {
-          "adapter": "eval.harbor_adapter:ProductAdapter",
-          "adapter_name": "vsm-product",
-          "adapter_version": "0.1.0",
-          "model_name": null,
-          "timeout_multiplier": 1.0,
-          "agent_timeout_multiplier": null,
-          "verifier_timeout_multiplier": null,
-          "environment_type": "docker",
-          "install_only": false
-        }
-      },
-      {
-        "trial_name": "torch-pipeline-parallelism__gGKFVJe",
+        "trial_name": "tsl-test-case-generation__SBHLxw8",
         "task_id": "task",
         "status": "failed",
         "verdict": "unknown",
         "reward": 0.0,
         "terminated_by": "infra_error",
         "attempts": 0,
-        "started_at": "2026-07-15T17:29:05.271601Z",
-        "finished_at": "2026-07-15T17:30:02.862204Z",
-        "duration_sec": 57,
+        "started_at": "2026-07-15T23:15:00.988395Z",
+        "finished_at": "2026-07-15T23:19:06.410231Z",
+        "duration_sec": 245,
         "tokens": {
           "input": null,
           "cache": null,
@@ -243,277 +141,16 @@ window.VSM_DATA = {
         }
       },
       {
-        "trial_name": "constraints-scheduling__C4Rkfap",
-        "task_id": "task",
-        "status": "failed",
-        "verdict": "unknown",
-        "reward": 0.0,
-        "terminated_by": "infra_error",
-        "attempts": 0,
-        "started_at": "2026-07-15T17:28:04.480941Z",
-        "finished_at": "2026-07-15T17:29:02.994202Z",
-        "duration_sec": 58,
-        "tokens": {
-          "input": null,
-          "cache": null,
-          "output": null
-        },
-        "cost_usd": null,
-        "config": {
-          "adapter": "eval.harbor_adapter:ProductAdapter",
-          "adapter_name": "vsm-product",
-          "adapter_version": "0.1.0",
-          "model_name": null,
-          "timeout_multiplier": 1.0,
-          "agent_timeout_multiplier": null,
-          "verifier_timeout_multiplier": null,
-          "environment_type": "docker",
-          "install_only": false
-        }
-      },
-      {
-        "trial_name": "build-cython-ext__YQxMoTj",
-        "task_id": "task",
-        "status": "failed",
-        "verdict": "unknown",
-        "reward": 0.0,
-        "terminated_by": "infra_error",
-        "attempts": 0,
-        "started_at": "2026-07-15T17:27:33.527339Z",
-        "finished_at": "2026-07-15T17:28:02.139499Z",
-        "duration_sec": 28,
-        "tokens": {
-          "input": null,
-          "cache": null,
-          "output": null
-        },
-        "cost_usd": null,
-        "config": {
-          "adapter": "eval.harbor_adapter:ProductAdapter",
-          "adapter_name": "vsm-product",
-          "adapter_version": "0.1.0",
-          "model_name": null,
-          "timeout_multiplier": 1.0,
-          "agent_timeout_multiplier": null,
-          "verifier_timeout_multiplier": null,
-          "environment_type": "docker",
-          "install_only": false
-        }
-      },
-      {
-        "trial_name": "torch-pipeline-parallelism__DfM59bv",
-        "task_id": "task",
-        "status": "error",
-        "verdict": "unknown",
-        "reward": null,
-        "terminated_by": "infra_error",
-        "attempts": 0,
-        "started_at": "2026-07-15T17:22:58.872640Z",
-        "finished_at": "2026-07-15T17:38:19.464500Z",
-        "duration_sec": 920,
-        "tokens": {
-          "input": null,
-          "cache": null,
-          "output": null
-        },
-        "cost_usd": null,
-        "config": {
-          "adapter": "eval.harbor_adapter:ProductAdapter",
-          "adapter_name": "vsm-product",
-          "adapter_version": "0.1.0",
-          "model_name": null,
-          "timeout_multiplier": 1.0,
-          "agent_timeout_multiplier": null,
-          "verifier_timeout_multiplier": null,
-          "environment_type": "docker",
-          "install_only": false
-        }
-      },
-      {
-        "trial_name": "constraints-scheduling__z8utw6F",
-        "task_id": "task",
-        "status": "failed",
-        "verdict": "unknown",
-        "reward": 0.0,
-        "terminated_by": "infra_error",
-        "attempts": 0,
-        "started_at": "2026-07-15T17:21:49.358153Z",
-        "finished_at": "2026-07-15T17:22:56.653860Z",
-        "duration_sec": 67,
-        "tokens": {
-          "input": null,
-          "cache": null,
-          "output": null
-        },
-        "cost_usd": null,
-        "config": {
-          "adapter": "eval.harbor_adapter:ProductAdapter",
-          "adapter_name": "vsm-product",
-          "adapter_version": "0.1.0",
-          "model_name": null,
-          "timeout_multiplier": 1.0,
-          "agent_timeout_multiplier": null,
-          "verifier_timeout_multiplier": null,
-          "environment_type": "docker",
-          "install_only": false
-        }
-      },
-      {
-        "trial_name": "build-cython-ext__dA2Nrpn",
-        "task_id": "task",
-        "status": "failed",
-        "verdict": "unknown",
-        "reward": 0.0,
-        "terminated_by": "infra_error",
-        "attempts": 0,
-        "started_at": "2026-07-15T17:21:21.807278Z",
-        "finished_at": "2026-07-15T17:21:47.489342Z",
-        "duration_sec": 25,
-        "tokens": {
-          "input": null,
-          "cache": null,
-          "output": null
-        },
-        "cost_usd": null,
-        "config": {
-          "adapter": "eval.harbor_adapter:ProductAdapter",
-          "adapter_name": "vsm-product",
-          "adapter_version": "0.1.0",
-          "model_name": null,
-          "timeout_multiplier": 1.0,
-          "agent_timeout_multiplier": null,
-          "verifier_timeout_multiplier": null,
-          "environment_type": "docker",
-          "install_only": false
-        }
-      },
-      {
-        "trial_name": "torch-pipeline-parallelism__LJTuNDm",
-        "task_id": "task",
-        "status": "error",
-        "verdict": "unknown",
-        "reward": null,
-        "terminated_by": "infra_error",
-        "attempts": 0,
-        "started_at": "2026-07-15T16:57:04.311706Z",
-        "finished_at": "2026-07-15T17:14:35.394978Z",
-        "duration_sec": 1051,
-        "tokens": {
-          "input": null,
-          "cache": null,
-          "output": null
-        },
-        "cost_usd": null,
-        "config": {
-          "adapter": "eval.harbor_adapter:ProductAdapter",
-          "adapter_name": "vsm-product",
-          "adapter_version": "0.1.0",
-          "model_name": null,
-          "timeout_multiplier": 1.0,
-          "agent_timeout_multiplier": null,
-          "verifier_timeout_multiplier": null,
-          "environment_type": "docker",
-          "install_only": false
-        }
-      },
-      {
-        "trial_name": "constraints-scheduling__qFHRVWi",
-        "task_id": "task",
-        "status": "failed",
-        "verdict": "unknown",
-        "reward": 0.0,
-        "terminated_by": "infra_error",
-        "attempts": 0,
-        "started_at": "2026-07-15T16:54:45.131605Z",
-        "finished_at": "2026-07-15T16:57:02.308476Z",
-        "duration_sec": 137,
-        "tokens": {
-          "input": null,
-          "cache": null,
-          "output": null
-        },
-        "cost_usd": null,
-        "config": {
-          "adapter": "eval.harbor_adapter:ProductAdapter",
-          "adapter_name": "vsm-product",
-          "adapter_version": "0.1.0",
-          "model_name": null,
-          "timeout_multiplier": 1.0,
-          "agent_timeout_multiplier": null,
-          "verifier_timeout_multiplier": null,
-          "environment_type": "docker",
-          "install_only": false
-        }
-      },
-      {
-        "trial_name": "build-cython-ext__rEetMV3",
-        "task_id": "task",
-        "status": "failed",
-        "verdict": "unknown",
-        "reward": 0.0,
-        "terminated_by": "infra_error",
-        "attempts": 0,
-        "started_at": "2026-07-15T16:50:52.667650Z",
-        "finished_at": "2026-07-15T16:54:43.082603Z",
-        "duration_sec": 230,
-        "tokens": {
-          "input": null,
-          "cache": null,
-          "output": null
-        },
-        "cost_usd": null,
-        "config": {
-          "adapter": "eval.harbor_adapter:ProductAdapter",
-          "adapter_name": "vsm-product",
-          "adapter_version": "0.1.0",
-          "model_name": null,
-          "timeout_multiplier": 1.0,
-          "agent_timeout_multiplier": null,
-          "verifier_timeout_multiplier": null,
-          "environment_type": "docker",
-          "install_only": false
-        }
-      },
-      {
-        "trial_name": "jsonl-aggregator__FzUJhfY",
-        "task_id": "task",
-        "status": "passed",
-        "verdict": "task_resolved",
-        "reward": 1.0,
-        "terminated_by": "task_resolved",
-        "attempts": 1,
-        "started_at": "2026-07-15T15:20:45.649285Z",
-        "finished_at": "2026-07-15T15:26:32.141408Z",
-        "duration_sec": 346,
-        "tokens": {
-          "input": null,
-          "cache": null,
-          "output": null
-        },
-        "cost_usd": null,
-        "config": {
-          "adapter": "eval.harbor_adapter:ProductAdapter",
-          "adapter_name": "vsm-product",
-          "adapter_version": "0.1.0",
-          "model_name": null,
-          "timeout_multiplier": 1.0,
-          "agent_timeout_multiplier": null,
-          "verifier_timeout_multiplier": null,
-          "environment_type": "docker",
-          "install_only": false
-        }
-      },
-      {
-        "trial_name": "jsonl-aggregator__euTwcBH",
+        "trial_name": "submission_a63937a5_20251224_152__fhtbvC6",
         "task_id": "task",
         "status": "error",
         "verdict": null,
         "reward": null,
         "terminated_by": null,
         "attempts": null,
-        "started_at": "2026-07-15T15:18:11.887383Z",
-        "finished_at": "2026-07-15T15:18:53.722051Z",
-        "duration_sec": 41,
+        "started_at": "2026-07-15T23:14:48.607105Z",
+        "finished_at": "2026-07-16T03:26:38.490662Z",
+        "duration_sec": 15109,
         "tokens": {
           "input": null,
           "cache": null,
@@ -533,74 +170,16 @@ window.VSM_DATA = {
         }
       },
       {
-        "trial_name": "jsonl-aggregator__5poudkc",
-        "task_id": "task",
-        "status": "failed",
-        "verdict": "task_resolved",
-        "reward": 0.0,
-        "terminated_by": "task_resolved",
-        "attempts": 1,
-        "started_at": "2026-07-15T15:06:56.105230Z",
-        "finished_at": "2026-07-15T15:13:46.561708Z",
-        "duration_sec": 410,
-        "tokens": {
-          "input": null,
-          "cache": null,
-          "output": null
-        },
-        "cost_usd": null,
-        "config": {
-          "adapter": "eval.harbor_adapter:ProductAdapter",
-          "adapter_name": "vsm-product",
-          "adapter_version": "0.1.0",
-          "model_name": null,
-          "timeout_multiplier": 1.0,
-          "agent_timeout_multiplier": null,
-          "verifier_timeout_multiplier": null,
-          "environment_type": "docker",
-          "install_only": false
-        }
-      },
-      {
-        "trial_name": "jsonl-aggregator__zFZNYfL",
-        "task_id": "task",
-        "status": "failed",
-        "verdict": "task_failed",
-        "reward": 0.0,
-        "terminated_by": "no_observations",
-        "attempts": 1,
-        "started_at": "2026-07-15T14:57:05.140694Z",
-        "finished_at": "2026-07-15T15:02:08.405205Z",
-        "duration_sec": 303,
-        "tokens": {
-          "input": null,
-          "cache": null,
-          "output": null
-        },
-        "cost_usd": null,
-        "config": {
-          "adapter": "eval.harbor_adapter:ProductAdapter",
-          "adapter_name": "vsm-product",
-          "adapter_version": "0.1.0",
-          "model_name": null,
-          "timeout_multiplier": 1.0,
-          "agent_timeout_multiplier": null,
-          "verifier_timeout_multiplier": null,
-          "environment_type": "docker",
-          "install_only": false
-        }
-      },
-      {
-        "trial_name": "jsonl-aggregator__qzKysy8",
+        "trial_name": "sign-vector-game__4jsBfxM",
         "task_id": "task",
         "status": "error",
         "verdict": null,
         "reward": null,
         "terminated_by": null,
         "attempts": null,
-        "started_at": "2026-07-15T14:54:31.097971Z",
-        "finished_at": "2026-07-15T14:55:56.380350Z",
-        "duration_sec": 85,
+        "started_at": "2026-07-15T23:12:47.596289Z",
+        "finished_at": "2026-07-15T23:14:46.370110Z",
+        "duration_sec": 118,
         "tokens": {
           "input": null,
           "cache": null,
@@ -620,16 +199,16 @@ window.VSM_DATA = {
         }
       },
       {
-        "trial_name": "jsonl-aggregator__eBNZoeK",
+        "trial_name": "sakila-sqlite-queries__zNJaFKW",
         "task_id": "task",
         "status": "error",
         "verdict": null,
         "reward": null,
         "terminated_by": null,
         "attempts": null,
-        "started_at": "2026-07-15T14:48:05.313989Z",
-        "finished_at": "2026-07-15T14:49:46.762531Z",
-        "duration_sec": 101,
+        "started_at": "2026-07-15T23:12:00.807191Z",
+        "finished_at": "2026-07-15T23:12:45.409434Z",
+        "duration_sec": 44,
         "tokens": {
           "input": null,
           "cache": null,
@@ -649,16 +228,16 @@ window.VSM_DATA = {
         }
       },
       {
-        "trial_name": "jsonl-aggregator__NWG9PD9",
+        "trial_name": "rsa-jwt-token-api-redis-blacklis__JPVHxaZ",
         "task_id": "task",
         "status": "error",
         "verdict": null,
         "reward": null,
         "terminated_by": null,
         "attempts": null,
-        "started_at": "2026-07-15T14:40:29.776296Z",
-        "finished_at": "2026-07-15T14:44:40.063996Z",
-        "duration_sec": 250,
+        "started_at": "2026-07-15T23:11:14.962115Z",
+        "finished_at": "2026-07-15T23:14:59.337488Z",
+        "duration_sec": 224,
         "tokens": {
           "input": null,
           "cache": null,
@@ -678,16 +257,16 @@ window.VSM_DATA = {
         }
       },
       {
-        "trial_name": "jsonl-aggregator__i5wrmdo",
-        "task_id": "jsonl-aggregator",
+        "trial_name": "pgn-chess-repair-puzzles__t8L5JXB",
+        "task_id": "task",
         "status": "error",
         "verdict": null,
         "reward": null,
         "terminated_by": null,
         "attempts": null,
-        "started_at": "2026-07-15T14:10:16.473196Z",
-        "finished_at": "2026-07-15T14:15:18.423352Z",
-        "duration_sec": 301,
+        "started_at": "2026-07-15T23:11:14.930078Z",
+        "finished_at": "2026-07-15T23:11:58.431956Z",
+        "duration_sec": 43,
         "tokens": {
           "input": null,
           "cache": null,
@@ -707,103 +286,16 @@ window.VSM_DATA = {
         }
       },
       {
-        "trial_name": "jsonl-aggregator__Nmo2oR7",
-        "task_id": "jsonl-aggregator",
-        "status": "failed",
-        "verdict": "task_resolved",
-        "reward": 0.0,
-        "terminated_by": "task_resolved",
-        "attempts": 1,
-        "started_at": "2026-07-15T13:51:28.982327Z",
-        "finished_at": "2026-07-15T13:56:55.604193Z",
-        "duration_sec": 326,
-        "tokens": {
-          "input": null,
-          "cache": null,
-          "output": null
-        },
-        "cost_usd": null,
-        "config": {
-          "adapter": "eval.harbor_adapter:ProductAdapter",
-          "adapter_name": "vsm-product",
-          "adapter_version": "0.1.0",
-          "model_name": null,
-          "timeout_multiplier": 1.0,
-          "agent_timeout_multiplier": null,
-          "verifier_timeout_multiplier": null,
-          "environment_type": "docker",
-          "install_only": false
-        }
-      },
-      {
-        "trial_name": "jsonl-aggregator__HQtmvCe",
-        "task_id": "jsonl-aggregator",
-        "status": "failed",
-        "verdict": "task_resolved",
-        "reward": 0.0,
-        "terminated_by": "task_resolved",
-        "attempts": 1,
-        "started_at": "2026-07-15T13:40:51.238582Z",
-        "finished_at": "2026-07-15T13:44:15.086395Z",
-        "duration_sec": 203,
-        "tokens": {
-          "input": null,
-          "cache": null,
-          "output": null
-        },
-        "cost_usd": null,
-        "config": {
-          "adapter": "eval.harbor_adapter:ProductAdapter",
-          "adapter_name": "vsm-product",
-          "adapter_version": "0.1.0",
-          "model_name": null,
-          "timeout_multiplier": 1.0,
-          "agent_timeout_multiplier": null,
-          "verifier_timeout_multiplier": null,
-          "environment_type": "docker",
-          "install_only": false
-        }
-      },
-      {
-        "trial_name": "jsonl-aggregator__LiGdATB",
-        "task_id": "jsonl-aggregator",
-        "status": "failed",
-        "verdict": "task_failed",
-        "reward": 0.0,
-        "terminated_by": "no_observations",
-        "attempts": 1,
-        "started_at": "2026-07-15T13:31:42.633976Z",
-        "finished_at": "2026-07-15T13:37:52.316336Z",
-        "duration_sec": 369,
-        "tokens": {
-          "input": null,
-          "cache": null,
-          "output": null
-        },
-        "cost_usd": null,
-        "config": {
-          "adapter": "eval.harbor_adapter:ProductAdapter",
-          "adapter_name": "vsm-product",
-          "adapter_version": "0.1.0",
-          "model_name": null,
-          "timeout_multiplier": 1.0,
-          "agent_timeout_multiplier": null,
-          "verifier_timeout_multiplier": null,
-          "environment_type": "docker",
-          "install_only": false
-        }
-      },
-      {
-        "trial_name": "log-summary__LbjKRpk",
-        "task_id": "log-summary",
+        "trial_name": "pdf-table-parsing__DetA5KT",
+        "task_id": "task",
         "status": "failed",
         "verdict": "unknown",
         "reward": 0.0,
         "terminated_by": "infra_error",
         "attempts": 0,
-        "started_at": "2026-07-15T13:09:42.020402Z",
-        "finished_at": "2026-07-15T13:14:43.150652Z",
-        "duration_sec": 301,
+        "started_at": "2026-07-15T23:10:17.798474Z",
+        "finished_at": "2026-07-15T23:15:43.051568Z",
+        "duration_sec": 325,
         "tokens": {
           "input": null,
           "cache": null,
@@ -823,73 +315,15 @@ window.VSM_DATA = {
         }
       },
       {
-        "trial_name": "jsonl-aggregator__dKkAb3W",
-        "task_id": "jsonl-aggregator",
-        "status": "failed",
-        "verdict": "task_failed",
-        "reward": 0.0,
-        "terminated_by": "no_observations",
-        "attempts": 1,
-        "started_at": "2026-07-15T13:03:03.281354Z",
-        "finished_at": "2026-07-15T13:09:39.414432Z",
-        "duration_sec": 396,
-        "tokens": {
-          "input": null,
-          "cache": null,
-          "output": null
-        },
-        "cost_usd": null,
-        "config": {
-          "adapter": "eval.harbor_adapter:ProductAdapter",
-          "adapter_name": "vsm-product",
-          "adapter_version": "0.1.0",
-          "model_name": null,
-          "timeout_multiplier": 1.0,
-          "agent_timeout_multiplier": null,
-          "verifier_timeout_multiplier": null,
-          "environment_type": "docker",
-          "install_only": false
-        }
-      },
-      {
-        "trial_name": "log-summary__6ScSYfw",
-        "task_id": "log-summary",
-        "status": "failed",
-        "verdict": "unknown",
-        "reward": 0.0,
-        "terminated_by": "infra_error",
-        "attempts": 0,
-        "started_at": "2026-07-15T12:58:01.064586Z",
-        "finished_at": "2026-07-15T13:04:37.701768Z",
-        "duration_sec": 396,
-        "tokens": {
-          "input": null,
-          "cache": null,
-          "output": null
-        },
-        "cost_usd": null,
-        "config": {
-          "adapter": "eval.harbor_adapter:ProductAdapter",
-          "adapter_name": "vsm-product",
-          "adapter_version": "0.1.0",
-          "model_name": null,
-          "timeout_multiplier": 1.0,
-          "agent_timeout_multiplier": null,
-          "verifier_timeout_multiplier": null,
-          "environment_type": "docker",
-          "install_only": false
-        }
-      },
-      {
-        "trial_name": "schedule-vacation__5YLmLFa",
-        "task_id": "schedule-vacation",
-        "status": "failed",
-        "verdict": "task_resolved",
-        "reward": 0.0,
-        "terminated_by": "task_resolved",
-        "attempts": 1,
-        "started_at": "2026-07-15T12:51:56.580739Z",
-        "finished_at": "2026-07-15T12:57:00.655257Z",
+        "trial_name": "okhttp-trailers-crash__7k7CYPY",
+        "task_id": "task",
+        "status": "error",
+        "verdict": null,
+        "reward": null,
+        "terminated_by": null,
+        "attempts": null,
+        "started_at": "2026-07-15T23:10:07.589992Z",
+        "finished_at": "2026-07-15T23:15:11.817919Z",
         "duration_sec": 304,
         "tokens": {
           "input": null,
@@ -899,8 +333,8 @@ window.VSM_DATA = {
         "cost_usd": null,
         "config": {
           "adapter": "eval.harbor_adapter:ProductAdapter",
-          "adapter_name": "vsm-product",
-          "adapter_version": "0.1.0",
+          "adapter_name": null,
+          "adapter_version": null,
           "model_name": null,
           "timeout_multiplier": 1.0,
           "agent_timeout_multiplier": null,
@@ -910,16 +344,16 @@ window.VSM_DATA = {
         }
       },
       {
-        "trial_name": "jsonl-aggregator__qMf54fm",
-        "task_id": "jsonl-aggregator",
-        "status": "failed",
+        "trial_name": "neutron-submission__TQdm3cJ",
+        "task_id": "task",
+        "status": "error",
         "verdict": "task_failed",
-        "reward": 0.0,
+        "reward": null,
         "terminated_by": "no_observations",
         "attempts": 1,
-        "started_at": "2026-07-15T12:51:16.973569Z",
-        "finished_at": "2026-07-15T12:57:58.535223Z",
-        "duration_sec": 401,
+        "started_at": "2026-07-15T23:08:57.086898Z",
+        "finished_at": "2026-07-16T03:26:49.135661Z",
+        "duration_sec": 15472,
         "tokens": {
           "input": null,
           "cache": null,
@@ -939,45 +373,16 @@ window.VSM_DATA = {
         }
       },
       {
-        "trial_name": "log-summary__BpDJedo",
-        "task_id": "log-summary",
-        "status": "failed",
-        "verdict": "unknown",
-        "reward": 0.0,
-        "terminated_by": "infra_error",
-        "attempts": 0,
-        "started_at": "2026-07-15T12:46:55.746726Z",
-        "finished_at": "2026-07-15T12:51:54.847658Z",
-        "duration_sec": 299,
-        "tokens": {
-          "input": null,
-          "cache": null,
-          "output": null
-        },
-        "cost_usd": null,
-        "config": {
-          "adapter": "eval.harbor_adapter:ProductAdapter",
-          "adapter_name": "vsm-product",
-          "adapter_version": "0.1.0",
-          "model_name": null,
-          "timeout_multiplier": 1.0,
-          "agent_timeout_multiplier": null,
-          "verifier_timeout_multiplier": null,
-          "environment_type": "docker",
-          "install_only": false
-        }
-      },
-      {
-        "trial_name": "jsonl-aggregator__ShkjUmu",
-        "task_id": "jsonl-aggregator",
+        "trial_name": "log-summary__hyBztm9",
+        "task_id": "task",
         "status": "error",
         "verdict": null,
         "reward": null,
         "terminated_by": null,
         "attempts": null,
-        "started_at": "2026-07-15T12:42:44.967612Z",
-        "finished_at": "2026-07-15T12:46:53.320148Z",
-        "duration_sec": 248,
+        "started_at": "2026-07-15T23:05:46.138335Z",
+        "finished_at": "2026-07-15T23:09:42.597152Z",
+        "duration_sec": 236,
         "tokens": {
           "input": null,
           "cache": null,
@@ -997,16 +402,16 @@ window.VSM_DATA = {
         }
       },
       {
-        "trial_name": "schedule-vacation__R43UYf3",
-        "task_id": "schedule-vacation",
+        "trial_name": "grid-pathfinding__A2oVVFA",
+        "task_id": "task",
         "status": "failed",
-        "verdict": "task_resolved",
+        "verdict": "unknown",
         "reward": 0.0,
-        "terminated_by": "task_resolved",
-        "attempts": 1,
-        "started_at": "2026-07-15T12:39:34.264733Z",
-        "finished_at": "2026-07-15T12:44:45.600117Z",
-        "duration_sec": 311,
+        "terminated_by": "infra_error",
+        "attempts": 0,
+        "started_at": "2026-07-15T23:04:52.641791Z",
+        "finished_at": "2026-07-15T23:11:12.964105Z",
+        "duration_sec": 380,
         "tokens": {
           "input": null,
           "cache": null,
@@ -1026,15 +431,856 @@ window.VSM_DATA = {
         }
       },
       {
-        "trial_name": "log-summary__MYhbTpT",
-        "task_id": "log-summary",
+        "trial_name": "application-debug__deRaHpg",
+        "task_id": "task",
+        "status": "failed",
+        "verdict": "task_resolved",
+        "reward": 0.0,
+        "terminated_by": "task_resolved",
+        "attempts": 1,
+        "started_at": "2026-07-15T23:04:52.548193Z",
+        "finished_at": "2026-07-15T23:10:16.621828Z",
+        "duration_sec": 324,
+        "tokens": {
+          "input": null,
+          "cache": null,
+          "output": null
+        },
+        "cost_usd": null,
+        "config": {
+          "adapter": "eval.harbor_adapter:ProductAdapter",
+          "adapter_name": "vsm-product",
+          "adapter_version": "0.1.0",
+          "model_name": null,
+          "timeout_multiplier": 1.0,
+          "agent_timeout_multiplier": null,
+          "verifier_timeout_multiplier": null,
+          "environment_type": "docker",
+          "install_only": false
+        }
+      },
+      {
+        "trial_name": "anomaly-detection-ranking__JmwMf2Z",
+        "task_id": "task",
+        "status": "error",
+        "verdict": null,
+        "reward": null,
+        "terminated_by": null,
+        "attempts": null,
+        "started_at": "2026-07-15T23:04:52.071221Z",
+        "finished_at": "2026-07-15T23:05:43.954707Z",
+        "duration_sec": 51,
+        "tokens": {
+          "input": null,
+          "cache": null,
+          "output": null
+        },
+        "cost_usd": null,
+        "config": {
+          "adapter": "eval.harbor_adapter:ProductAdapter",
+          "adapter_name": null,
+          "adapter_version": null,
+          "model_name": null,
+          "timeout_multiplier": 1.0,
+          "agent_timeout_multiplier": null,
+          "verifier_timeout_multiplier": null,
+          "environment_type": "docker",
+          "install_only": false
+        }
+      },
+      {
+        "trial_name": "bracket-sequence-restoration__hCMSi5f",
+        "task_id": "task",
         "status": "failed",
         "verdict": "unknown",
         "reward": 0.0,
         "terminated_by": "infra_error",
         "attempts": 0,
-        "started_at": "2026-07-15T12:35:47.081457Z",
-        "finished_at": "2026-07-15T12:39:32.347231Z",
+        "started_at": "2026-07-15T23:04:51.755451Z",
+        "finished_at": "2026-07-15T23:11:12.771998Z",
+        "duration_sec": 381,
+        "tokens": {
+          "input": null,
+          "cache": null,
+          "output": null
+        },
+        "cost_usd": null,
+        "config": {
+          "adapter": "eval.harbor_adapter:ProductAdapter",
+          "adapter_name": "vsm-product",
+          "adapter_version": "0.1.0",
+          "model_name": null,
+          "timeout_multiplier": 1.0,
+          "agent_timeout_multiplier": null,
+          "verifier_timeout_multiplier": null,
+          "environment_type": "docker",
+          "install_only": false
+        }
+      },
+      {
+        "trial_name": "chained-forensic-extraction_2026__sfS4xwQ",
+        "task_id": "task",
+        "status": "error",
+        "verdict": null,
+        "reward": null,
+        "terminated_by": null,
+        "attempts": null,
+        "started_at": "2026-07-15T23:04:51.673392Z",
+        "finished_at": "2026-07-15T23:08:54.772225Z",
+        "duration_sec": 243,
+        "tokens": {
+          "input": null,
+          "cache": null,
+          "output": null
+        },
+        "cost_usd": null,
+        "config": {
+          "adapter": "eval.harbor_adapter:ProductAdapter",
+          "adapter_name": null,
+          "adapter_version": null,
+          "model_name": null,
+          "timeout_multiplier": 1.0,
+          "agent_timeout_multiplier": null,
+          "verifier_timeout_multiplier": null,
+          "environment_type": "docker",
+          "install_only": false
+        }
+      },
+      {
+        "trial_name": "task-xxe-exploit__X3PgMHo",
+        "task_id": "task",
+        "status": "error",
+        "verdict": "task_resolved",
+        "reward": null,
+        "terminated_by": "task_resolved",
+        "attempts": 1,
+        "started_at": "2026-07-15T22:55:15.282753Z",
+        "finished_at": "2026-07-15T22:58:41.151557Z",
+        "duration_sec": 205,
+        "tokens": {
+          "input": null,
+          "cache": null,
+          "output": null
+        },
+        "cost_usd": null,
+        "config": {
+          "adapter": "eval.harbor_adapter:ProductAdapter",
+          "adapter_name": "vsm-product",
+          "adapter_version": "0.1.0",
+          "model_name": null,
+          "timeout_multiplier": 1.0,
+          "agent_timeout_multiplier": null,
+          "verifier_timeout_multiplier": null,
+          "environment_type": "docker",
+          "install_only": false
+        }
+      },
+      {
+        "trial_name": "simple-database-query-tool__7R35CaF",
+        "task_id": "task",
+        "status": "failed",
+        "verdict": "unknown",
+        "reward": 0.0,
+        "terminated_by": "infra_error",
+        "attempts": 0,
+        "started_at": "2026-07-15T22:53:39.093270Z",
+        "finished_at": "2026-07-15T23:00:01.820454Z",
+        "duration_sec": 382,
+        "tokens": {
+          "input": null,
+          "cache": null,
+          "output": null
+        },
+        "cost_usd": null,
+        "config": {
+          "adapter": "eval.harbor_adapter:ProductAdapter",
+          "adapter_name": "vsm-product",
+          "adapter_version": "0.1.0",
+          "model_name": null,
+          "timeout_multiplier": 1.0,
+          "agent_timeout_multiplier": null,
+          "verifier_timeout_multiplier": null,
+          "environment_type": "docker",
+          "install_only": false
+        }
+      },
+      {
+        "trial_name": "security-breach-incident-respons__7bb4WTT",
+        "task_id": "task",
+        "status": "failed",
+        "verdict": "unknown",
+        "reward": 0.0,
+        "terminated_by": "infra_error",
+        "attempts": 0,
+        "started_at": "2026-07-15T22:53:09.281131Z",
+        "finished_at": "2026-07-15T23:00:02.728434Z",
+        "duration_sec": 413,
+        "tokens": {
+          "input": null,
+          "cache": null,
+          "output": null
+        },
+        "cost_usd": null,
+        "config": {
+          "adapter": "eval.harbor_adapter:ProductAdapter",
+          "adapter_name": "vsm-product",
+          "adapter_version": "0.1.0",
+          "model_name": null,
+          "timeout_multiplier": 1.0,
+          "agent_timeout_multiplier": null,
+          "verifier_timeout_multiplier": null,
+          "environment_type": "docker",
+          "install_only": false
+        }
+      },
+      {
+        "trial_name": "reverse-engineer-stack-vm__kABTWST",
+        "task_id": "task",
+        "status": "error",
+        "verdict": null,
+        "reward": null,
+        "terminated_by": null,
+        "attempts": null,
+        "started_at": "2026-07-15T22:53:03.625944Z",
+        "finished_at": "2026-07-15T22:53:06.896968Z",
+        "duration_sec": 3,
+        "tokens": {
+          "input": null,
+          "cache": null,
+          "output": null
+        },
+        "cost_usd": null,
+        "config": {
+          "adapter": "eval.harbor_adapter:ProductAdapter",
+          "adapter_name": null,
+          "adapter_version": null,
+          "model_name": null,
+          "timeout_multiplier": 1.0,
+          "agent_timeout_multiplier": null,
+          "verifier_timeout_multiplier": null,
+          "environment_type": "docker",
+          "install_only": false
+        }
+      },
+      {
+        "trial_name": "publisher-market-analysis__befxLiE",
+        "task_id": "task",
+        "status": "failed",
+        "verdict": "unknown",
+        "reward": 0.0,
+        "terminated_by": "infra_error",
+        "attempts": 0,
+        "started_at": "2026-07-15T22:52:40.540594Z",
+        "finished_at": "2026-07-15T22:53:01.278445Z",
+        "duration_sec": 20,
+        "tokens": {
+          "input": null,
+          "cache": null,
+          "output": null
+        },
+        "cost_usd": null,
+        "config": {
+          "adapter": "eval.harbor_adapter:ProductAdapter",
+          "adapter_name": "vsm-product",
+          "adapter_version": "0.1.0",
+          "model_name": null,
+          "timeout_multiplier": 1.0,
+          "agent_timeout_multiplier": null,
+          "verifier_timeout_multiplier": null,
+          "environment_type": "docker",
+          "install_only": false
+        }
+      },
+      {
+        "trial_name": "multi-labeller__jzF5HuV",
+        "task_id": "task",
+        "status": "failed",
+        "verdict": "task_failed",
+        "reward": 0.0,
+        "terminated_by": "no_observations",
+        "attempts": 1,
+        "started_at": "2026-07-15T22:52:22.104536Z",
+        "finished_at": "2026-07-15T23:04:35.776506Z",
+        "duration_sec": 733,
+        "tokens": {
+          "input": null,
+          "cache": null,
+          "output": null
+        },
+        "cost_usd": null,
+        "config": {
+          "adapter": "eval.harbor_adapter:ProductAdapter",
+          "adapter_name": "vsm-product",
+          "adapter_version": "0.1.0",
+          "model_name": null,
+          "timeout_multiplier": 1.0,
+          "agent_timeout_multiplier": null,
+          "verifier_timeout_multiplier": null,
+          "environment_type": "docker",
+          "install_only": false
+        }
+      },
+      {
+        "trial_name": "git-repo-forensics__rz7p4Zu",
+        "task_id": "task",
+        "status": "failed",
+        "verdict": "unknown",
+        "reward": 0.0,
+        "terminated_by": "infra_error",
+        "attempts": 0,
+        "started_at": "2026-07-15T22:51:59.913885Z",
+        "finished_at": "2026-07-15T22:52:20.652517Z",
+        "duration_sec": 20,
+        "tokens": {
+          "input": null,
+          "cache": null,
+          "output": null
+        },
+        "cost_usd": null,
+        "config": {
+          "adapter": "eval.harbor_adapter:ProductAdapter",
+          "adapter_name": "vsm-product",
+          "adapter_version": "0.1.0",
+          "model_name": null,
+          "timeout_multiplier": 1.0,
+          "agent_timeout_multiplier": null,
+          "verifier_timeout_multiplier": null,
+          "environment_type": "docker",
+          "install_only": false
+        }
+      },
+      {
+        "trial_name": "fix-js-network-controller__TrHfpAe",
+        "task_id": "task",
+        "status": "error",
+        "verdict": null,
+        "reward": null,
+        "terminated_by": null,
+        "attempts": null,
+        "started_at": "2026-07-15T22:51:44.506973Z",
+        "finished_at": "2026-07-15T22:56:36.827455Z",
+        "duration_sec": 292,
+        "tokens": {
+          "input": null,
+          "cache": null,
+          "output": null
+        },
+        "cost_usd": null,
+        "config": {
+          "adapter": "eval.harbor_adapter:ProductAdapter",
+          "adapter_name": null,
+          "adapter_version": null,
+          "model_name": null,
+          "timeout_multiplier": 1.0,
+          "agent_timeout_multiplier": null,
+          "verifier_timeout_multiplier": null,
+          "environment_type": "docker",
+          "install_only": false
+        }
+      },
+      {
+        "trial_name": "distributed-test-execution-sched__34SAGby",
+        "task_id": "task",
+        "status": "failed",
+        "verdict": "unknown",
+        "reward": 0.0,
+        "terminated_by": "infra_error",
+        "attempts": 0,
+        "started_at": "2026-07-15T22:51:01.410188Z",
+        "finished_at": "2026-07-15T22:51:57.548190Z",
+        "duration_sec": 56,
+        "tokens": {
+          "input": null,
+          "cache": null,
+          "output": null
+        },
+        "cost_usd": null,
+        "config": {
+          "adapter": "eval.harbor_adapter:ProductAdapter",
+          "adapter_name": "vsm-product",
+          "adapter_version": "0.1.0",
+          "model_name": null,
+          "timeout_multiplier": 1.0,
+          "agent_timeout_multiplier": null,
+          "verifier_timeout_multiplier": null,
+          "environment_type": "docker",
+          "install_only": false
+        }
+      },
+      {
+        "trial_name": "california-housing-api__SieB3Yn",
+        "task_id": "task",
+        "status": "failed",
+        "verdict": "task_failed",
+        "reward": 0.0,
+        "terminated_by": "no_observations",
+        "attempts": 1,
+        "started_at": "2026-07-15T22:48:21.983407Z",
+        "finished_at": "2026-07-15T22:53:36.777217Z",
+        "duration_sec": 314,
+        "tokens": {
+          "input": null,
+          "cache": null,
+          "output": null
+        },
+        "cost_usd": null,
+        "config": {
+          "adapter": "eval.harbor_adapter:ProductAdapter",
+          "adapter_name": "vsm-product",
+          "adapter_version": "0.1.0",
+          "model_name": null,
+          "timeout_multiplier": 1.0,
+          "agent_timeout_multiplier": null,
+          "verifier_timeout_multiplier": null,
+          "environment_type": "docker",
+          "install_only": false
+        }
+      },
+      {
+        "trial_name": "api-endpoint-permission-canonica__QRRx6N6",
+        "task_id": "task",
+        "status": "failed",
+        "verdict": "task_failed",
+        "reward": 0.0,
+        "terminated_by": "no_observations",
+        "attempts": 1,
+        "started_at": "2026-07-15T22:47:59.767827Z",
+        "finished_at": "2026-07-15T22:51:42.134922Z",
+        "duration_sec": 222,
+        "tokens": {
+          "input": null,
+          "cache": null,
+          "output": null
+        },
+        "cost_usd": null,
+        "config": {
+          "adapter": "eval.harbor_adapter:ProductAdapter",
+          "adapter_name": "vsm-product",
+          "adapter_version": "0.1.0",
+          "model_name": null,
+          "timeout_multiplier": 1.0,
+          "agent_timeout_multiplier": null,
+          "verifier_timeout_multiplier": null,
+          "environment_type": "docker",
+          "install_only": false
+        }
+      },
+      {
+        "trial_name": "breast-cancer-mlflow__EwKvLYL",
+        "task_id": "task",
+        "status": "failed",
+        "verdict": "task_failed",
+        "reward": 0.0,
+        "terminated_by": "no_observations",
+        "attempts": 1,
+        "started_at": "2026-07-15T22:47:59.766409Z",
+        "finished_at": "2026-07-15T22:55:13.015540Z",
+        "duration_sec": 433,
+        "tokens": {
+          "input": null,
+          "cache": null,
+          "output": null
+        },
+        "cost_usd": null,
+        "config": {
+          "adapter": "eval.harbor_adapter:ProductAdapter",
+          "adapter_name": "vsm-product",
+          "adapter_version": "0.1.0",
+          "model_name": null,
+          "timeout_multiplier": 1.0,
+          "agent_timeout_multiplier": null,
+          "verifier_timeout_multiplier": null,
+          "environment_type": "docker",
+          "install_only": false
+        }
+      },
+      {
+        "trial_name": "application-debug__PvYwFv9",
+        "task_id": "task",
+        "status": "failed",
+        "verdict": "task_failed",
+        "reward": 0.0,
+        "terminated_by": "no_observations",
+        "attempts": 1,
+        "started_at": "2026-07-15T22:47:59.766321Z",
+        "finished_at": "2026-07-15T22:52:38.069457Z",
+        "duration_sec": 278,
+        "tokens": {
+          "input": null,
+          "cache": null,
+          "output": null
+        },
+        "cost_usd": null,
+        "config": {
+          "adapter": "eval.harbor_adapter:ProductAdapter",
+          "adapter_name": "vsm-product",
+          "adapter_version": "0.1.0",
+          "model_name": null,
+          "timeout_multiplier": 1.0,
+          "agent_timeout_multiplier": null,
+          "verifier_timeout_multiplier": null,
+          "environment_type": "docker",
+          "install_only": false
+        }
+      },
+      {
+        "trial_name": "book-portfolio-analysis__6S4L5hi",
+        "task_id": "task",
+        "status": "failed",
+        "verdict": "unknown",
+        "reward": 0.0,
+        "terminated_by": "infra_error",
+        "attempts": 0,
+        "started_at": "2026-07-15T22:47:59.766299Z",
+        "finished_at": "2026-07-15T22:48:19.835848Z",
+        "duration_sec": 20,
+        "tokens": {
+          "input": null,
+          "cache": null,
+          "output": null
+        },
+        "cost_usd": null,
+        "config": {
+          "adapter": "eval.harbor_adapter:ProductAdapter",
+          "adapter_name": "vsm-product",
+          "adapter_version": "0.1.0",
+          "model_name": null,
+          "timeout_multiplier": 1.0,
+          "agent_timeout_multiplier": null,
+          "verifier_timeout_multiplier": null,
+          "environment_type": "docker",
+          "install_only": false
+        }
+      },
+      {
+        "trial_name": "broken-python__daxA3iP",
+        "task_id": "task",
+        "status": "passed",
+        "verdict": "task_failed",
+        "reward": 1.0,
+        "terminated_by": "no_observations",
+        "attempts": 1,
+        "started_at": "2026-07-15T22:47:59.766085Z",
+        "finished_at": "2026-07-15T22:50:58.996692Z",
+        "duration_sec": 179,
+        "tokens": {
+          "input": null,
+          "cache": null,
+          "output": null
+        },
+        "cost_usd": null,
+        "config": {
+          "adapter": "eval.harbor_adapter:ProductAdapter",
+          "adapter_name": "vsm-product",
+          "adapter_version": "0.1.0",
+          "model_name": null,
+          "timeout_multiplier": 1.0,
+          "agent_timeout_multiplier": null,
+          "verifier_timeout_multiplier": null,
+          "environment_type": "docker",
+          "install_only": false
+        }
+      },
+      {
+        "trial_name": "task-xxe-exploit__ze3NLJJ",
+        "task_id": "task",
+        "status": "error",
+        "verdict": null,
+        "reward": null,
+        "terminated_by": null,
+        "attempts": null,
+        "started_at": "2026-07-15T22:41:56.529115Z",
+        "finished_at": "2026-07-15T22:43:54.611340Z",
+        "duration_sec": 118,
+        "tokens": {
+          "input": null,
+          "cache": null,
+          "output": null
+        },
+        "cost_usd": null,
+        "config": {
+          "adapter": "eval.harbor_adapter:ProductAdapter",
+          "adapter_name": null,
+          "adapter_version": null,
+          "model_name": null,
+          "timeout_multiplier": 1.0,
+          "agent_timeout_multiplier": null,
+          "verifier_timeout_multiplier": null,
+          "environment_type": "docker",
+          "install_only": false
+        }
+      },
+      {
+        "trial_name": "simple-database-query-tool__9us8zYc",
+        "task_id": "task",
+        "status": "error",
+        "verdict": null,
+        "reward": null,
+        "terminated_by": null,
+        "attempts": null,
+        "started_at": "2026-07-15T22:41:52.943751Z",
+        "finished_at": "2026-07-15T22:42:05.098844Z",
+        "duration_sec": 12,
+        "tokens": {
+          "input": null,
+          "cache": null,
+          "output": null
+        },
+        "cost_usd": null,
+        "config": {
+          "adapter": "eval.harbor_adapter:ProductAdapter",
+          "adapter_name": null,
+          "adapter_version": null,
+          "model_name": null,
+          "timeout_multiplier": 1.0,
+          "agent_timeout_multiplier": null,
+          "verifier_timeout_multiplier": null,
+          "environment_type": "docker",
+          "install_only": false
+        }
+      },
+      {
+        "trial_name": "security-breach-incident-respons__DvgqVmD",
+        "task_id": "task",
+        "status": "error",
+        "verdict": null,
+        "reward": null,
+        "terminated_by": null,
+        "attempts": null,
+        "started_at": "2026-07-15T22:41:42.089850Z",
+        "finished_at": "2026-07-15T22:41:54.256712Z",
+        "duration_sec": 12,
+        "tokens": {
+          "input": null,
+          "cache": null,
+          "output": null
+        },
+        "cost_usd": null,
+        "config": {
+          "adapter": "eval.harbor_adapter:ProductAdapter",
+          "adapter_name": null,
+          "adapter_version": null,
+          "model_name": null,
+          "timeout_multiplier": 1.0,
+          "agent_timeout_multiplier": null,
+          "verifier_timeout_multiplier": null,
+          "environment_type": "docker",
+          "install_only": false
+        }
+      },
+      {
+        "trial_name": "reverse-engineer-stack-vm__TwJ9jCr",
+        "task_id": "task",
+        "status": "error",
+        "verdict": null,
+        "reward": null,
+        "terminated_by": null,
+        "attempts": null,
+        "started_at": "2026-07-15T22:41:28.755793Z",
+        "finished_at": "2026-07-15T22:41:39.893856Z",
+        "duration_sec": 11,
+        "tokens": {
+          "input": null,
+          "cache": null,
+          "output": null
+        },
+        "cost_usd": null,
+        "config": {
+          "adapter": "eval.harbor_adapter:ProductAdapter",
+          "adapter_name": null,
+          "adapter_version": null,
+          "model_name": null,
+          "timeout_multiplier": 1.0,
+          "agent_timeout_multiplier": null,
+          "verifier_timeout_multiplier": null,
+          "environment_type": "docker",
+          "install_only": false
+        }
+      },
+      {
+        "trial_name": "publisher-market-analysis__XVjdbNM",
+        "task_id": "task",
+        "status": "error",
+        "verdict": null,
+        "reward": null,
+        "terminated_by": null,
+        "attempts": null,
+        "started_at": "2026-07-15T22:41:14.443770Z",
+        "finished_at": "2026-07-15T22:41:26.571589Z",
+        "duration_sec": 12,
+        "tokens": {
+          "input": null,
+          "cache": null,
+          "output": null
+        },
+        "cost_usd": null,
+        "config": {
+          "adapter": "eval.harbor_adapter:ProductAdapter",
+          "adapter_name": null,
+          "adapter_version": null,
+          "model_name": null,
+          "timeout_multiplier": 1.0,
+          "agent_timeout_multiplier": null,
+          "verifier_timeout_multiplier": null,
+          "environment_type": "docker",
+          "install_only": false
+        }
+      },
+      {
+        "trial_name": "multi-labeller__geHTdWR",
+        "task_id": "task",
+        "status": "error",
+        "verdict": null,
+        "reward": null,
+        "terminated_by": null,
+        "attempts": null,
+        "started_at": "2026-07-15T22:40:32.077309Z",
+        "finished_at": "2026-07-15T22:41:50.674048Z",
+        "duration_sec": 78,
+        "tokens": {
+          "input": null,
+          "cache": null,
+          "output": null
+        },
+        "cost_usd": null,
+        "config": {
+          "adapter": "eval.harbor_adapter:ProductAdapter",
+          "adapter_name": null,
+          "adapter_version": null,
+          "model_name": null,
+          "timeout_multiplier": 1.0,
+          "agent_timeout_multiplier": null,
+          "verifier_timeout_multiplier": null,
+          "environment_type": "docker",
+          "install_only": false
+        }
+      },
+      {
+        "trial_name": "git-repo-forensics__bAsAxXZ",
+        "task_id": "task",
+        "status": "failed",
+        "verdict": "unknown",
+        "reward": 0.0,
+        "terminated_by": "infra_error",
+        "attempts": 0,
+        "started_at": "2026-07-15T22:40:17.896977Z",
+        "finished_at": "2026-07-15T22:43:44.102486Z",
+        "duration_sec": 206,
+        "tokens": {
+          "input": null,
+          "cache": null,
+          "output": null
+        },
+        "cost_usd": null,
+        "config": {
+          "adapter": "eval.harbor_adapter:ProductAdapter",
+          "adapter_name": "vsm-product",
+          "adapter_version": "0.1.0",
+          "model_name": null,
+          "timeout_multiplier": 1.0,
+          "agent_timeout_multiplier": null,
+          "verifier_timeout_multiplier": null,
+          "environment_type": "docker",
+          "install_only": false
+        }
+      },
+      {
+        "trial_name": "fix-js-network-controller__VGcHwsu",
+        "task_id": "task",
+        "status": "error",
+        "verdict": null,
+        "reward": null,
+        "terminated_by": null,
+        "attempts": null,
+        "started_at": "2026-07-15T22:38:28.643023Z",
+        "finished_at": "2026-07-15T22:43:21.022909Z",
+        "duration_sec": 292,
+        "tokens": {
+          "input": null,
+          "cache": null,
+          "output": null
+        },
+        "cost_usd": null,
+        "config": {
+          "adapter": "eval.harbor_adapter:ProductAdapter",
+          "adapter_name": null,
+          "adapter_version": null,
+          "model_name": null,
+          "timeout_multiplier": 1.0,
+          "agent_timeout_multiplier": null,
+          "verifier_timeout_multiplier": null,
+          "environment_type": "docker",
+          "install_only": false
+        }
+      },
+      {
+        "trial_name": "distributed-test-execution-sched__EtxaSCo",
+        "task_id": "task",
+        "status": "failed",
+        "verdict": "unknown",
+        "reward": 0.0,
+        "terminated_by": "infra_error",
+        "attempts": 0,
+        "started_at": "2026-07-15T22:38:14.177597Z",
+        "finished_at": "2026-07-15T22:40:15.581679Z",
+        "duration_sec": 121,
+        "tokens": {
+          "input": null,
+          "cache": null,
+          "output": null
+        },
+        "cost_usd": null,
+        "config": {
+          "adapter": "eval.harbor_adapter:ProductAdapter",
+          "adapter_name": "vsm-product",
+          "adapter_version": "0.1.0",
+          "model_name": null,
+          "timeout_multiplier": 1.0,
+          "agent_timeout_multiplier": null,
+          "verifier_timeout_multiplier": null,
+          "environment_type": "docker",
+          "install_only": false
+        }
+      },
+      {
+        "trial_name": "california-housing-api__AeeczhS",
+        "task_id": "task",
+        "status": "error",
+        "verdict": null,
+        "reward": null,
+        "terminated_by": null,
+        "attempts": null,
+        "started_at": "2026-07-15T22:37:31.752111Z",
+        "finished_at": "2026-07-15T22:38:26.510666Z",
+        "duration_sec": 54,
+        "tokens": {
+          "input": null,
+          "cache": null,
+          "output": null
+        },
+        "cost_usd": null,
+        "config": {
+          "adapter": "eval.harbor_adapter:ProductAdapter",
+          "adapter_name": null,
+          "adapter_version": null,
+          "model_name": null,
+          "timeout_multiplier": 1.0,
+          "agent_timeout_multiplier": null,
+          "verifier_timeout_multiplier": null,
+          "environment_type": "docker",
+          "install_only": false
+        }
+      },
+      {
+        "trial_name": "book-portfolio-analysis__mp5g7Pw",
+        "task_id": "task",
+        "status": "failed",
+        "verdict": "unknown",
+        "reward": 0.0,
+        "terminated_by": "infra_error",
+        "attempts": 0,
+        "started_at": "2026-07-15T22:33:44.185349Z",
+        "finished_at": "2026-07-15T22:37:29.305804Z",
         "duration_sec": 225,
         "tokens": {
           "input": null,
@@ -1055,74 +1301,16 @@ window.VSM_DATA = {
         }
       },
       {
-        "trial_name": "jsonl-aggregator__EYVaxjH",
-        "task_id": "jsonl-aggregator",
-        "status": "passed",
-        "verdict": "task_resolved",
-        "reward": 1.0,
-        "terminated_by": "task_resolved",
-        "attempts": 1,
-        "started_at": "2026-07-15T12:31:04.799407Z",
-        "finished_at": "2026-07-15T12:35:44.849352Z",
-        "duration_sec": 280,
-        "tokens": {
-          "input": null,
-          "cache": null,
-          "output": null
-        },
-        "cost_usd": null,
-        "config": {
-          "adapter": "eval.harbor_adapter:ProductAdapter",
-          "adapter_name": "vsm-product",
-          "adapter_version": "0.1.0",
-          "model_name": null,
-          "timeout_multiplier": 1.0,
-          "agent_timeout_multiplier": null,
-          "verifier_timeout_multiplier": null,
-          "environment_type": "docker",
-          "install_only": false
-        }
-      },
-      {
-        "trial_name": "jsonl-aggregator__BhAR8cz",
-        "task_id": "jsonl-aggregator",
-        "status": "failed",
-        "verdict": "task_resolved",
-        "reward": 0.0,
-        "terminated_by": "task_resolved",
-        "attempts": 1,
-        "started_at": "2026-07-15T12:26:24.288638Z",
-        "finished_at": "2026-07-15T12:29:17.584101Z",
-        "duration_sec": 173,
-        "tokens": {
-          "input": null,
-          "cache": null,
-          "output": null
-        },
-        "cost_usd": null,
-        "config": {
-          "adapter": "eval.harbor_adapter:ProductAdapter",
-          "adapter_name": "vsm-product",
-          "adapter_version": "0.1.0",
-          "model_name": null,
-          "timeout_multiplier": 1.0,
-          "agent_timeout_multiplier": null,
-          "verifier_timeout_multiplier": null,
-          "environment_type": "docker",
-          "install_only": false
-        }
-      },
-      {
-        "trial_name": "build-merkle-tree-cli-sha512__MNeXTCu",
-        "task_id": "build-merkle-tree-cli-sha512",
+        "trial_name": "breast-cancer-mlflow__qkv8SHD",
+        "task_id": "task",
         "status": "failed",
         "verdict": "task_failed",
         "reward": 0.0,
         "terminated_by": "no_observations",
         "attempts": 1,
-        "started_at": "2026-07-15T12:22:08.138610Z",
-        "finished_at": "2026-07-15T12:28:54.272498Z",
-        "duration_sec": 406,
+        "started_at": "2026-07-15T22:33:44.139813Z",
+        "finished_at": "2026-07-15T22:47:06.571151Z",
+        "duration_sec": 802,
         "tokens": {
           "input": null,
           "cache": null,
@@ -1142,16 +1330,16 @@ window.VSM_DATA = {
         }
       },
       {
-        "trial_name": "schedule-vacation__5vifATX",
-        "task_id": "schedule-vacation",
+        "trial_name": "application-debug__NzfACNf",
+        "task_id": "task",
         "status": "failed",
         "verdict": "task_resolved",
         "reward": 0.0,
         "terminated_by": "task_resolved",
         "attempts": 1,
-        "started_at": "2026-07-15T12:19:11.083174Z",
-        "finished_at": "2026-07-15T12:22:04.983897Z",
-        "duration_sec": 173,
+        "started_at": "2026-07-15T22:33:44.104375Z",
+        "finished_at": "2026-07-15T22:38:11.401862Z",
+        "duration_sec": 267,
         "tokens": {
           "input": null,
           "cache": null,
@@ -1171,103 +1359,16 @@ window.VSM_DATA = {
         }
       },
       {
-        "trial_name": "log-summary__nhLMfWn",
-        "task_id": "log-summary",
+        "trial_name": "api-endpoint-permission-canonica__5pAgACF",
+        "task_id": "task",
         "status": "failed",
-        "verdict": "unknown",
-        "reward": 0.0,
-        "terminated_by": "infra_error",
-        "attempts": 0,
-        "started_at": "2026-07-15T12:15:54.347227Z",
-        "finished_at": "2026-07-15T12:19:07.060097Z",
-        "duration_sec": 192,
-        "tokens": {
-          "input": null,
-          "cache": null,
-          "output": null
-        },
-        "cost_usd": null,
-        "config": {
-          "adapter": "eval.harbor_adapter:ProductAdapter",
-          "adapter_name": "vsm-product",
-          "adapter_version": "0.1.0",
-          "model_name": null,
-          "timeout_multiplier": 1.0,
-          "agent_timeout_multiplier": null,
-          "verifier_timeout_multiplier": null,
-          "environment_type": "docker",
-          "install_only": false
-        }
-      },
-      {
-        "trial_name": "jsonl-aggregator__quS2XPJ",
-        "task_id": "jsonl-aggregator",
-        "status": "failed",
-        "verdict": "task_resolved",
-        "reward": 0.0,
-        "terminated_by": "task_resolved",
-        "attempts": 1,
-        "started_at": "2026-07-15T12:13:51.192890Z",
-        "finished_at": "2026-07-15T12:15:51.860477Z",
-        "duration_sec": 120,
-        "tokens": {
-          "input": null,
-          "cache": null,
-          "output": null
-        },
-        "cost_usd": null,
-        "config": {
-          "adapter": "eval.harbor_adapter:ProductAdapter",
-          "adapter_name": "vsm-product",
-          "adapter_version": "0.1.0",
-          "model_name": null,
-          "timeout_multiplier": 1.0,
-          "agent_timeout_multiplier": null,
-          "verifier_timeout_multiplier": null,
-          "environment_type": "docker",
-          "install_only": false
-        }
-      },
-      {
-        "trial_name": "jsonl-aggregator__2M6oFYm",
-        "task_id": "jsonl-aggregator",
-        "status": "passed",
-        "verdict": "task_resolved",
-        "reward": 1.0,
-        "terminated_by": "task_resolved",
-        "attempts": 1,
-        "started_at": "2026-07-15T11:59:58.417992Z",
-        "finished_at": "2026-07-15T12:06:00.066939Z",
-        "duration_sec": 361,
-        "tokens": {
-          "input": null,
-          "cache": null,
-          "output": null
-        },
-        "cost_usd": null,
-        "config": {
-          "adapter": "eval.harbor_adapter:ProductAdapter",
-          "adapter_name": "vsm-product",
-          "adapter_version": "0.1.0",
-          "model_name": null,
-          "timeout_multiplier": 1.0,
-          "agent_timeout_multiplier": null,
-          "verifier_timeout_multiplier": null,
-          "environment_type": "docker",
-          "install_only": false
-        }
-      },
-      {
-        "trial_name": "jsonl-aggregator__Hk4nGNf",
-        "task_id": "jsonl-aggregator",
-        "status": "failed",
-        "verdict": "unknown",
+        "verdict": "task_failed",
         "reward": 0.0,
         "terminated_by": "no_observations",
         "attempts": 1,
-        "started_at": "2026-07-15T10:35:00.051044Z",
-        "finished_at": "2026-07-15T10:36:09.981509Z",
-        "duration_sec": 69,
+        "started_at": "2026-07-15T22:33:44.091169Z",
+        "finished_at": "2026-07-15T22:41:12.232243Z",
+        "duration_sec": 448,
         "tokens": {
           "input": null,
           "cache": null,
@@ -1287,16 +1388,16 @@ window.VSM_DATA = {
         }
       },
       {
-        "trial_name": "jsonl-aggregator__DdAXQvj",
-        "task_id": "jsonl-aggregator",
-        "status": "failed",
-        "verdict": "unknown",
-        "reward": 0.0,
-        "terminated_by": "infra_error",
-        "attempts": 0,
-        "started_at": "2026-07-15T10:32:05.201241Z",
-        "finished_at": "2026-07-15T10:34:07.895870Z",
-        "duration_sec": 122,
+        "trial_name": "broken-python__wtCweov",
+        "task_id": "task",
+        "status": "passed",
+        "verdict": "task_failed",
+        "reward": 1.0,
+        "terminated_by": "no_observations",
+        "attempts": 1,
+        "started_at": "2026-07-15T22:33:44.064117Z",
+        "finished_at": "2026-07-15T22:40:29.933934Z",
+        "duration_sec": 405,
         "tokens": {
           "input": null,
           "cache": null,
@@ -1316,16 +1417,16 @@ window.VSM_DATA = {
         }
       },
       {
-        "trial_name": "jsonl-aggregator__orckmyP",
-        "task_id": "jsonl-aggregator",
+        "trial_name": "application-debug__TqqMaJk",
+        "task_id": "task",
         "status": "failed",
-        "verdict": "unknown",
+        "verdict": "task_failed",
         "reward": 0.0,
-        "terminated_by": "infra_error",
-        "attempts": 0,
-        "started_at": "2026-07-15T10:27:17.183517Z",
-        "finished_at": "2026-07-15T10:29:20.240503Z",
-        "duration_sec": 123,
+        "terminated_by": "no_observations",
+        "attempts": 1,
+        "started_at": "2026-07-15T22:27:56.399021Z",
+        "finished_at": "2026-07-15T22:32:19.796332Z",
+        "duration_sec": 263,
         "tokens": {
           "input": null,
           "cache": null,
@@ -1336,6 +1437,122 @@ window.VSM_DATA = {
           "adapter": "eval.harbor_adapter:ProductAdapter",
           "adapter_name": "vsm-product",
           "adapter_version": "0.1.0",
+          "model_name": null,
+          "timeout_multiplier": 1.0,
+          "agent_timeout_multiplier": null,
+          "verifier_timeout_multiplier": null,
+          "environment_type": "docker",
+          "install_only": false
+        }
+      },
+      {
+        "trial_name": "task-xxe-exploit__NJfHEJ2",
+        "task_id": "task",
+        "status": "error",
+        "verdict": null,
+        "reward": null,
+        "terminated_by": null,
+        "attempts": null,
+        "started_at": "2026-07-15T22:13:36.280532Z",
+        "finished_at": "2026-07-15T22:15:34.819184Z",
+        "duration_sec": 118,
+        "tokens": {
+          "input": null,
+          "cache": null,
+          "output": null
+        },
+        "cost_usd": null,
+        "config": {
+          "adapter": "eval.harbor_adapter:ProductAdapter",
+          "adapter_name": null,
+          "adapter_version": null,
+          "model_name": null,
+          "timeout_multiplier": 1.0,
+          "agent_timeout_multiplier": null,
+          "verifier_timeout_multiplier": null,
+          "environment_type": "docker",
+          "install_only": false
+        }
+      },
+      {
+        "trial_name": "simple-database-query-tool__JJbXhEy",
+        "task_id": "task",
+        "status": "error",
+        "verdict": null,
+        "reward": null,
+        "terminated_by": null,
+        "attempts": null,
+        "started_at": "2026-07-15T22:13:35.818424Z",
+        "finished_at": "2026-07-15T22:13:42.758335Z",
+        "duration_sec": 6,
+        "tokens": {
+          "input": null,
+          "cache": null,
+          "output": null
+        },
+        "cost_usd": null,
+        "config": {
+          "adapter": "eval.harbor_adapter:ProductAdapter",
+          "adapter_name": null,
+          "adapter_version": null,
+          "model_name": null,
+          "timeout_multiplier": 1.0,
+          "agent_timeout_multiplier": null,
+          "verifier_timeout_multiplier": null,
+          "environment_type": "docker",
+          "install_only": false
+        }
+      },
+      {
+        "trial_name": "security-breach-incident-respons__pLFtXBx",
+        "task_id": "task",
+        "status": "error",
+        "verdict": null,
+        "reward": null,
+        "terminated_by": null,
+        "attempts": null,
+        "started_at": "2026-07-15T22:13:30.392202Z",
+        "finished_at": "2026-07-15T22:13:42.724097Z",
+        "duration_sec": 12,
+        "tokens": {
+          "input": null,
+          "cache": null,
+          "output": null
+        },
+        "cost_usd": null,
+        "config": {
+          "adapter": "eval.harbor_adapter:ProductAdapter",
+          "adapter_name": null,
+          "adapter_version": null,
+          "model_name": null,
+          "timeout_multiplier": 1.0,
+          "agent_timeout_multiplier": null,
+          "verifier_timeout_multiplier": null,
+          "environment_type": "docker",
+          "install_only": false
+        }
+      },
+      {
+        "trial_name": "reverse-engineer-stack-vm__WC26jU6",
+        "task_id": "task",
+        "status": "error",
+        "verdict": null,
+        "reward": null,
+        "terminated_by": null,
+        "attempts": null,
+        "started_at": "2026-07-15T22:13:16.780624Z",
+        "finished_at": "2026-07-15T22:13:28.170982Z",
+        "duration_sec": 11,
+        "tokens": {
+          "input": null,
+          "cache": null,
+          "output": null
+        },
+        "cost_usd": null,
+        "config": {
+          "adapter": "eval.harbor_adapter:ProductAdapter",
+          "adapter_name": null,
+          "adapter_version": null,
           "model_name": null,
           "timeout_multiplier": 1.0,
           "agent_timeout_multiplier": null,
@@ -1354,7 +1571,7 @@ window.VSM_DATA = {
       "S3",
       "S3*"
     ],
-    "autonomy_verdict": "SEMI-AUTONOMOUS",
+    "autonomy_verdict": "DEPENDENT",
     "autonomy_target": 1.0,
     "autonomy_signs": {
       "s5_sign": {
@@ -1378,16 +1595,16 @@ window.VSM_DATA = {
         "meets": false
       },
       "eval_sign": {
-        "value": 1.0,
+        "value": 0.0,
         "from": "dev_metrics",
-        "meets": true
+        "meets": false
       }
     },
     "last_primitive": "Create",
     "last_transition": "Phase 3 → Phase 4",
     "child_initialized": true,
     "child_path": "../vsm",
-    "cycle_count": 2,
+    "cycle_count": 8,
     "updated": "2026-07-16"
   },
   "audit": [],
@@ -3257,6 +3474,65 @@ window.VSM_DATA = {
       "updated": "2026-07-16",
       "status": "triage",
       "options": []
+    },
+    {
+      "id": "VSM-035",
+      "source_system": "S1",
+      "signal_type": "gap",
+      "severity": "S1",
+      "target_unit": "meta",
+      "title": "Train overlay Dockerfile: 100% infra-error (pip/uv network flaky, no retry, broken-python intent conflict)",
+      "summary": "Round 1 train-batch (seed=42, 15 задач × 5 workers) провалился ПОЛНОСТЬЮ на\ninfra: 0/15 passed, все terminated_by=error, trace_len=0, duration=0.0s.\nПродукт (vsm-product triad) ни разу не запустился — все падения на Docker\nbuild overlay (eval/harbor_run.py:_prepare_overlay_task), ДО старта агента.\n\nCycle (run_cycle.py) зафиксировал это как regression (pass_rate 33.3% → 0.0%,\ndelta -33.3%) — СИМПТОМ. Ручной анализ (S1) нашёл ROOT CAUSE: overlay\nDockerfile для train падает на сетевых RUN (pip/uv/curl), retry-wrapper есть\nтолько для goose; uv/pip беззащитны перед transient SSL/DNS.\n\nЧетыре класса infra-ошибок, все в overlay Dockerfile:\n  A. No module named pip — broken-python (задача-ловушка, intent = сломанный\n     python; overlay pip-install ломается об это).\n  B. SSL_ERROR_SYSCALL на uv download (application-debug, california-housing,\n     ...) — flaky network на release-assets.githubusercontent.com; НЕТ\n     retry-wrapper для uv (есть только для goose).\n  C. DNS resolution failure (git-repo-forensics, multi-labeller) — harbor-build\n     network не резолвит pypi.org через VPN-TUN (198.18.0.x); ручной docker\n     build работает (DNS 172.22.160.1) → harbour использует иной network context.\n  D. EnvironmentStartTimeoutError (task-xxe-exploit) — build превысил timeout.\n\nКОНТРАСТ с TB-2.1 (VSM-033): TB-2.1 решён prebuild-образами (docker_image\npatch, deps вшиты заранее). Train = build-context: overlay Dockerfile строится\nharbor'ом при каждом trial, и сетевые RUN (pip/uv/curl) падают на flaky\nDNS/SSL. Retry-wrapper есть только для goose — uv/pip беззащитны.\n",
+      "evidence": [
+        "state/batch_summaries/train__20260716-002958.json: 0/15 passed, 100% error, pass_rate=0.0",
+        "state/harbor-trials/broken-python__dmbUHn6/exception.txt → No module named pip (overlay pip-install в intent-сломанный python)",
+        "state/harbor-trials/application-debug__3GG9D69/exception.txt → SSL_ERROR_SYSCALL на uv download (release-assets.githubusercontent.com)",
+        "state/harbor-trials/git-repo-forensics__wzDRg5n/exception.txt → Temporary failure in name resolution для pypi.org (DNS fail в harbor-build)",
+        "state/harbor-trials/multi-labeller/exception.txt → Failed to resolve 'pypi.org' (numpy==2.1.3)",
+        "state/harbor-trials/task-xxe-exploit/exception.txt → EnvironmentStartTimeoutError (build timeout)",
+        "eval/harbor_run.py:210 — RUN python3 -m pip install (no retry, no fallback)",
+        "eval/harbor_run.py:218 — RUN curl uv install.sh (no retry-wrapper, в отличие от goose строки 227-237)",
+        "meta/train-batch-round1-analysis.md — полный каталог 4 классов ошибок",
+        "Ручной тест: docker build python:3.13-slim + pip pyyaml = OK (DNS 172.22.160.1 работает); harbour-build тех же задач = DNS fail → network context различается"
+      ],
+      "error_classes": {
+        "A_no_pip": "broken-python: overlay pip-install в intent-сломанный python (задача-ловушка)",
+        "B_uv_ssl": "SSL_ERROR_SYSCALL на uv download — flaky network, no retry-wrapper",
+        "C_dns": "DNS resolution failure для pypi.org — harbor-build network ≠ host docker network",
+        "D_timeout": "EnvironmentStartTimeoutError — build превысил build_timeout_sec"
+      },
+      "root_cause": "Overlay Dockerfile (eval/harbor_run.py:_prepare_overlay_task) делает сетевые\nRUN в build: pip install (deps), curl uv-installer, curl goose. Retry-wrapper\nесть ТОЛЬКО для goose (3 попытки, строки 227-237). uv-install (строка 218) и\npip-install (строка 210) — без retry, один transient network/DNS fail = весь\ntrial потерян. Для train-датасета (build-context, overlay строится каждый\nраз) это фатально: 15/15 упали.\n\nДополнительно: broken-python-класс — структурный конфликт. Overlay pip-install\nнесовместим с задачами, где сломанный python — часть intent (продукт должен\nпочинить pip сам, это задача). Overlay ломает intent ещё до старта продукта.\n",
+      "proposal": "Non-binding. S5 (basta: prepare_only) готовит, не постановляет.\n\nРЕАЛИЗОВАНО (этот issue = фиксация прогресса):\n1. Retry-wrapper для uv/pip-install (Round 2 фикс) — снял часть, но недостаточно.\n2. **vsm-tools offline layer (scripts/build_tools_images.py)** — host docker\n   build vsm-tools:{core,sci,ml,web} (goose/uv/get-pip/wheels), overlay COPY\n   --from (zero network). ВАЛИДИРОВАНО: 0 DNS-build-fail для product-runtime\n   deps, продукт реально запускается (durations 117-183s).\n3. Multi-stage Dockerfile patch (alias последнего FROM) — снял reverse-engineer\n   overlay-bug.\n4. Pre-pull base-images на host — снял ghcr.io/DNS pull-failures.\n\nОГРАНИЧЕНИЕ (требует дальнейшего решения, решает человек):\n- Task's-own Dockerfile deps (pandas/scikit-learn/jq в самом Dockerfile задачи)\n  всё ещё падают на DNS — 4-5 задач Batch 2 (anomaly, sakila, log-summary).\n  vsm-tools не покрывает их (это не product-runtime, а task-specific стек).\n  Варианты: --network=host для build (host-сеть работает), task-specific\n  prebuild (тяжело для 100 разных), или scan+offline-cache всех task-deps.\n- broken-python-class: overlay маскирует intent (get-pip bootstrap чинит python\n  до продукта → ложный PASS). Нужно detect-and-skip-overlay-deps для intent-\n  сломанных задач.\n",
+      "acceptance": [
+        "Product-runtime deps (pyyaml/pytest/goose/uv) ставятся offline — ВЫПОЛНЕНО (vsm-tools:core/sci, 0 DNS-fail)",
+        "Продукт запускается (>50% задач trace_len>0) — ВЫПОЛНЕНО для задач с чистым task-Dockerfile (9/12 в Batch 1)",
+        "TODO: task-specific deps (pandas/scikit) offline или --network=host — НЕ ВЫПОЛНЕНО (4-5 задач Batch 2 падают)",
+        "TODO: broken-python intent не маскируется overlay — НЕ ВЫПОЛНЕНО (ложный PASS)"
+      ],
+      "needs_human_decision": true,
+      "references": [
+        "VSM-033",
+        "VSM-034",
+        "VSM-031",
+        "meta/train-batch1-analysis.md",
+        "meta/train-batch2-analysis.md"
+      ],
+      "notes": [
+        "Offline-fix валидирован: vsm-tools:{core,sci} (433/586MB) + pre-pulled bases → 0 DNS-build-fail для product-runtime. Продукт реально работает.",
+        "ОГРАНИЧЕНИЕ: task's-own Dockerfile deps (pandas/scikit/jq) НЕ покрываются — 4-5 задач Batch 2. Корневое решение = --network=host (host docker build работает, harbor-build нет).",
+        "Продуктовая оценка стала возможной: VSM-034 surrender подтверждён количественно (3/9 в Batch 1 — breast-cancer/california/multi-labeller делают fs.list+pytest→стоп). Pass-rate ≈ 0% (исключая ложный broken-python).",
+        "broken-python PASS — overlay маска (get-pip чинит intent-сломанный python до продукта). Продукт не заслугил.",
+        "trace_len=0 vs >0 теперь ключевой discriminant: 0 = build/init-fail, >0 = продуктовая работа.",
+        "DNS-проблема (класс C) — intermittent: ручной docker build работает, harbour-build падает. Различие в network context harbor vs docker-cli. Требует расследования (docker compose network? extra_allowed_hosts?)",
+        "broken-python — единственная задача где ошибку МОЖНО считать 'expected' (intent = сломанный python). Остальные 14 — чистый infra-regression.",
+        "trace_len=0 у всех 15 — это маркер 'product never started', не 'product failed'. Важно отличать при future-анализе."
+      ],
+      "status": "triage",
+      "decision": "",
+      "selected_options": [],
+      "created": "2026-07-16",
+      "updated": "2026-07-16",
+      "options": []
     }
   ],
   "history": [
@@ -3330,7 +3606,7 @@ window.VSM_DATA = {
     },
     {
       "date": "2026-07-16",
-      "autonomy_score": 0.475,
+      "autonomy_score": 0.175,
       "maturation_phase": "Phase 4",
       "coverage_ratio": 0.0,
       "validate_pass_rate": null,
@@ -3349,12 +3625,190 @@ window.VSM_DATA = {
       "s5_intervention_count": 0,
       "s5_intervention_cycles": 0,
       "intervention_share": 0.0,
-      "eval_pass_rate": 1.0
+      "eval_pass_rate": 0.0
     }
   ],
   "activity": [],
   "interventions": [],
   "batches": [
+    {
+      "batch_id": "train__20260716-020450",
+      "profile": "train",
+      "timestamp": "2026-07-16T02:04:50",
+      "wall_clock_sec": 15720.5,
+      "workers": 5,
+      "tasks_total": 15,
+      "summary": {
+        "total": 1,
+        "passed": 0,
+        "failed": 0,
+        "error": 1,
+        "pass_rate": 0.0
+      },
+      "trend_direction": "none",
+      "trend_delta": 0.0,
+      "observations": [
+        {
+          "type": "zero_pass",
+          "severity": "warn",
+          "detail": "0/1 passed — no task resolved",
+          "detector": "rule:zero_pass"
+        },
+        {
+          "type": "infra_cluster",
+          "severity": "warn",
+          "detail": "10/1 (1000%) tasks errored — likely infra",
+          "detector": "rule:infra_share"
+        }
+      ],
+      "decision": "ok_with_concerns: 2 warnings",
+      "issues_raised": [],
+      "decided_at": "2026-07-16T06:26:51"
+    },
+    {
+      "batch_id": "train__20260716-014756",
+      "profile": "train",
+      "timestamp": "2026-07-16T01:47:56",
+      "wall_clock_sec": 999.3,
+      "workers": 5,
+      "tasks_total": 15,
+      "summary": {
+        "total": 1,
+        "passed": 0,
+        "failed": 1,
+        "error": 0,
+        "pass_rate": 0.0
+      },
+      "trend_direction": "none",
+      "trend_delta": 0.0,
+      "observations": [
+        {
+          "type": "zero_pass",
+          "severity": "warn",
+          "detail": "0/1 passed — no task resolved",
+          "detector": "rule:zero_pass"
+        },
+        {
+          "type": "infra_cluster",
+          "severity": "warn",
+          "detail": "6/1 (600%) tasks errored — likely infra",
+          "detector": "rule:infra_share"
+        }
+      ],
+      "decision": "ok_with_concerns: 2 warnings",
+      "issues_raised": [],
+      "decided_at": "2026-07-16T02:04:36"
+    },
+    {
+      "batch_id": "train__20260716-013342",
+      "profile": "train",
+      "timestamp": "2026-07-16T01:33:42",
+      "wall_clock_sec": 804.2,
+      "workers": 5,
+      "tasks_total": 15,
+      "summary": {
+        "total": 1,
+        "passed": 0,
+        "failed": 1,
+        "error": 0,
+        "pass_rate": 0.0
+      },
+      "trend_direction": "none",
+      "trend_delta": 0.0,
+      "observations": [
+        {
+          "type": "zero_pass",
+          "severity": "warn",
+          "detail": "0/1 passed — no task resolved",
+          "detector": "rule:zero_pass"
+        },
+        {
+          "type": "infra_cluster",
+          "severity": "warn",
+          "detail": "10/1 (1000%) tasks errored — likely infra",
+          "detector": "rule:infra_share"
+        }
+      ],
+      "decision": "ok_with_concerns: 2 warnings",
+      "issues_raised": [],
+      "decided_at": "2026-07-16T01:47:06"
+    },
+    {
+      "batch_id": "train__20260716-010601",
+      "profile": "train",
+      "timestamp": "2026-07-16T01:06:01",
+      "wall_clock_sec": 644.1,
+      "workers": 5,
+      "tasks_total": 15,
+      "summary": {
+        "total": 1,
+        "passed": 0,
+        "failed": 1,
+        "error": 0,
+        "pass_rate": 0.0
+      },
+      "trend_direction": "none",
+      "trend_delta": 0.0,
+      "observations": [
+        {
+          "type": "zero_pass",
+          "severity": "warn",
+          "detail": "0/1 passed — no task resolved",
+          "detector": "rule:zero_pass"
+        },
+        {
+          "type": "infra_cluster",
+          "severity": "warn",
+          "detail": "13/1 (1300%) tasks errored — likely infra",
+          "detector": "rule:infra_share"
+        }
+      ],
+      "decision": "ok_with_concerns: 2 warnings",
+      "issues_raised": [],
+      "decided_at": "2026-07-16T01:16:45"
+    },
+    {
+      "batch_id": "train__20260716-002958",
+      "profile": "train",
+      "timestamp": "2026-07-16T00:29:58",
+      "wall_clock_sec": 822.7,
+      "workers": 5,
+      "tasks_total": 15,
+      "summary": {
+        "total": 1,
+        "passed": 0,
+        "failed": 0,
+        "error": 1,
+        "pass_rate": 0.0
+      },
+      "trend_direction": "none",
+      "trend_delta": 0.0,
+      "observations": [
+        {
+          "type": "zero_pass",
+          "severity": "warn",
+          "detail": "0/1 passed — no task resolved",
+          "detector": "rule:zero_pass"
+        },
+        {
+          "type": "regression",
+          "severity": "critical",
+          "detail": "pass_rate 33.3% → 0.0% (delta -33.3%)",
+          "detector": "rule:trend_delta"
+        },
+        {
+          "type": "infra_cluster",
+          "severity": "warn",
+          "detail": "15/1 (1500%) tasks errored — likely infra",
+          "detector": "rule:infra_share"
+        }
+      ],
+      "decision": "needs_human_decision: regression",
+      "issues_raised": [
+        "VSM-035"
+      ],
+      "decided_at": "2026-07-16T00:43:41"
+    },
     {
       "batch_id": "eval-test__20260715-233538",
       "profile": "eval-test",
@@ -3401,6 +3855,60 @@ window.VSM_DATA = {
       "autonomy": 0.475,
       "verdict": "SEMI-AUTONOMOUS",
       "decision": "ok_with_concerns: 1 warnings",
+      "issue_created": null
+    },
+    {
+      "cycle": 3,
+      "timestamp": "2026-07-16T00:43:41",
+      "pass_rate": 0.0,
+      "autonomy": 0.175,
+      "verdict": "DEPENDENT",
+      "decision": "needs_human_decision: regression",
+      "issue_created": "VSM-035"
+    },
+    {
+      "cycle": 4,
+      "timestamp": "2026-07-16T01:16:45",
+      "pass_rate": 0.0,
+      "autonomy": 0.175,
+      "verdict": "DEPENDENT",
+      "decision": "ok_with_concerns: 2 warnings",
+      "issue_created": null
+    },
+    {
+      "cycle": 5,
+      "timestamp": "2026-07-16T01:47:06",
+      "pass_rate": 0.0,
+      "autonomy": 0.175,
+      "verdict": "DEPENDENT",
+      "decision": "ok_with_concerns: 2 warnings",
+      "issue_created": null
+    },
+    {
+      "cycle": 6,
+      "timestamp": "2026-07-16T02:04:36",
+      "pass_rate": 0.0,
+      "autonomy": 0.175,
+      "verdict": "DEPENDENT",
+      "decision": "ok_with_concerns: 2 warnings",
+      "issue_created": null
+    },
+    {
+      "cycle": 7,
+      "timestamp": "2026-07-16T06:26:51",
+      "pass_rate": 0.0,
+      "autonomy": 0.175,
+      "verdict": "DEPENDENT",
+      "decision": "ok_with_concerns: 2 warnings",
+      "issue_created": null
+    },
+    {
+      "cycle": 8,
+      "timestamp": "2026-07-16T06:33:52",
+      "pass_rate": 0.0,
+      "autonomy": 0.175,
+      "verdict": "DEPENDENT",
+      "decision": "ok_with_concerns: 2 warnings",
       "issue_created": null
     }
   ]

@@ -1,0 +1,128 @@
+{
+  "batch_id": "train__20260716-014756",
+  "profile": "train",
+  "timestamp": "2026-07-16T01:47:56",
+  "started_at": "2026-07-16T01:47:56",
+  "finished_at": "2026-07-16T02:04:35",
+  "wall_clock_sec": 999.3,
+  "workers": 5,
+  "tasks_total": 15,
+  "summary": {
+    "total": 1,
+    "passed": 0,
+    "failed": 1,
+    "error": 0,
+    "pass_rate": 0.0
+  },
+  "trend_direction": "none",
+  "trend_delta": 0.0,
+  "per_task": [
+    {
+      "task_id": "task",
+      "status": "failed",
+      "duration_sec": 0.6,
+      "reward": 0.0
+    },
+    {
+      "task_id": "task",
+      "status": "passed",
+      "duration_sec": 160.8,
+      "reward": 1.0
+    },
+    {
+      "task_id": "api-endpoint-permission-canonicalizer",
+      "status": "error",
+      "duration_sec": null,
+      "reward": null
+    },
+    {
+      "task_id": "distributed-test-execution-scheduler",
+      "status": "error",
+      "duration_sec": null,
+      "reward": null
+    },
+    {
+      "task_id": "task",
+      "status": "failed",
+      "duration_sec": 0.7,
+      "reward": 0.0
+    },
+    {
+      "task_id": "task",
+      "status": "failed",
+      "duration_sec": 183.3,
+      "reward": 0.0
+    },
+    {
+      "task_id": "task",
+      "status": "failed",
+      "duration_sec": 0.6,
+      "reward": 0.0
+    },
+    {
+      "task_id": "task",
+      "status": "error",
+      "duration_sec": 0.0,
+      "reward": 0.0
+    },
+    {
+      "task_id": "task",
+      "status": "failed",
+      "duration_sec": 176.4,
+      "reward": 0.0
+    },
+    {
+      "task_id": "task",
+      "status": "failed",
+      "duration_sec": 169.4,
+      "reward": 0.0
+    },
+    {
+      "task_id": "task",
+      "status": "error",
+      "duration_sec": 0.0,
+      "reward": 0.0
+    },
+    {
+      "task_id": "task",
+      "status": "error",
+      "duration_sec": 119.1,
+      "reward": 0.0
+    },
+    {
+      "task_id": "task",
+      "status": "failed",
+      "duration_sec": 0.5,
+      "reward": 0.0
+    },
+    {
+      "task_id": "security-breach-incident-response",
+      "status": "error",
+      "duration_sec": null,
+      "reward": null
+    },
+    {
+      "task_id": "task",
+      "status": "failed",
+      "duration_sec": 160.8,
+      "reward": 0.0
+    }
+  ],
+  "observations": [
+    {
+      "type": "zero_pass",
+      "severity": "warn",
+      "detail": "0/1 passed — no task resolved",
+      "detector": "rule:zero_pass"
+    },
+    {
+      "type": "infra_cluster",
+      "severity": "warn",
+      "detail": "6/1 (600%) tasks errored — likely infra",
+      "detector": "rule:infra_share"
+    }
+  ],
+  "decision": "ok_with_concerns: 2 warnings",
+  "issues_raised": [],
+  "decided_at": "2026-07-16T02:04:36"
+}

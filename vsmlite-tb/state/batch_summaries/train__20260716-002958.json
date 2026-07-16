@@ -1,0 +1,136 @@
+{
+  "batch_id": "train__20260716-002958",
+  "profile": "train",
+  "timestamp": "2026-07-16T00:29:58",
+  "started_at": "2026-07-16T00:29:58",
+  "finished_at": "2026-07-16T00:43:40",
+  "wall_clock_sec": 822.7,
+  "workers": 5,
+  "tasks_total": 15,
+  "summary": {
+    "total": 1,
+    "passed": 0,
+    "failed": 0,
+    "error": 1,
+    "pass_rate": 0.0
+  },
+  "trend_direction": "none",
+  "trend_delta": 0.0,
+  "per_task": [
+    {
+      "task_id": "task",
+      "status": "error",
+      "duration_sec": 0.0,
+      "reward": 0.0
+    },
+    {
+      "task_id": "api-endpoint-permission-canonicalizer",
+      "status": "error",
+      "duration_sec": null,
+      "reward": null
+    },
+    {
+      "task_id": "task",
+      "status": "error",
+      "duration_sec": 0.0,
+      "reward": 0.0
+    },
+    {
+      "task_id": "task",
+      "status": "error",
+      "duration_sec": 0.0,
+      "reward": 0.0
+    },
+    {
+      "task_id": "task",
+      "status": "error",
+      "duration_sec": 0.0,
+      "reward": 0.0
+    },
+    {
+      "task_id": "distributed-test-execution-scheduler",
+      "status": "error",
+      "duration_sec": null,
+      "reward": null
+    },
+    {
+      "task_id": "task",
+      "status": "error",
+      "duration_sec": 0.0,
+      "reward": 0.0
+    },
+    {
+      "task_id": "task",
+      "status": "error",
+      "duration_sec": 0.0,
+      "reward": 0.0
+    },
+    {
+      "task_id": "task",
+      "status": "error",
+      "duration_sec": 0.0,
+      "reward": 0.0
+    },
+    {
+      "task_id": "security-breach-incident-response",
+      "status": "error",
+      "duration_sec": null,
+      "reward": null
+    },
+    {
+      "task_id": "task",
+      "status": "error",
+      "duration_sec": 0.0,
+      "reward": 0.0
+    },
+    {
+      "task_id": "task",
+      "status": "error",
+      "duration_sec": 0.0,
+      "reward": 0.0
+    },
+    {
+      "task_id": "task",
+      "status": "error",
+      "duration_sec": 0.0,
+      "reward": 0.0
+    },
+    {
+      "task_id": "task",
+      "status": "error",
+      "duration_sec": 0.0,
+      "reward": 0.0
+    },
+    {
+      "task_id": "task",
+      "status": "error",
+      "duration_sec": 0.0,
+      "reward": 0.0
+    }
+  ],
+  "observations": [
+    {
+      "type": "zero_pass",
+      "severity": "warn",
+      "detail": "0/1 passed — no task resolved",
+      "detector": "rule:zero_pass"
+    },
+    {
+      "type": "regression",
+      "severity": "critical",
+      "detail": "pass_rate 33.3% → 0.0% (delta -33.3%)",
+      "detector": "rule:trend_delta"
+    },
+    {
+      "type": "infra_cluster",
+      "severity": "warn",
+      "detail": "15/1 (1500%) tasks errored — likely infra",
+      "detector": "rule:infra_share"
+    }
+  ],
+  "decision": "needs_human_decision: regression",
+  "issues_raised": [
+    "VSM-035"
+  ],
+  "decided_at": "2026-07-16T00:43:41"
+}

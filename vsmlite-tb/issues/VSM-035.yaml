@@ -66,35 +66,49 @@ root_cause: |
   починить pip сам, это задача). Overlay ломает intent ещё до старта продукта.
 
 proposal: |
-  Non-binding. S5 (basta: prepare_only) готовит, не постановляет. Возможные
-  направления (решает человек):
-  - Retry-wrapper для uv-install (как для goose): 5 попыток с backoff, transient
-    SSL/TLS ошибки — норма для docker build network.
-  - Retry/fallback для pip-install: retry + fallback на pre-bundled wheel или
-    --no-deps продолжение (deps могут стоять в base).
-  - --network=host для harbor-build если поддерживается — обойти DNS-проблемы
-    VPN-TUN (host docker build работает, harbor-build — нет).
-  - broken-python-class: detect intent-сломанный python (или skip-overlay-deps
-    для задач где python должен быть сломан) — overlay не должен чинить то, что
-    задача просит сломать.
-  - prebuild для train тоже (как VSM-033 для TB-2.1): build patched-образ с deps
-    заранее, обойти flaky build-network полностью.
+  Non-binding. S5 (basta: prepare_only) готовит, не постановляет.
+
+  РЕАЛИЗОВАНО (этот issue = фиксация прогресса):
+  1. Retry-wrapper для uv/pip-install (Round 2 фикс) — снял часть, но недостаточно.
+  2. **vsm-tools offline layer (scripts/build_tools_images.py)** — host docker
+     build vsm-tools:{core,sci,ml,web} (goose/uv/get-pip/wheels), overlay COPY
+     --from (zero network). ВАЛИДИРОВАНО: 0 DNS-build-fail для product-runtime
+     deps, продукт реально запускается (durations 117-183s).
+  3. Multi-stage Dockerfile patch (alias последнего FROM) — снял reverse-engineer
+     overlay-bug.
+  4. Pre-pull base-images на host — снял ghcr.io/DNS pull-failures.
+
+  ОГРАНИЧЕНИЕ (требует дальнейшего решения, решает человек):
+  - Task's-own Dockerfile deps (pandas/scikit-learn/jq в самом Dockerfile задачи)
+    всё ещё падают на DNS — 4-5 задач Batch 2 (anomaly, sakila, log-summary).
+    vsm-tools не покрывает их (это не product-runtime, а task-specific стек).
+    Варианты: --network=host для build (host-сеть работает), task-specific
+    prebuild (тяжело для 100 разных), или scan+offline-cache всех task-deps.
+  - broken-python-class: overlay маскирует intent (get-pip bootstrap чинит python
+    до продукта → ложный PASS). Нужно detect-and-skip-overlay-deps для intent-
+    сломанных задач.
 
 acceptance:
-  - "Round 2 (повтор тех же 15): >50% задач доходят до запуска продукта (trace_len > 0, terminated_by != error)"
-  - "uv/pip-install в overlay имеют retry-wrapper (не падают на transient SSL/DNS)"
-  - "broken-python-class: overlay либо skip-deps, либо продукт запускается в intent-сломанном python и сам чинит pip"
+  - "Product-runtime deps (pyyaml/pytest/goose/uv) ставятся offline — ВЫПОЛНЕНО (vsm-tools:core/sci, 0 DNS-fail)"
+  - "Продукт запускается (>50% задач trace_len>0) — ВЫПОЛНЕНО для задач с чистым task-Dockerfile (9/12 в Batch 1)"
+  - "TODO: task-specific deps (pandas/scikit) offline или --network=host — НЕ ВЫПОЛНЕНО (4-5 задач Batch 2 падают)"
+  - "TODO: broken-python intent не маскируется overlay — НЕ ВЫПОЛНЕНО (ложный PASS)"
 
-needs_human_decision: true   # выбор стратегии фикса — решение человека (retry vs prebuild vs network)
+needs_human_decision: true   # --network=host vs task-prebuild vs accept-ограничение
 
 references:
-  - VSM-033   # prebuild для TB-2.1 — аналогичный подход применим к train (этот issue)
-  - VSM-034   # продуктовый empty-workspace surrender — НЕ подтверждён для train (нет данных, eval упал на infra)
-  - VSM-031   # cycle automation — cycle корректно зафиксировал 0/15 как error (infra_cluster детектор)
-  - meta/train-batch-round1-analysis.md   # полный анализ round 1
+  - VSM-033   # prebuild для TB-2.1 — аналогичный подход для task-specific deps
+  - VSM-034   # продуктовый empty-workspace surrender — ПОДТВЕРЖДЁН на train (3/9 Batch1)
+  - VSM-031   # cycle automation
+  - meta/train-batch1-analysis.md   # seed=42 анализ (VSM-034 подтверждён)
+  - meta/train-batch2-analysis.md   # seed=43 анализ (offline-fix ограничение)
 
 notes:
-  - "Round 1 = чистый infra-noise: продуктовая оценка (VSM-034 и frontier-baselines сравнение) невозможна без фикса. Это блокер для всего train-обучения VSM."
+  - "Offline-fix валидирован: vsm-tools:{core,sci} (433/586MB) + pre-pulled bases → 0 DNS-build-fail для product-runtime. Продукт реально работает."
+  - "ОГРАНИЧЕНИЕ: task's-own Dockerfile deps (pandas/scikit/jq) НЕ покрываются — 4-5 задач Batch 2. Корневое решение = --network=host (host docker build работает, harbor-build нет)."
+  - "Продуктовая оценка стала возможной: VSM-034 surrender подтверждён количественно (3/9 в Batch 1 — breast-cancer/california/multi-labeller делают fs.list+pytest→стоп). Pass-rate ≈ 0% (исключая ложный broken-python)."
+  - "broken-python PASS — overlay маска (get-pip чинит intent-сломанный python до продукта). Продукт не заслугил."
+  - "trace_len=0 vs >0 теперь ключевой discriminant: 0 = build/init-fail, >0 = продуктовая работа."
   - "DNS-проблема (класс C) — intermittent: ручной docker build работает, harbour-build падает. Различие в network context harbor vs docker-cli. Требует расследования (docker compose network? extra_allowed_hosts?)"
   - "broken-python — единственная задача где ошибку МОЖНО считать 'expected' (intent = сломанный python). Остальные 14 — чистый infra-regression."
   - "trace_len=0 у всех 15 — это маркер 'product never started', не 'product failed'. Важно отличать при future-анализе."

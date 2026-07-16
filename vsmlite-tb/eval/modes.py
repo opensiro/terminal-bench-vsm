@@ -226,18 +226,21 @@ def run_eval_dataset(config: EvalConfig) -> dict:
     return _run_batch([t.task_id for t in tasks], config)
 
 
-def run_train(config: EvalConfig, sample_size: int | None = None) -> dict:
-    """train: dev-v2 все (или по фильтру) или N сэмплов (seed=42) → harbor batch.
+def run_train(config: EvalConfig, sample_size: int | None = None,
+              seed: int | None = None) -> dict:
+    """train: dev-v2 все (или по фильтру) или N сэмплов (seed) → harbor batch.
 
     Раньше делегировала runner.run_all (старый пайплайн container/agent_phase/
     grader). Phase 3 cleanup переключил train на harbour — тот же _run_batch, что
     eval-test/eval-dataset. runner.py/container.py/agent_phase.py/grader.py
     удалены как устаревшие (superseded VSM-024).
 
-    sample_size (CLI --sample N): детерминированный random сэмпл N задач
-    (seed=config.eval_test_seed, default 42) — воспроизводимо между запусками
-    (точки сравнимы), как run_eval_test, но для train-датасета. Без --sample —
-    текущее поведение (все/по фильтру).
+    sample_size (CLI --sample N): детерминированный random сэмпл N задач —
+    воспроизводимо между запусками (точки сравнимы), как run_eval_test, но для
+    train-датасета. Без --sample — текущее поведение (все/по фильтру).
+    seed (CLI --seed): override config.eval_test_seed (default 42). Позволяет
+    гонять РАЗНЫЕ батчи по 15 задач (batch1=seed42, batch2=seed43 и т.д.) для
+    расширения датасета обучения без перекрытия выборок.
     """
     _log(f"── train: profile={config.profile} (harbour batch) ──")
     tasks = load_tasks(config)
@@ -245,8 +248,9 @@ def run_train(config: EvalConfig, sample_size: int | None = None) -> dict:
         _log("нет задач для train (проверьте dataset_dir и фильтры)")
         return {}
     if sample_size is not None:
-        tasks = sample_tasks(tasks, sample_size, config.eval_test_seed)
-        _log(f"sample: {sample_size} (seed={config.eval_test_seed}) из {len(load_tasks(config))}")
+        s = seed if seed is not None else config.eval_test_seed
+        tasks = sample_tasks(tasks, sample_size, s)
+        _log(f"sample: {sample_size} (seed={s}) из {len(load_tasks(config))}")
         _log("выборка: " + ", ".join(t.task_id for t in tasks))
     _log(f"задач к прогону: {len(tasks)}")
     return _run_batch([t.task_id for t in tasks], config)

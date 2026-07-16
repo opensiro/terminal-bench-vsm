@@ -16,5 +16,59 @@
     "verdict": "SEMI-AUTONOMOUS",
     "decision": "ok_with_concerns: 1 warnings",
     "issue_created": null
+  },
+  {
+    "cycle": 3,
+    "timestamp": "2026-07-16T00:43:41",
+    "pass_rate": 0.0,
+    "autonomy": 0.175,
+    "verdict": "DEPENDENT",
+    "decision": "needs_human_decision: regression",
+    "issue_created": "VSM-035"
+  },
+  {
+    "cycle": 4,
+    "timestamp": "2026-07-16T01:16:45",
+    "pass_rate": 0.0,
+    "autonomy": 0.175,
+    "verdict": "DEPENDENT",
+    "decision": "ok_with_concerns: 2 warnings",
+    "issue_created": null
+  },
+  {
+    "cycle": 5,
+    "timestamp": "2026-07-16T01:47:06",
+    "pass_rate": 0.0,
+    "autonomy": 0.175,
+    "verdict": "DEPENDENT",
+    "decision": "ok_with_concerns: 2 warnings",
+    "issue_created": null
+  },
+  {
+    "cycle": 6,
+    "timestamp": "2026-07-16T02:04:36",
+    "pass_rate": 0.0,
+    "autonomy": 0.175,
+    "verdict": "DEPENDENT",
+    "decision": "ok_with_concerns: 2 warnings",
+    "issue_created": null
+  },
+  {
+    "cycle": 7,
+    "timestamp": "2026-07-16T06:26:51",
+    "pass_rate": 0.0,
+    "autonomy": 0.175,
+    "verdict": "DEPENDENT",
+    "decision": "ok_with_concerns: 2 warnings",
+    "issue_created": null
+  },
+  {
+    "cycle": 8,
+    "timestamp": "2026-07-16T06:33:52",
+    "pass_rate": 0.0,
+    "autonomy": 0.175,
+    "verdict": "DEPENDENT",
+    "decision": "ok_with_concerns: 2 warnings",
+    "issue_created": null
   }
 ]

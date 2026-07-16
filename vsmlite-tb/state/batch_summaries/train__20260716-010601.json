@@ -1,0 +1,128 @@
+{
+  "batch_id": "train__20260716-010601",
+  "profile": "train",
+  "timestamp": "2026-07-16T01:06:01",
+  "started_at": "2026-07-16T01:06:01",
+  "finished_at": "2026-07-16T01:16:45",
+  "wall_clock_sec": 644.1,
+  "workers": 5,
+  "tasks_total": 15,
+  "summary": {
+    "total": 1,
+    "passed": 0,
+    "failed": 1,
+    "error": 0,
+    "pass_rate": 0.0
+  },
+  "trend_direction": "none",
+  "trend_delta": 0.0,
+  "per_task": [
+    {
+      "task_id": "task",
+      "status": "error",
+      "duration_sec": 0.0,
+      "reward": 0.0
+    },
+    {
+      "task_id": "task",
+      "status": "error",
+      "duration_sec": 0.0,
+      "reward": 0.0
+    },
+    {
+      "task_id": "distributed-test-execution-scheduler",
+      "status": "error",
+      "duration_sec": null,
+      "reward": null
+    },
+    {
+      "task_id": "task",
+      "status": "failed",
+      "duration_sec": 210.5,
+      "reward": 0.0
+    },
+    {
+      "task_id": "task",
+      "status": "error",
+      "duration_sec": 0.0,
+      "reward": 0.0
+    },
+    {
+      "task_id": "task",
+      "status": "error",
+      "duration_sec": 0.0,
+      "reward": 0.0
+    },
+    {
+      "task_id": "task",
+      "status": "error",
+      "duration_sec": 0.0,
+      "reward": 0.0
+    },
+    {
+      "task_id": "task",
+      "status": "error",
+      "duration_sec": 0.0,
+      "reward": 0.0
+    },
+    {
+      "task_id": "task",
+      "status": "error",
+      "duration_sec": 0.0,
+      "reward": 0.0
+    },
+    {
+      "task_id": "task",
+      "status": "error",
+      "duration_sec": 0.0,
+      "reward": 0.0
+    },
+    {
+      "task_id": "security-breach-incident-response",
+      "status": "error",
+      "duration_sec": null,
+      "reward": null
+    },
+    {
+      "task_id": "task",
+      "status": "error",
+      "duration_sec": 0.0,
+      "reward": 0.0
+    },
+    {
+      "task_id": "task",
+      "status": "error",
+      "duration_sec": 0.0,
+      "reward": 0.0
+    },
+    {
+      "task_id": "api-endpoint-permission-canonicalizer",
+      "status": "error",
+      "duration_sec": null,
+      "reward": null
+    },
+    {
+      "task_id": "task",
+      "status": "failed",
+      "duration_sec": 0.6,
+      "reward": 0.0
+    }
+  ],
+  "observations": [
+    {
+      "type": "zero_pass",
+      "severity": "warn",
+      "detail": "0/1 passed — no task resolved",
+      "detector": "rule:zero_pass"
+    },
+    {
+      "type": "infra_cluster",
+      "severity": "warn",
+      "detail": "13/1 (1300%) tasks errored — likely infra",
+      "detector": "rule:infra_share"
+    }
+  ],
+  "decision": "ok_with_concerns: 2 warnings",
+  "issues_raised": [],
+  "decided_at": "2026-07-16T01:16:45"
+}

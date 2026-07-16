@@ -1,49 +1,49 @@
 {
-  "generated": "2026-07-15",
+  "generated": "2026-07-16",
   "profile": "train",
   "dataset": "open-thoughts/OpenThoughts-TB-dev-v2",
   "harness": "claude-code",
   "summary": {
     "total": 1,
-    "passed": 1,
+    "passed": 0,
     "failed": 0,
-    "error": 0,
-    "pass_rate": 1.0
+    "error": 1,
+    "pass_rate": 0.0
   },
   "by_category": {
-    "file-operations": {
+    "scientific-computing": {
       "total": 1,
-      "passed": 1,
-      "pass_rate": 1.0
+      "passed": 0,
+      "pass_rate": 0.0
     }
   },
   "by_difficulty": {
-    "easy": {
+    "medium": {
       "total": 1,
-      "passed": 1,
-      "pass_rate": 1.0
+      "passed": 0,
+      "pass_rate": 0.0
     }
   },
   "tasks": [
     {
       "task_id": "task",
-      "status": "passed",
-      "passed": true,
-      "category": "file-operations",
-      "difficulty": "easy",
-      "agent_duration_sec": 163.1,
-      "trace_len": 6,
+      "status": "error",
+      "passed": false,
+      "category": "scientific-computing",
+      "difficulty": "medium",
+      "agent_duration_sec": 212.5,
+      "trace_len": 3,
       "failure_obs_count": 0,
-      "timestamp": "2026-07-15T18:26:32",
-      "error": null,
-      "agent_exit_code": 0,
+      "timestamp": "2026-07-16T06:26:51",
+      "error": "unknown: ",
+      "agent_exit_code": 1,
       "timed_out": false,
       "harbor": {
-        "trial_name": "jsonl-aggregator__FzUJhfY",
-        "terminated_by": "task_resolved",
-        "verdict": "task_resolved",
+        "trial_name": "neutron-submission__TQdm3cJ",
+        "terminated_by": "no_observations",
+        "verdict": "task_failed",
         "attempts": 1,
-        "reward": 1.0
+        "reward": 0.0
       }
     }
   ]

@@ -105,10 +105,14 @@ def main() -> None:
     p_run.add_argument("--sample", type=int, default=None,
                        help="детерминированный random сэмпл N задач (seed=42, как eval-test); "
                             "только для run без --task")
+    p_run.add_argument("--seed", type=int, default=None,
+                       help="seed для --sample (default: 42). Разный seed → разные батчи.")
 
     p_runall = sub.add_parser("run-all", help="прогнать все задачи по фильтру (train)")
     p_runall.add_argument("--sample", type=int, default=None,
                           help="детерминированный random сэмпл N задач (seed=42, как eval-test)")
+    p_runall.add_argument("--seed", type=int, default=None,
+                          help="seed для --sample (default: 42). Разный seed → разные батчи.")
 
     p_et = sub.add_parser("eval-test",
                           help="TB-2.1 verified: N сэмплов (seed=42) для оценки репрезентативности")
@@ -151,7 +155,8 @@ def main() -> None:
         if sample and config.filter_task_ids:
             print("--sample игнорируется: задан явный --task whitelist", file=sys.stderr)
             sample = None
-        run_train(config, sample_size=sample)
+        seed = getattr(args, "seed", None)
+        run_train(config, sample_size=sample, seed=seed)
     else:  # unreachable — argparse required=True
         parser.error(f"неизвестная команда: {args.command}")
 

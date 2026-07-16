@@ -1,0 +1,128 @@
+{
+  "batch_id": "train__20260716-020450",
+  "profile": "train",
+  "timestamp": "2026-07-16T02:04:50",
+  "started_at": "2026-07-16T02:04:50",
+  "finished_at": "2026-07-16T06:26:51",
+  "wall_clock_sec": 15720.5,
+  "workers": 5,
+  "tasks_total": 15,
+  "summary": {
+    "total": 1,
+    "passed": 0,
+    "failed": 0,
+    "error": 1,
+    "pass_rate": 0.0
+  },
+  "trend_direction": "none",
+  "trend_delta": 0.0,
+  "per_task": [
+    {
+      "task_id": "task",
+      "status": "error",
+      "duration_sec": 0.0,
+      "reward": 0.0
+    },
+    {
+      "task_id": "chained-forensic-extraction_20260101_011957",
+      "status": "error",
+      "duration_sec": null,
+      "reward": null
+    },
+    {
+      "task_id": "task",
+      "status": "error",
+      "duration_sec": 0.0,
+      "reward": 0.0
+    },
+    {
+      "task_id": "task",
+      "status": "failed",
+      "duration_sec": 117.2,
+      "reward": 0.0
+    },
+    {
+      "task_id": "task",
+      "status": "failed",
+      "duration_sec": 0.6,
+      "reward": 0.0
+    },
+    {
+      "task_id": "task",
+      "status": "failed",
+      "duration_sec": 0.6,
+      "reward": 0.0
+    },
+    {
+      "task_id": "task",
+      "status": "error",
+      "duration_sec": 0.0,
+      "reward": 0.0
+    },
+    {
+      "task_id": "task",
+      "status": "error",
+      "duration_sec": 0.0,
+      "reward": 0.0
+    },
+    {
+      "task_id": "task",
+      "status": "error",
+      "duration_sec": 0.0,
+      "reward": 0.0
+    },
+    {
+      "task_id": "rsa-jwt-token-api-redis-blacklist",
+      "status": "error",
+      "duration_sec": null,
+      "reward": null
+    },
+    {
+      "task_id": "task",
+      "status": "error",
+      "duration_sec": 0.0,
+      "reward": 0.0
+    },
+    {
+      "task_id": "task",
+      "status": "failed",
+      "duration_sec": 0.6,
+      "reward": 0.0
+    },
+    {
+      "task_id": "task",
+      "status": "failed",
+      "duration_sec": 0.6,
+      "reward": 0.0
+    },
+    {
+      "task_id": "submission_a63937a5_20251224_152124",
+      "status": "error",
+      "duration_sec": null,
+      "reward": null
+    },
+    {
+      "task_id": "task",
+      "status": "error",
+      "duration_sec": 212.5,
+      "reward": 0.0
+    }
+  ],
+  "observations": [
+    {
+      "type": "zero_pass",
+      "severity": "warn",
+      "detail": "0/1 passed — no task resolved",
+      "detector": "rule:zero_pass"
+    },
+    {
+      "type": "infra_cluster",
+      "severity": "warn",
+      "detail": "10/1 (1000%) tasks errored — likely infra",
+      "detector": "rule:infra_share"
+    }
+  ],
+  "decision": "ok_with_concerns: 2 warnings",
+  "issues_raised": [],
+  "decided_at": "2026-07-16T06:26:51"
+}

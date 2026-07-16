@@ -69,7 +69,7 @@
   },
   {
     "date": "2026-07-16",
-    "autonomy_score": 0.475,
+    "autonomy_score": 0.175,
     "maturation_phase": "Phase 4",
     "coverage_ratio": 0.0,
     "validate_pass_rate": null,
@@ -88,6 +88,6 @@
     "s5_intervention_count": 0,
     "s5_intervention_cycles": 0,
     "intervention_share": 0.0,
-    "eval_pass_rate": 1.0
+    "eval_pass_rate": 0.0
   }
 ]
