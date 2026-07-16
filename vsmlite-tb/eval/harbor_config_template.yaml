@@ -27,3 +27,10 @@ environment:
     # goose sub-agents read s1-planner/s1-test-controller/s1-verifier from here.
     - {type: bind, source: <ABS_VSM>, target: /opt/vsm, read_only: true}
     - {type: bind, source: <ABS_EVAL>, target: /opt/eval_shim, read_only: true}
+  # VSM-038: host network for the container. TB tests/test.sh (verifier phase)
+  # does apt-get update + curl uv + uv pip install — needs working DNS. Docker
+  # default-bridge DNS is unreliable in WSL2+VPN-TUN. network_mode: host makes
+  # the container (agent + verifier share it) use the host stack. test.sh itself
+  # is NOT modified (TB ground truth). See eval/host-network-compose.yaml.
+  extra_docker_compose:
+    - <ABS_EVAL>/host-network-compose.yaml
