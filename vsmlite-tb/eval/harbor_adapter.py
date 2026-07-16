@@ -116,16 +116,31 @@ class ProductAdapter(BaseAgent):
 
         # 3. Launch orchestrator_runner inside the container. All deps (python3,
         #    pyyaml, goose) are baked into the image by the overlay Dockerfile —
-        #    no runtime install needed. PYTHONPATH makes the product importable;
-        #    WORKSPACE_ROOT is the task workspace (/app).
+        #    no runtime install needed. PYTHONPATH makes the product importable.
+        #
+        # VSM-036: WORKSPACE detection. The adapter previously hardcoded /app,
+        # but 48% of train tasks have WORKDIR=/workdir or /workspace (not /app).
+        # For those, `chdir /app` fails → OCI exec error → infra_error, attempts=0
+        # (product never starts). Fix: detect the task WORKSPACE at runtime by
+        # probing candidate dirs in priority order (task's own WORKDIR wins), then
+        # run the product there. The probe runs as a shell prefix that exports
+        # WORKSPACE and cds into it.
+        workspace_probe = (
+            "WORKSPACE=$(for d in /app /workdir /workspace /root; do "
+            "[ -d \"$d\" ] && echo \"$d\" && break; done); "
+            "WORKSPACE=${WORKSPACE:-/}"
+        )
         command = (
-            f"PYTHONPATH=/opt/vsm_src WORKSPACE_ROOT=/app "
+            f'{workspace_probe} && '
+            f"PYTHONPATH=/opt/vsm_src WORKSPACE_ROOT=$WORKSPACE "
             f"python3 {_SHIM_PATH}"
             f" --instruction-file {_CONTAINER_TASK_PROMPT}"
-            f" --workspace /app"
+            f" --workspace $WORKSPACE"
             f" --trace-file {_CONTAINER_PRODUCT_TRACE}"
         )
-        exec_result = await environment.exec(command=command, cwd="/app")
+        # cwd=None → harbor uses the container's default WORKDIR (task-defined),
+        # which is the right place for task data. We no longer force /app.
+        exec_result = await environment.exec(command=command, cwd=None)
 
         # Record raw exec output for debugging (visible in harbor view / trial logs).
         if exec_result.stdout:

@@ -1,0 +1,83 @@
+id: VSM-036
+source_system: S1            # synthesis-operator: eval infrastructure blocker (WORKDIR mismatch)
+signal_type: gap             # gap — 48% train-задач не могут запустить продукт (adapter hardcodes /app)
+severity: S1                 # бьёт по核心: продукт не стартует почти на половине датасета
+target_unit: meta            # eval/harbor_adapter.py (eval infrastructure)
+
+title: "harbor_adapter hardcodes /app WORKDIR — 48% train tasks fail chdir (WORKDIR≠/app)"
+
+summary: |
+  Корневая причина массовых infra_error/attempts=0 в train-батчах. eval/harbor
+  _adapter.py:run() hardcodes WORKSPACE_ROOT=/app, --workspace /app, cwd="/app".
+  Но 48/100 train-задач имеют WORKDIR≠/app (Dockerfile WORKDIR /workdir или
+  /workspace) — их контейнеры не содержат /app. Продукт падает на старте:
+    OCI runtime exec failed: chdir to cwd ("/app") set in config.json failed:
+    no such file or directory
+  → terminated_by=infra_error, attempts=0 (recovery-cycle даже не стартует).
+
+  МАСШТАБ: 17 trials в 12 задач упали на chdir /app в 2×15 батчах. 48% датасета
+  потенциально затронуто. Это объясняет "класс 2" (infra_error/attempts=0) из
+  анализов batch1/2 — не API-rate-limit (как гипотезировалось), а WORKDIR-mismatch.
+
+  КОНТРАСТ: задачи с WORKDIR=/app (52/100, напр. broken-python, application-debug)
+  стартуют нормально — продукт работает (durations 117-183s).
+
+  Обнаружено при расследовании гипотезы "AI API rate-limit ломает батчи" —
+  product-логи НЕ содержат 429/rate_limit/quota сигнатур. Реальная причина
+  инфра-провалов = WORKDIR mismatch, не API.
+
+evidence:
+  - "eval/harbor_adapter.py:122-128 — hardcoded WORKSPACE_ROOT=/app, --workspace /app, cwd='/app'"
+  - "state/harbor-trials/bracket-sequence-restoration__MFmbce5/agent/product-stdout.log → 'OCI runtime exec failed: chdir to cwd (\"/app\") failed: no such file or directory'"
+  - "17 trials across 12 tasks fell on chdir /app (grep across batch1/2/3 harbor-trials)"
+  - "WORKDIR analysis: 52/100 train tasks WORKDIR=/app, 48/100 WORKDIR≠/app (/workdir, /workspace) → 48% broken by adapter"
+  - "meta/train-batch1-analysis.md класс 2 (infra_error/attempts=0): book-portfolio, git-repo-forensics — обе /workdir tasks, root cause = этот bug"
+  - "Контраст: broken-python/application-debug (WORKDIR=/app) стартуют OK, продукт работает 117-183s"
+
+affected_workdirs:
+  app: "52 tasks (WORKDIR=/app) — adapter works"
+  workdir: "most of the 48 broken — WORKDIR=/workdir"
+  workspace: "some — WORKDIR=/workspace"
+
+root_cause: |
+  harbor_adapter.run() assumed every task workspace is /app (TB convention for
+  some datasets). But train (tb-dev-v2) tasks use varied WORKDIRs set in their
+  own Dockerfile (/workdir, /workspace). The adapter force-cds into /app which
+  doesn't exist → OCI exec fails before the product even starts.
+
+proposal: |
+  Реализовано (этот issue = фиксация). eval/harbor_adapter.py:run() теперь
+  детектит WORKSPACE runtime: shell-probe по приоритету [/app, /workdir,
+  /workspace, /root], берёт первую существующую директорию. Продукт запускается
+  в ней (task's own WORKDIR), WORKSPACE_ROOT/--workspace указывают на неё.
+  cwd=None → harbor использует контейнерный WORKDIR (правильное место данных).
+  Fallback на / если ничего нет.
+
+  Smoke-test: bracket-sequence-restoration (WORKDIR=/workdir) — раньше падала на
+  chdir /app за 0.6s (infra_error, attempts=0). С фиксом:
+    ДО:   terminated_by=infra_error, attempts=0, duration=0.6s, 0 tool_calls
+    ПОСЛЕ: terminated_by=task_resolved, reward=1.0, attempts=1, 5 steps, 4 tool_calls
+  ПЕРВЫЙ реальный продуктовый PASS (не ложный broken-python) — продукт решил
+  задачу в правильном WORKDIR (/workdir).
+
+acceptance:
+  - "Задачи с WORKDIR≠/app (/workdir, /workspace) стартуют продукт (terminated_by != infra_error, trace_len > 0) — ВЫПОЛНЕНО (bracket-sequence PASS)"
+  - "bracket-sequence-restoration, book-portfolio-analysis, git-repo-forensics доходят до product phase — bracket-sequence PASS ✓"
+  - "<48% train-задач более не падают на 'chdir /app failed' — bracket-sequence подтверждает"
+
+needs_human_decision: false   # infra-фикс, root cause ясен; не продуктовая стратегия
+
+references:
+  - VSM-035   # offline-overlay fix — снял build-DNS; этот issue — следующий infra-барьер (WORKDIR)
+  - VSM-034   # empty-workspace surrender — продуктовый (этот issue — infra, продукт даже не стартовал)
+  - meta/train-batch1-analysis.md   # класс 2 (infra_error/attempts=0) = этот bug
+  - meta/train-batch2-analysis.md   # grid-pathfinding, bracket-sequence — этот bug
+
+notes:
+  - "Гипотеза 'AI API rate-limit ломает батчи' НЕ подтвердилась: product-логи не содержат 429/quota/rate_limit сигнатур. Реальная причина инфра-провалов = WORKDIR mismatch."
+  - "WORKDIR=/app — конвенция TB для некоторых датасетов, но train (tb-dev-v2) её не следует (48% /workdir или /workspace)."
+  - "Этот bug маскировал продуктовую оценку на 48% датасета — VSM-034 surrender анализировался только на /app-задачах. После фикса VSM-034 можно переоценить на полном датасете."
+  - "cwd=None в harbor environment.exec использует контейнерный default WORKDIR — это правильно (task data лежит там, где Dockerfile его положил)."
+
+created: 2026-07-16
+updated: 2026-07-16
