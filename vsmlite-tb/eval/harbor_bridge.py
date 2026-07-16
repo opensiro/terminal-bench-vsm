@@ -96,7 +96,15 @@ def parse_trial(trial_dir: Path) -> dict:
         "verdict": agent_meta.get("verdict"),
         "attempts": agent_meta.get("total_attempts"),
         "reward": reward_value,
+        # VSM-037: strict attribution verdict (detects false-positive PASS from
+        # overlay-collision). Added alongside TB reward (ground truth) — does NOT
+        # overwrite reward. strict_reward=1.0 only for genuine_pass (product
+        # actually worked); 0.0 for false_positive (overlay masked) / fail / unknown.
+        "strict_verdict": _strict_verdict(trial_dir),
     }
+    task_result["harbor"]["strict_reward"] = (
+        1.0 if task_result["harbor"]["strict_verdict"] == "genuine_pass" else 0.0
+    )
     return task_result
 
 
@@ -110,6 +118,25 @@ def record_trial(config: EvalConfig, task_result: dict) -> dict:
 
 
 # ── helpers ──
+
+def _strict_verdict(trial_dir: Path) -> str:
+    """VSM-037: strict attribution verdict via true_verifier (post-trial).
+
+    Lazy-imports scripts/true_verifier.py (flat module, like collect_metrics).
+    Returns verdict string (genuine_pass/false_positive/fail/unknown). On any
+    error → 'unknown' (non-fatal: true_verifier is observability, not a blocker).
+    """
+    try:
+        import sys as _sys
+        _scripts = str(Path(__file__).resolve().parent.parent / "scripts")
+        if _scripts not in _sys.path:
+            _sys.path.insert(0, _scripts)
+        from true_verifier import verify_trial
+        v = verify_trial(Path(trial_dir))
+        return v.get("strict_verdict", "unknown")
+    except Exception:
+        return "unknown"
+
 
 def _read_json(path: Path) -> dict | None:
     if not path.exists():

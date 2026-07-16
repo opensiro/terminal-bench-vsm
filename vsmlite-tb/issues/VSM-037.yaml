@@ -1,0 +1,89 @@
+id: VSM-037
+source_system: S1            # synthesis-operator: eval-метрика качества (false-positive PASS)
+signal_type: quality         # quality — pass-rate завышен overlay-collision'ом
+severity: S2                 # бьёт по核心 A(t): eval_sign искажён (pass-rate выше реального)
+target_unit: meta            # eval/ + scripts/true_verifier.py (eval infrastructure)
+
+title: "False-positive PASS: overlay-collision маскирует reward=1.0 без действий продукта"
+
+summary: |
+  TB `tests/test.sh` = ground truth, детерминистический, запускается harbour в
+  ТОМ ЖЕ контейнере где работал продукт (с overlay-deps внутри). Проблема: overlay
+  ставит deps (pip, goose, ...) которые test.sh может проверить как «продукт
+  решил» → reward=1.0 БЕЗ действий продукта = false-positive PASS.
+
+  Канонический кейс (broken-python): overlay ставит pip (для product runtime,
+  VSM-035 offline layer), test.sh проверяет `import pip` → reward=1.0, хотя
+  продукт сделал 0 работы (fs.list + pytest → стоп, s1_control=fail_no_checkpoint,
+  s1_artifacts=[]). Продукт сам признал провал, но verifier дал PASS.
+
+  МАСШТАБ (валидировано на 251 trial за сессию):
+    - 8 false_positive PASS (7× broken-python + 1× acl-permissions-inheritance)
+    - 14 genuine_pass (продукт реально работал)
+    - 0 false-alarm (сигнатура чистая — genuine PASS не помечаются false)
+    - TB raw pass-rate: 22/251 = 8.8%
+    - strict pass-rate: 14/251 = 5.6% (3.2 п.п. ниже — overlay-collision inflates)
+
+  Root cause НЕ в verifier (TB test.sh детерминистический, LLM-judge не нужен —
+  0% задач требуют). Root cause = overlay-collision: overlay-действие совпало с
+  решением задачи. Это инфра-проблема (overlay ставит то что задача просит продукт
+  поставить), не продуктовая.
+
+evidence:
+  - "broken-python: test.sh проверяет `import pip` (tests/test_outputs.py: test_pip_installed + test_pip_install)"
+  - "eval/harbor_run.py:_prepare_overlay_task — overlay ставит pip (apt-get install python3-pip + get-pip bootstrap)"
+  - "state/harbor-trials/broken-python__*/agent/product-trace.json → s1_control.verdict=fail_no_checkpoint, s1_artifacts=[], terminated_by=no_observations (продукт не работал)"
+  - "state/harbor-trials/broken-python__*/result.json → verifier_result.rewards.reward=1.0 (TB PASS несмотря на провал продукта)"
+  - "КОНТРАСТ genuine: state/harbor-trials/jsonl-aggregator__FzUJhfY → s1_artifacts=[aggregate.py, aggregates.json], s1_control.verdict=pass, terminated_by=task_resolved (продукт работал, PASS легитимен)"
+
+false_positive_signature: |
+  4 поля, все одновременно (0 false-alarm на 14 genuine PASS):
+    reward == 1.0
+    s1_control[].verdict == "fail_no_checkpoint"   (продукт сам признал провал)
+    terminated_by == "no_observations"             (triad не нашла что тестить)
+    s1_artifacts == [] или missing                  (продукт ничего не создал)
+
+  Genuine PASS с no_observations (convolutional-layers, fix_async_worker_queue)
+  имеют НЕПУСТЫЕ s1_artifacts → дискриминатор надёжный. Genuine PASS с
+  terminated_by=task_resolved явно легитимны.
+
+proposal: |
+  Реализовано (этот issue = фиксация). Детерминистический post-trial attribution
+  check — БЕЗ LLM (TB test.sh уже детерминистический, LLM-judge избыточен).
+
+  scripts/true_verifier.py:
+    verify_trial(trial_dir) → {strict_verdict, strict_reward, reason}
+    strict_verdict ∈ {genuine_pass, false_positive, fail, unknown}
+    strict_reward: 1.0 только для genuine_pass; 0.0 иначе.
+    НЕ затирает TB reward (ground truth) — добавляет strict_verdict рядом.
+
+  eval/harbor_bridge.py:parse_trial интегрирован — task_result["harbor"] теперь
+  содержит reward (TB ground truth) + strict_verdict + strict_reward. Двойная
+  метрика: TB pass-rate (raw) + strict pass-rate (с атрибуцией).
+
+  CLI:
+    python3 scripts/true_verifier.py <trial_dir>           # один trial
+    python3 scripts/true_verifier.py --batch <summary.json> # PASS в батче
+    python3 scripts/true_verifier.py --all [--write-registry]  # все trials
+
+acceptance:
+  - "8 false_positive PASS обнаружены (7 broken-python + 1 acl) — ВЫПОЛНЕНО"
+  - "0 false-alarm (14 genuine PASS не помечены false) — ВЫПОЛНЕНО"
+  - "strict pass-rate ниже TB raw pass-rate (5.6% vs 8.8%) — overlay-collision quantified"
+  - "make validate GREEN (scripts/ read-only, не мутирует ../)"
+
+needs_human_decision: false   # infra-fix, root cause ясен, сигнатура валидирована
+
+references:
+  - VSM-035   # offline overlay layer — источник collision (ставит deps для product runtime)
+  - VSM-034   # empty-workspace surrender — продукт сдаётся (s1_control=fail_no_checkpoint signature пересекается)
+  - meta/verifier-architecture.md   # ASCII-схема verifier-фазы (где живёт true-verifier)
+
+notes:
+  - "LLM-judge НЕ нужен: исследование показало 0% задач требуют LLM, все проверяются детерминистическим pytest/grader. Проблема = атрибуция reward'а (кто произвёл — продукт или overlay), не проверка ответа."
+  - "Strict_reward НЕ заменяет TB reward в метриках A(t) автоматически — это observability-слой. Использовать strict_reward для A(t) eval_sign = отдельное решение (меняет semantics pass-rate)."
+  - "Broken-python — структурный конфликт: overlay чинит pip (для product runtime), но задача просит продукт починить pip. Detect-and-skip-overlay-deps для intent-сломанных задач = future work (VSM-035 note)."
+  - "Один broken-python trial (p5ogWq8) помечен genuine_pass — продукт в нём действительно отработал (s1_control=pass). Это не false-alarm, а корректная классификация: даже broken-python продукт может легитимно решить."
+
+created: 2026-07-16
+updated: 2026-07-16
