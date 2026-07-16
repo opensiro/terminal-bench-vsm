@@ -125,9 +125,19 @@ class ProductAdapter(BaseAgent):
         # probing candidate dirs in priority order (task's own WORKDIR wins), then
         # run the product there. The probe runs as a shell prefix that exports
         # WORKSPACE and cds into it.
+        #
+        # VSM-039: prefer $TASK_WORKDIR (parsed from the task's Dockerfile and
+        # injected as ENV by _prepare_overlay_task). The /app-first probe below
+        # always found /app (overlay mkdir /app creates it unconditionally),
+        # masking the real task WORKDIR (/workdir, /workspace) → executor ws=/app
+        # while planner sees /workdir in its prompt → artifact/exec path mismatch.
+        # $TASK_WORKDIR is authoritative (from Dockerfile); probe is fallback only.
         workspace_probe = (
-            "WORKSPACE=$(for d in /app /workdir /workspace /root; do "
-            "[ -d \"$d\" ] && echo \"$d\" && break; done); "
+            "WORKSPACE=${TASK_WORKDIR:-}; "
+            "if [ -z \"$WORKSPACE\" ] || [ ! -d \"$WORKSPACE\" ]; then "
+            "  WORKSPACE=$(for d in /app /workdir /workspace /root; do "
+            "    [ -d \"$d\" ] && echo \"$d\" && break; done); "
+            "fi; "
             "WORKSPACE=${WORKSPACE:-/}"
         )
         # VSM-034 A': bind-mount a diag dir for goose sub-agent observability

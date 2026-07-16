@@ -197,6 +197,23 @@ def _prepare_overlay_task(original_task_dir: Path, overlay_dir: Path) -> Path:
         # exactly 'todo-task-base' as long as the final stage is the default.
     patched_original = "\n".join(lines)
 
+    # VSM-039: parse the task's effective WORKDIR = the LAST `WORKDIR <path>`
+    # directive at or after the final FROM (this is the cwd docker sets for the
+    # container's main process). Expose it as TASK_WORKDIR env so the product
+    # adapter can prefer it over the /app-first probe (VSM-039 root cause: probe
+    # finds /app first because overlay mkdir /app always creates it, masking the
+    # real task WORKDIR like /workdir → artifact/exec path mismatch).
+    task_workdir = ""
+    search_lines = lines[last_from_idx:] if last_from_idx >= 0 else lines
+    for line in search_lines:
+        s = line.strip()
+        if s.upper().startswith("WORKDIR "):
+            wd = s.split(None, 1)[1].strip() if len(s.split(None, 1)) > 1 else ""
+            # Strip inline comments and surrounding quotes.
+            wd = wd.split("#")[0].strip().strip('"').strip("'")
+            if wd:
+                task_workdir = wd  # keep updating → ends on the LAST WORKDIR
+
     deps_str = " ".join(profile_deps)
     strategy_note = (
         "# VSM-035 OFFLINE strategy: COPY --from=vsm-tools:%s (zero network RUN).\n"
@@ -213,6 +230,11 @@ def _prepare_overlay_task(original_task_dir: Path, overlay_dir: Path) -> Path:
         "# Harbor caches this image by build-context hash; deps install once at build.\n\n"
         f"{patched_original}\n\n"
     )
+    # VSM-039: expose the task's parsed WORKDIR as TASK_WORKDIR env. Must be set
+    # in the FINAL stage (after FROM todo-task-base) to survive into the running
+    # container — ENV doesn't cross multi-stage FROM boundaries. Injected into
+    # both branches below via workdir_env. Empty → adapter falls back to probe.
+    workdir_env = f"ENV TASK_WORKDIR={task_workdir}\n" if task_workdir else ""
 
     if use_offline:
         # ── VSM-035 offline: COPY binaries+wheels from tools image, pip --no-index ──
@@ -224,6 +246,7 @@ def _prepare_overlay_task(original_task_dir: Path, overlay_dir: Path) -> Path:
             f"FROM {tools_tag} AS tools\n\n"
             "# ── final: task image + tools layered via COPY (zero network) ──\n"
             "FROM todo-task-base\n"
+            + workdir_env +
             "# python3 + pip: ubuntu-base tasks have NO python (acl, etc). curl/bzip2\n"
             "# for goose/uv extraction; libxcb1/libgomp1 for goose runtime deps.\n"
             "RUN apt-get update -qq && \\\n"
@@ -256,6 +279,7 @@ def _prepare_overlay_task(original_task_dir: Path, overlay_dir: Path) -> Path:
         overlay_dockerfile += (
             "# ── Stage 2: goose + python deps layered on top of the task image ──\n"
             "FROM todo-task-base\n"
+            + workdir_env +
             "RUN apt-get update -qq && \\\n"
             "    DEBIAN_FRONTEND=noninteractive apt-get install -y -qq --no-install-recommends \\\n"
             "        python3 python3-pip curl bzip2 libxcb1 libgomp1 > /dev/null 2>&1 && \\\n"
