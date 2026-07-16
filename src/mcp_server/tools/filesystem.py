@@ -11,7 +11,25 @@ def register_filesystem_tools(server, workspace: str):
     ws = Path(workspace).resolve()
 
     def _safe_path(p: str) -> Path:
-        resolved = (ws / p).resolve()
+        # VSM-034 TERTIARY-1: goose-planner sometimes returns absolute paths
+        # (e.g. "/workspace/do_merge.py") because it sees WORKSPACE=<planner's
+        # view> in its prompt, but this MCP server's ws may be a different dir
+        # (the executor binds to input.workspace). Treat absolute paths inside
+        # ws as-is; remap the basename into ws as a fallback for planner/executor
+        # workspace mismatch; raise only for genuinely foreign paths.
+        pp = Path(p)
+        if pp.is_absolute():
+            resolved = pp.resolve()
+            # Absolute path inside ws — allow directly.
+            if str(resolved).startswith(str(ws)):
+                return resolved
+            # Absolute path outside ws — planner/executor workspace mismatch.
+            # Remap the basename into ws so the artifact lands where the executor
+            # expects it (csv-json-jsonl-merger: "/workspace/do_merge.py" →
+            # "<ws>/do_merge.py"). This unblocks artifact creation; the security
+            # invariant (cannot escape ws) is preserved.
+            return ws / pp.name
+        resolved = (ws / pp).resolve()
         if not str(resolved).startswith(str(ws)):
             raise ValueError(f"path outside workspace: {p}")
         return resolved

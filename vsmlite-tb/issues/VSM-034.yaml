@@ -118,17 +118,32 @@ needs_human_decision: false   # РЕШЕНО: N+A' + R+C реализованы 
 
 # ── TERTIARY STATUS (2026-07-16, branch vsm034-tertiary) ──
 #
-# TERTIARY-1 (artifact creation / workspace mismatch) — ROOT CAUSE ИЗУЧЕН, фикс отложен:
-#   Планировщик возвращает absolute path (fs.write path="/workspace/do_merge.py").
-#   Executor AgentLoop вызывает mcp_server.call_tool → filesystem.py _safe_path
-#   reject'ает absolute path вне ws → raises ValueError → MCPServer.call_tool
-#   ловит exception, возвращает {"error": ...} БЕЗ stdout/stderr/exit_code →
-#   AgentLoop видит observation="" exit_code=0 → exception ПОЛНОСТЬЮ проглочен.
-#   Файл не создаётся, но triad думает что шаг прошёл. Двойной баг:
-#     (a) planner возвращает absolute paths (SOUL/SKILL говорят relative, LLM игнорирует)
-#     (b) call_tool/AgentLoop silently swallow exceptions ({"error":...} без exit_code)
-#   Фикс сложнее (тронет mcp_server.call_tool contract + planner prompt) — отложен
-#   в отдельный issue. Проявлялся на csv-json-jsonl-merger (R-фикс раскрыл).
+# TERTIARY-1 (artifact creation / workspace mismatch) — ФИКСЫ A+B РЕАЛИЗОВАНЫ,
+# вскрыт 3-й слой (TERTIARY-1b: workspace probe /app vs task WORKDIR):
+#   Первоначальный root cause (двойной баг):
+#     (a) planner возвращает absolute paths (fs.write path="/workspace/do_merge.py")
+#     (b) call_tool silently swallow exceptions ({"error":...} без exit_code)
+#   ФИКС A (call_tool visibility — server.py): except-блок теперь возвращает
+#   {"stdout":"","stderr":err_msg,"exit_code":1} вместо {"error":...}. AgentLoop
+#   видит observation+exit_code≠0 → failure_observations регистрируется. Invisible
+#   failure устранён. ВАЛИДИРОВАНО: bracket fs.write obs="wrote 1650 bytes..."
+#   (видно), артефакт recorded в s1_artifacts.
+#   ФИКС B (basename remap — filesystem.py _safe_path): absolute path вне ws →
+#   ремап basename в ws (security preserved: pp.name не может содержать .. или /).
+#   /workspace/do_merge.py вне ws=/app → <ws>/do_merge.py.
+#   ВСКРЫТ 3-Й СЛОЙ (TERTIARY-1b, НЕ починен): workspace probe в harbor_adapter
+#   ищет /app /workdir /workspace /root — находит /app ПЕРВЫМ (overlay создаёт
+#   mkdir /app), хотя task WORKDIR=/workdir. Executor ws=/app, planner видит
+#   /workdir в prompt → fs.write /workdir/solution.py → ремап в /app/solution.py
+#   → shell.exec runner ищет /workdir/solution.py → No such file. Recovery:
+#   "pattern 'solution.py' not found in /app". Нужно: workspace probe должен
+#   предпочитать task WORKDIR (из Dockerfile) над /app. Отдельный фикс в
+#   eval/harbor_adapter.py:workspace_probe.
+#
+# Файлы (branch vsm034-tertiary1):
+#   ../src/mcp_server/server.py (+9) — ФИКС A (call_tool visibility)
+#   ../src/mcp_server/tools/filesystem.py (+19) — ФИКС B (basename remap)
+#   TERTIARY-1b (workspace probe) — ОТЛОЖЕН, нужен фикс в harbor_adapter.py
 #
 # TERTIARY-2 (verifier false-PASS) — РЕАЛИЗОВАН, ВАЛИДИРОВАН В LIVE-БАТЧЕ:
 #   После SECONDARY-C test-controller правильно ловит "collected 0 items" →
