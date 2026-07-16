@@ -80,8 +80,13 @@ def _image_exists(tag: str) -> bool:
 def _tools_dockerfile(profile: str) -> str:
     """Dockerfile для vsm-tools:<profile>.
 
-    Multi-stage: builder качает wheels для python 3.11 И 3.13 (task-образы разные),
-    final-stage minimal — кладёт binaries + wheels в /opt/.
+    Multi-stage: builder качает wheels для python 3.11, 3.12, 3.13 (task-образы
+    разные: python:3.x-slim, ubuntu-apt python3.12, ghcr python-3-13), final-stage
+    minimal — кладёт binaries + wheels в /opt/.
+
+    VSM-036 note: 3.12 added — ubuntu-base tasks (apt-get install python3) get
+    system python 3.12.3, which had NO matching wheel (only 3.11/3.13 were
+    built) → 'No module named yaml' infra_error. Now covered.
     """
     pkgs = _pb._deps_for_profile(profile)
     pkgs_str = " ".join(pkgs)
@@ -91,10 +96,14 @@ def _tools_dockerfile(profile: str) -> str:
 # on host; harbor-build network is unreliable — this image removes all network
 # RUNs from the per-task overlay).
 
-# ── Builder: download wheels for BOTH python 3.11 and 3.13 (task images vary) ──
+# ── Builder: download wheels for python 3.11, 3.12, 3.13 (task images vary) ──
 FROM python:3.11-slim AS py311
 RUN pip download --dest /wheels311 --only-binary=:all: {pkgs_str} || \\
     pip download --dest /wheels311 {pkgs_str}
+
+FROM python:3.12-slim AS py312
+RUN pip download --dest /wheels312 --only-binary=:all: {pkgs_str} || \\
+    pip download --dest /wheels312 {pkgs_str}
 
 FROM python:3.13-slim AS py313
 RUN pip download --dest /wheels313 --only-binary=:all: {pkgs_str} || \\
@@ -129,9 +138,10 @@ RUN mkdir -p /opt/bin && \\
 # get-pip.py (для intent-сломанных python образов, напр. broken-python).
 RUN mkdir -p /opt && curl -fsSL https://bootstrap.pypa.io/get-pip.py -o /opt/get-pip.py
 
-# Merged wheels from both python versions → /opt/wheels.
+# Merged wheels from all three python versions → /opt/wheels.
 RUN mkdir -p /opt/wheels
 COPY --from=py311 /wheels311/ /opt/wheels/
+COPY --from=py312 /wheels312/ /opt/wheels/
 COPY --from=py313 /wheels313/ /opt/wheels/
 RUN ls /opt/wheels | wc -l && echo "wheels staged for profile {profile}"
 """

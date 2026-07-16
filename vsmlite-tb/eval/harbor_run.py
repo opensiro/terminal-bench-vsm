@@ -216,15 +216,24 @@ def _prepare_overlay_task(original_task_dir: Path, overlay_dir: Path) -> Path:
 
     if use_offline:
         # ── VSM-035 offline: COPY binaries+wheels from tools image, pip --no-index ──
+        # VSM-036 fix: apt-get MUST install python3/python3-pip (ubuntu-base tasks
+        # like acl-permissions have no python). Also mkdir /app — harbour defaults
+        # cwd=/app but tasks without WORKDIR don't create it → OCI chdir fails.
         overlay_dockerfile += (
             f"# ── tools stage (offline binaries + wheels, profile={profile}) ──\n"
             f"FROM {tools_tag} AS tools\n\n"
             "# ── final: task image + tools layered via COPY (zero network) ──\n"
             "FROM todo-task-base\n"
+            "# python3 + pip: ubuntu-base tasks have NO python (acl, etc). curl/bzip2\n"
+            "# for goose/uv extraction; libxcb1/libgomp1 for goose runtime deps.\n"
             "RUN apt-get update -qq && \\\n"
             "    DEBIAN_FRONTEND=noninteractive apt-get install -y -qq --no-install-recommends \\\n"
-            "        jq make file tree > /dev/null 2>&1 && \\\n"
+            "        python3 python3-pip curl bzip2 libxcb1 libgomp1 jq make file tree > /dev/null 2>&1 && \\\n"
             "    rm -rf /var/lib/apt/lists/*\n"
+            "# VSM-036: ensure /app exists (harbour defaults cwd=/app; tasks without\n"
+            "# WORKDIR don't create it → OCI exec 'chdir /app failed'). mkdir is idempotent\n"
+            "# and harmless for tasks that already have /app or use /workdir.\n"
+            "RUN mkdir -p /app\n"
             "# Binaries from tools image (goose, uv) + get-pip for broken-python intent.\n"
             "COPY --from=tools /opt/bin/goose /usr/local/bin/goose\n"
             "COPY --from=tools /opt/bin/uv    /usr/local/bin/uv\n"
