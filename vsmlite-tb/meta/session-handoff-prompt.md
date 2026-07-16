@@ -10,15 +10,15 @@
 
 ## Контекст предыдущей сессии (кратко)
 
-Предыдущая сессия (2026-07-16) проделала большую работу по починке eval-infra. **Все коммиты уже в main** (HEAD=`7dc63e1`). Прочитай эти файлы ПЕРЕД работой — они содержат весь контекст:
+Предыдущая сессия (2026-07-16) проделала большую работу по починке eval-infra. **Все коммиты уже в main** (HEAD=`0fd4f66`). Прочитай эти файлы ПЕРЕД работой — они содержат весь контекст:
 
-1. **`meta/cycle-runbook.md`** — СТАНДАРТ запуска eval-цикла. Читать первым. Содержит: предусловия (vsm-tools build, pre-pull bases), команды запуска, OOM-митигацию, мониторинг, чеклист перед прогонами.
+1. **`meta/cycle-runbook.md`** — СТАНДАРТ запуска eval-цикла. Читать первым. Содержит: предусловия (vsm-tools build, pre-pull bases), команды запуска, OOM-митигацию, мониторинг, чеклист перед прогонами. **Внимание: не упоминает VSM-038 (host-network) — см. ниже.**
 2. **`meta/verifier-architecture.md`** — ASCII-схема verifier-фазы (как reward течёт от TB test.sh через harbour до A(t)) + 3 слоя верификации.
-3. **`issues/VSM-{034,035,036,037}.yaml`** — 4 зафиксированных находки с root cause + fix.
-4. **`state/true_verification.json`** — baseline registry: 14 genuine_pass, 8 false_positive, strict 5.6% vs TB 8.8%.
+3. **`issues/VSM-{034,035,036,037,038}.yaml`** — 5 зафиксированных находок с root cause + fix.
+4. **`state/true_verification.json`** — baseline registry (архивный snapshot): 14 genuine_pass, 8 false_positive (на момент архива).
 5. **`state/archives/runs-20260716-172304.manifest.md`** — архив 265 исторических trials (восстановим через `tar -xzf`).
 
-## Что уже сделано (5 инфра-фиксов, валидированы)
+## Что уже сделано (6 инфра-фиксов, валидированы)
 
 | Fix | Проблема | Решение |
 |---|---|---|
@@ -27,30 +27,67 @@
 | — | python3 отсутствует в ubuntu-base задачах | restore `apt-get install python3 python3-pip` в offline overlay |
 | — | `No module named yaml` на python 3.12 | 3-я builder stage в `build_tools_images.py` (cp311+cp312+cp313 wheels) |
 | VSM-037 | Ложный PASS от overlay-collision (broken-python: overlay ставит pip → test.sh проверяет `import pip` → reward=1.0 без действий продукта) | `scripts/true_verifier.py` — детерминистический post-trial attribution (no LLM): сигнатура `reward=1.0 + s1_control=fail_no_checkpoint + no_observations + s1_artifacts=[]`. Интегрирован в `harbor_bridge.py` (strict_verdict рядом с TB reward). **0 false-alarm на 14 genuine PASS.** |
+| **VSM-038** | **test.sh RewardFileNotFoundError**: TB canonical test.sh (apt-get update + curl uv + uv pip install) падал на bridge DNS. Блокировал ВСЕ задачи где verifier uses network (большинство). | **`network_mode: host`** через `eval/host-network-compose.yaml` + wiring в `harbor_config_template.yaml` (extra_docker_compose). Контейнер (agent+verifier) использует host-сеть → DNS работает. **test.sh НЕ модифицирован** (TB ground truth). ВАЛИДНО: acl-permissions task_resolved reward=1.0 (был RewardFileNotFoundError). Submission-safe. |
+
+**Результат:** на последнем батче (26 trials, host-network) — **0 RewardFileNotFoundError, 0 DNS/chdir/yaml errors**. TB raw = strict pass-rate = 11.5% (впервые совпали — все PASS легитимны). Pipeline производит валидные runs для leaderboard-сабмита.
 
 **Результат:** на 251 trial — 0 NEW chdir/yaml/DNS ошибок. Продукт доходит до работы на всех задачах. Архив: `state/archives/runs-20260716-172304.tar.gz`.
 
 ## ПРИОРИТЕТ — что сделать (в порядке важности)
 
-### 🔴 #1 (главное): Task-own Dockerfile deps offline
-**Проблема:** vsm-tools покрывает только **product-runtime deps** (pyyaml/pytest/goose/uv). Но ~5 задач имеют сетевые `RUN` в **своём собственном** task-Dockerfile (`uv pip install pandas==2.2.3 scikit-learn`, `apt-get update`) — те падают на той же ненадёжной harbour-build-network. Это **последний инфра-барьер** перед чисто продуктовыми данными.
-**Затронуто:** anomaly-detection-ranking, sakila-sqlite-queries, log-summary, и др. (scan: `grep -rl "pip install\|apt-get" .cache/tb-dev-v2/*/environment/Dockerfile`).
-**Пути решения (исследуй и выбери):**
-- (A) `--network=host` для harbour-build — host-сеть работает (проверено: `docker build` на host ставит pip/pyyaml OK). Корневое решение, но проверь поддерживает ли harbour 0.18.0 это (через config или env).
-- (B) Расширить `build_tools_images.py`: сканировать все task-Dockerfile'ы, извлекать их pip-deps, качать wheels на host, класть в vsm-tools. Overlay тогда ставит task-deps из локального wheels тоже.
-- (C) Task-specific prebuild (как VSM-033 для TB-2.1) — тяжело для 100 разных Dockerfile'ов.
+### 🔴 #1 (ГЛАВНОЕ): VSM-034 — product surrender (продуктовая проблема в ../src/)
 
-### 🟡 #2: Pre-flight check перед стартом батча
-**Проблема:** race-condition — батч стартовал, пока vsm-tools ещё перестраивался → первые задачи взяли stale tools (`No module named yaml`).
-**Решение:** добавить в `eval/modes.py:run_train` (или `_run_batch`) pre-flight проверку: `vsm-tools:<profile>` существует + содержит cp312 wheels (`docker run --rm --entrypoint sh vsm-tools:core -c "ls /opt/wheels | grep -c cp312"`). Если нет — отказать старту с понятным сообщением.
+**Инфра полностью починена** (VSM-035..038). Pipeline производит валидные runs.
+Теперь главный блокер роста pass-rate = **продукт** (vsm-product triad), не инфра.
 
-### 🟡 #3: Upsert-баг metrics.record
-**Проблема:** `eval/metrics.py:record` делает upsert по `task_id` — последний trial в батче затирает предыдущие. batch_summary показывал `total=1` вместо 15, dev_metrics терял историю. Cycle даёт ложный `zero_pass`.
-**Решение:** `metrics.record_batch` (batch-mode, не per-task upsert) или append + dedup по trial_name. Это чинит cycle observations (pass-rate будет корректный).
+**Проблема (VSM-034):** продукт "surrenders" на задачах где workspace пуст/needs prep —
+делает ровно `fs.list(".")` + `pytest` → стоп (2 tool_calls, no_observations). Не читает
+task_prompt, не создаёт артефакты. ~33% задач (breast-cancer, california-housing,
+multi-labeller в батчах). Pass-rate ≈ 11% держится именно из-за этого.
 
-### 🟢 #4 (опц.): broken-python intent-collision
-**Проблема:** overlay ставит pip (для product runtime), но broken-python = задача «почини pip» → overlay маскирует intent. True-verifier **ловит** (8 false_positive), но overlay всё ещё ставит pip.
-**Решение:** detect-and-skip-overlay-deps для intent-сломанных задач (grep Dockerfile на «intentionally break» комментарии). Низкий приоритет — true-verifier уже детектит.
+**Корневая причина (3-звенная цепочка, исследована):**
+1. **Silent fallback** (`../src/runtime/triad_solver.py:519-524`): goose-planner не вернул
+   parseable JSON → тихий откат к rule-based `_default_planner` (hardcoded fs.list+pytest,
+   не читает task_prompt). **Ноль observability** — в trace не видно что rule-based ran.
+2. **Test-controller PASS on empty** (`triad_solver.py:421-428`): "0 tests collected" =
+   no error keywords → verdict=pass (считает пустой workspace успешным).
+3. **Orchestrator no_observations** (`../src/orchestrator.py:174-186`): 0 failure_observations
+   (pytest exit 0 из-за `|| true`) → terminate after attempt 1.
+
+**Где фикс (через child-dispatcher, НЕ напрямую ../src/):**
+- (A) **Убрать silent fallback** — логировать/errors при goose failure (triad_solver.py:519-524,
+  654-655). Дать сигнал что rule-based ran вместо goose. Самый глубокий корень.
+- (B) **Усилить _default_planner** — читать task_prompt, создавать артефакты (не только
+  fs.list+pytest). triad_solver.py:364-392. Делает fallback безопасным.
+- (C) **Test-controller: "no_attempt" verdict** — отличать "0 tests collected" от реального
+  pass. triad_solver.py:421-428. acceptance: `s1_control.verdict=no_attempt` при 0 artifacts.
+- (D) **Orchestrator: retry instead of terminate** — 2-я попытка с другим framing при
+  no_observations. orchestrator.py:174-186.
+
+**ВАЖНО:** VSM-034 = `needs_human_decision: true`. Нужно решение стратегии (A/B/C/D или
+комбинация) В `issues/VSM-034.yaml → decision` перед child-dispatcher. Read
+`../vsm/systems/s1-planner/{SOUL,SKILL}.md` — там уже описано "MUST create artifact",
+просто не доходит до goose из-за silent fallback.
+
+### 🟡 #2: Task-own Dockerfile deps (build-network, ЧАСТИЧНО фиксировано)
+VSM-038 (host-network) починил **runtime** (test.sh в контейнере). Но **build** network
+всё ещё bridge — task-specific deps в Dockerfile задачи (pandas/scikit/jq у anomaly/sakila/
+log-summary) падают на DNS. VSM-035 offline layer покрывает product-runtime, не task-specific.
+**Решение:** `build: network: host` в task docker-compose, или расширить vsm-tools scan.
+Низший приоритет — host-network уже покрыл большинство (test.sh = canonical blocker).
+
+### 🟡 #3: Pre-flight check (race-condition)
+Батч стартовал до завершения rebuild vsm-tools → stale tools. Решение: pre-flight в
+`eval/modes.py:run_train` проверять `vsm-tools:<profile>` + cp312 wheels перед стартом.
+
+### 🟡 #4: Upsert-баг metrics.record
+`eval/metrics.py:record` upsert по task_id затирает предыдущие trials. dev_metrics показывает
+total=1 вместо 15. Решение: `metrics.record_batch` или append+dedup по trial_name.
+
+### 🟢 #5 (опц.): broken-python intent-collision
+Overlay ставит pip (product runtime), но broken-python просит продукт починить pip.
+True-verifier **ловит** (0 false_positive в последнем батче). Detect-and-skip-overlay-deps
+для intent-сломанных задач. Низший приоритет.
 
 ## Главные инварианты (НЕ нарушать)
 
