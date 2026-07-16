@@ -130,9 +130,15 @@ class ProductAdapter(BaseAgent):
             "[ -d \"$d\" ] && echo \"$d\" && break; done); "
             "WORKSPACE=${WORKSPACE:-/}"
         )
+        # VSM-034 A': bind-mount a diag dir for goose sub-agent observability
+        # (planner_source = goose vs default fallback, network_retry events).
+        # Read by _diag_goose() in ../src/runtime/triad_solver.py.
+        diag_dir = "/logs/agent/diag"
         command = (
             f'{workspace_probe} && '
+            f"mkdir -p {diag_dir} && "
             f"PYTHONPATH=/opt/vsm_src WORKSPACE_ROOT=$WORKSPACE "
+            f"VSM_DIAG_DIR={diag_dir} "
             f"python3 {_SHIM_PATH}"
             f" --instruction-file {_CONTAINER_TASK_PROMPT}"
             f" --workspace $WORKSPACE"

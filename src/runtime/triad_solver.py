@@ -516,12 +516,32 @@ def make_goose_planner(
             provider=provider, task_input=task_input, timeout_sec=timeout_sec,
             tools=["fs", "shell"],
         )
+        # VSM-034 A': record planner source for observability (log-only).
+        import os
+        import json
+        import time as _time
+        _diag_dir = os.environ.get("VSM_DIAG_DIR", "")
+        def _src(source, **extra):
+            if not _diag_dir:
+                return
+            try:
+                rec = {"role": "planner_source", "ts": _time.time(),
+                       "source": source, **extra}
+                with open(os.path.join(_diag_dir, f"planner-source-{int(_time.time()*1000)}.json"), "w") as f:
+                    json.dump(rec, f, default=str, indent=2)
+            except Exception:
+                pass
         if parsed is None:
+            _src("default_fallback_none")
             return _default_planner(task_prompt, available_tools, recovery_directive)
         steps = parsed.get("steps") or []
         # Minimal validation: each step must have a tool.
         clean = [s for s in steps if isinstance(s, dict) and s.get("tool")]
-        return clean or _default_planner(task_prompt, available_tools, recovery_directive)
+        if not clean:
+            _src("default_fallback_empty", raw_steps_count=len(steps))
+            return _default_planner(task_prompt, available_tools, recovery_directive)
+        _src("goose", steps_count=len(clean))
+        return clean
 
     return _planner
 
@@ -614,6 +634,61 @@ def make_goose_verifier(
     return _verifier
 
 
+def _is_network_failure(result) -> bool:
+    """VSM-034: detect goose failures caused by flaky network (retryable).
+
+    Two signatures observed in diagnostic data:
+      (1) TCP-connect-hang → goose subprocess.TimeoutExpired (exit_code=124,
+          timed_out=True, empty stdout). VPN-TUN connect stalls until the
+          subprocess timeout kills goose.
+      (2) Explicit 'Network error: Could not connect to api.z.ai' in stdout
+          (exit_code=0, goose started its banner, API call failed).
+    Both are transient (host network works moments later); retry recovers them.
+    """
+    if result is None:
+        return False
+    if getattr(result, "timed_out", False):
+        return True
+    stdout = (getattr(result, "stdout", "") or "").lower()
+    stderr = (getattr(result, "stderr", "") or "").lower()
+    network_markers = (
+        "network error",
+        "could not connect to",
+        "connection reset",
+        "connection refused",
+        "temporary failure in name resolution",
+        "tls handshake",
+    )
+    return any(m in stdout or m in stderr for m in network_markers)
+
+
+def _diag_goose(role, status, **extra):
+    """VSM-034 A': permanent diagnostic for goose sub-agent outcomes.
+
+    Writes a small JSON record per goose invocation into $VSM_DIAG_DIR (default
+    /tmp/vsm-diag, overridden by eval/harbor_adapter.py to a bind-mounted path
+    so records survive the container). Log-only — never changes behavior.
+    Records: role, status (ok | network_retry | parse_none), attempt number,
+    exit_code, timed_out, duration, stdout/stderr heads. This makes the
+    goose-vs-fallback decision observable in product-trace without ad-hoc
+    instrumentation every time a regression like VSM-034 appears.
+    """
+    import os
+    import json
+    import time as _time
+    _diag_dir = os.environ.get("VSM_DIAG_DIR", "/tmp/vsm-diag")
+    try:
+        os.makedirs(_diag_dir, exist_ok=True)
+    except Exception:
+        return
+    try:
+        rec = {"role": role, "ts": _time.time(), "status": status, **extra}
+        with open(os.path.join(_diag_dir, f"goose-{role}-{int(_time.time()*1000)}.json"), "w") as f:
+            json.dump(rec, f, default=str, indent=2)
+    except Exception:
+        pass
+
+
 def _run_goose_subagent(
     role: str,
     systems_dir,
@@ -627,6 +702,13 @@ def _run_goose_subagent(
 
     None return signals the caller to fall back to the rule-based stub. This
     keeps the triad usable without goose (tests, CI).
+
+    VSM-034: retries on transient network failure (flaky VPN-TUN to z.ai).
+    Diagnostic data showed 77% of planner fallbacks were network errors
+    (TCP-connect-hang timeout OR explicit 'Network error'); a single retry
+    recovered most of them. Retry budget = 2 attempts (initial + 1 retry)
+    with 4s backoff. Non-network failures (parse error, real goose crash)
+    are NOT retried — only network-classified ones.
 
     tools: per-role MCP tool modules to attach (e.g. ["fs", "shell"]). When
     non-empty, GooseRunner builds a --with-extension wrapper so goose can
@@ -648,11 +730,48 @@ def _run_goose_subagent(
         workspace=str(workspace),
         tools=tools or [],
     )
-    try:
-        result = GooseRunner().run(cfg, task_input, timeout_sec=timeout_sec)
-        return result.parsed
-    except Exception:
+
+    # VSM-034: network-retry loop. GooseRunner.run() does not raise on
+    # subprocess timeout / network errors — it returns an AgentResult with
+    # timed_out / exit_code set. We classify and retry transient network flaps.
+    import time as _time
+    max_attempts = 2  # initial + 1 retry
+    backoff_sec = 4.0
+    for attempt in range(1, max_attempts + 1):
+        try:
+            result = GooseRunner().run(cfg, task_input, timeout_sec=timeout_sec)
+        except Exception:
+            # Unexpected crash (not a GooseRunner-handled network/timeout).
+            # Not retryable — bail out.
+            return None
+        if result.parsed is not None:
+            _diag_goose(role, "ok", attempt=attempt, exit_code=result.exit_code,
+                        duration_sec=round(result.duration_sec, 2),
+                        parsed_keys=list(result.parsed.keys())
+                        if isinstance(result.parsed, dict) else None)
+            return result.parsed
+        # parsed is None — decide whether to retry.
+        if attempt < max_attempts and _is_network_failure(result):
+            _diag_goose(role, "network_retry", attempt=attempt,
+                        exit_code=result.exit_code,
+                        timed_out=result.timed_out,
+                        duration_sec=round(result.duration_sec, 2),
+                        stdout_head=(result.stdout or "")[:500],
+                        stderr_head=(result.stderr or "")[:500])
+            _time.sleep(backoff_sec)
+            continue
+        # Non-network failure, or retry budget exhausted: log and fall back.
+        _diag_goose(role, "parse_none", attempt=attempt,
+                    exit_code=result.exit_code,
+                    timed_out=result.timed_out,
+                    duration_sec=round(result.duration_sec, 2),
+                    stdout_len=len(result.stdout or ""),
+                    stdout_head=(result.stdout or "")[:2000],
+                    stderr_head=(result.stderr or "")[:2000],
+                    has_json_block=("```json" in (result.stdout or "")),
+                    network=_is_network_failure(result))
         return None
+    return None
 
 
 def _json_dump(obj) -> str:
