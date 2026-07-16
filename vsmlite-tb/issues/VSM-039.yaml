@@ -1,0 +1,101 @@
+id: VSM-039
+source_system: S5            # diagnostic findings из TERTIARY-1 validation (S5 prepare)
+signal_type: gap             # gap — workspace probe неточен, артефакты создаются не в task WORKDIR
+severity: S2                 # бьёт по products на 48% train (WORKDIR≠/app): artifact-vs-exec path mismatch
+target_unit: meta            # eval/harbor_adapter.py (eval infrastructure)
+
+title: "workspace probe prefers /app over task WORKDIR → artifact/exec path mismatch"
+
+summary: |
+  Регрессия/неполнота VSM-036. VSM-036 добавил workspace_probe в
+  eval/harbor_adapter.py чтобы не хардкодить /app, но probe перебирает
+  кандидаты в порядке [/app, /workdir, /workspace, /root] — и берёт ПЕРВЫЙ
+  существующий. VSM-036 fix также добавил `mkdir /app` в overlay Dockerfile
+  (harbor_run.py:~234) чтобы OCI exec не падал на chdir. Из-за этого /app
+  существует ВСЕГДА (даже для task с WORKDIR=/workdir) → probe находит /app
+  первым → executor workspace = /app, а НЕ task WORKDIR.
+
+  ПОСЛЕДСТВИЕ (TERTIARY-1 3-й слой): goose-planner видит task WORKDIR (напр.
+  /workdir) в prompt → планирует fs.write path="/workdir/solution.py".
+  Executor's MCP workspace=/app. При TERTIARY-1 fix B (basename remap)
+  path ремапится в /app/solution.py (файл создаётся). Но shell.exec в plan
+  runner'а использует planner's пути: `python3 /workdir/solution.py` →
+  "No such file" (файл в /app, не /workdir). Артефакт создан, но не там где
+  его ищет execution.
+
+  МАСШТАБ: потенциально все 48% train-задач с WORKDIR≠/app. В TERTIARY-1
+  validation (bracket-sequence-restoration, WORKDIR=/workdir):
+    fs.write /workdir/solution.py → ремап в /app/solution.py (OK, written)
+    shell.exec "python3 /workdir/solution.py" → No such file
+    recovery_blocked: pattern 'solution.py' not found in /app
+
+root_cause: |
+  VSM-036 workspace_probe (harbor_adapter.py:128-132) проверяет /app первым.
+  VSM-036 overlay Dockerfile (harbor_run.py) делает `mkdir /app` всегда —
+  значит /app всегда существует и всегда выигрывает probe, даже когда task
+  WORKDIR=/workdir или /workspace. Корректное поведение: task WORKDIR должен
+  иметь приоритет (он указан в Dockerfile, это где лежат task data и где
+  product должен работать). /app — только fallback если WORKDIR не задан.
+
+evidence:
+  - "eval/harbor_adapter.py:128-132 — workspace_probe: `for d in /app /workdir /workspace /root` (/app первым)"
+  - "eval/harbor_run.py:~234 — overlay Dockerfile `mkdir /app` (создаётся всегда, всегда выигрывает probe)"
+  - "state/harbor-trials/bracket-sequence-restoration__xCyFs2b/agent/product-trace.json: s1_artifacts=[{path:solution.py,op:created}], НО shell.exec 'python3 /workdir/solution.py' → No such file; recovery_blocked 'pattern not found in /app'"
+  - ".cache/tb-dev-v2/bracket-sequence-restoration/environment/Dockerfile: WORKDIR /workdir (дважды)"
+  - "product-stdout.log: 'recovery_blocked:pattern solution.py not found in /app' — executor ws=/app, НЕ task WORKDIR /workdir"
+
+proposal: |
+  Non-binding. Два варианта:
+
+  (P1) **Task WORKDIR из Dockerfile** (точный): harbor_run.py уже парсит
+  Dockerfile задачи (для overlay FROM-aliasing). Добавить парсинг последней
+  `WORKDIR <path>` директивы → передать как env в adapter → adapter
+  использует её как PRIMARY workspace (с fallback на probe только если WORKDIR
+  не задан или не существует в контейнере).
+
+  (P2) **Runtime probe с WORKDIR-приоритетом** (проще): изменить probe order
+  на [/workdir, /workspace, /root, /app] (task-convention WORKDIRs ПЕРЕД /app).
+  Но это хрупко — heterogeneous tasks могут использовать любые WORKDIR. Не
+  покрывает custom WORKDIR (напр. /home, /srv).
+
+  (P3) **Container default WORKDIR** (через `cwd=None`): harbor environment.exec
+  с cwd=None использует контейнерный default WORKDIR. Но adapter уже передаёт
+  --workspace $WORKSPACE явно (нужно для executor's MCP binding). Нужно
+  разделить: MCP workspace binding = task WORKDIR (не probe), cwd=None для exec.
+
+  Рекомендация: P1 (точный, парсинг Dockerfile) или P3 (cleanest, использует
+  container native WORKDIR). P2 — quick fix, но хрупкий.
+
+acceptance:
+  - "bracket-sequence-restoration (WORKDIR=/workdir): fs.write solution.py → файл В /workdir/solution.py (НЕ /app), shell.exec его находит"
+  - "executor workspace совпадает с task WORKDIR из Dockerfile (grep 'WORKDIR' в Dockerfile == $WORKSPACE в product-trace)"
+  - "Задачи с WORKDIR≠/app создают артефакты по правильному пути (s1_artifacts path ∈ task WORKDIR)"
+  - "Нет регрессии на /app-задачах (broken-python и др. продолжают работать)"
+
+needs_human_decision: false   # infra-фикс, root cause ясен; выбор P1/P2/P3 — технический
+
+policy_question: "Какой подход к workspace detection? P1 (Dockerfile parse), P2 (probe reorder), P3 (container native WORKDIR)?"
+
+options:
+  - id: P1
+    label: "Dockerfile WORKDIR parse"
+    hint: "Точный: парсить последнюю WORKDIR из Dockerfile задачи. Harbor_run уже парсит Dockerfile. Самый корректный, средняя работа."
+  - id: P2
+    label: "Probe reorder (/workdir first)"
+    hint: "Быстрый: поменять order в probe на [/workdir,/workspace,/root,/app]. Хрупко на custom WORKDIR, но покрывает train (только /workdir,/workspace)."
+  - id: P3
+    label: "Container native WORKDIR (cwd=None)"
+    hint: "Cleanest: использовать container default WORKDIR через cwd=None, MCP binding = task WORKDIR. Требует разделения exec-cwd от MCP-workspace."
+
+references:
+  - VSM-036   # исходный WORKDIR fix — добавил probe, но /app-first регрессия (этот issue)
+  - VSM-034   # TERTIARY-1 (artifact creation) — fix A+B починили visibility/remap, этот issue = 3-й слой
+
+notes:
+  - "VSM-036 'fixed' WORKDIR путём добавления workspace_probe, но probe ставит /app первым + overlay mkdir /app всегда создаёт /app → probe всегда возвращает /app. Это НЕ фикс для WORKDIR≠/app задач — это маска. Реальный task WORKDIR теряется."
+  - "TERTIARY-1 fix B (basename remap) правильно ремапит absolute path вне ws в basename, но это не помогает когда runner shell.exec использует planner's пути (/workdir/X) а файл в executor ws (/app/X). Корень = ws mismatch, не path remap."
+  - "Этот bug невидим на /app-задачах (52%) — там planner /app совпадает с executor /app. Проявляется только на WORKDIR≠/app (48%), где TERTIARY-1 invariants расходятся."
+  - "Валидация TERTIARY-1 A+B подтвердила: invisible failure устранён (artifact recorded, observation visible), но execution всё ещё падает на path mismatch — именно из-за этого issue."
+
+created: 2026-07-16
+updated: 2026-07-16
