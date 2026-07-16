@@ -1,12 +1,12 @@
 {
   "_comment": "status.json — health систем vsmlite (S1-S5+S3*). Пишет S2 (status sweep), читает render_data.py. summary — человекочитаемо (1-2 предложения); current_task — технически.",
-  "generated": "2026-07-16T06:33:52",
+  "generated": "2026-07-16T17:00:36",
   "operational_mode": "normal",
   "systems": {
     "S1": {
       "name": "synthesis-operator",
       "health": "active",
-      "summary": "cycle #8; orchestrating child maturation",
+      "summary": "cycle #10; orchestrating child maturation",
       "current_task": "A(t)=0.175 (DEPENDENT)"
     },
     "S2": {

@@ -70,5 +70,23 @@
     "verdict": "DEPENDENT",
     "decision": "ok_with_concerns: 2 warnings",
     "issue_created": null
+  },
+  {
+    "cycle": 9,
+    "timestamp": "2026-07-16T07:21:09",
+    "pass_rate": 0.0,
+    "autonomy": 0.175,
+    "verdict": "DEPENDENT",
+    "decision": "ok_with_concerns: 2 warnings",
+    "issue_created": null
+  },
+  {
+    "cycle": 10,
+    "timestamp": "2026-07-16T17:00:36",
+    "pass_rate": 0.0,
+    "autonomy": 0.175,
+    "verdict": "DEPENDENT",
+    "decision": "ok_with_concerns: 2 warnings",
+    "issue_created": null
   }
 ]

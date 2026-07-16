@@ -35,6 +35,13 @@ eval/runs/
 # ── harbor: trial артефакты (логи, trajectory, docker configs) — генерируются ──
 state/harbor-trials/
 
+# ── eval run-logs (batch/smoke logs, regenerable) ──
+state/logs/
+
+# ── archives: исторические раны (tar.gz, восстановимы из harbor-trials) ──
+# manifest'ы (state/archives/*.manifest.md) трекаются — они контекст.
+state/archives/*.tar.gz
+
 # ── временные backups (smoke-test и т.п.) ──
 *.smoke-backup
 

@@ -1,26 +1,26 @@
 {
   "_comment": "agent_eval.json — скоринг 0-10 (A-E, D<0.5=FAIL) работы агентов (VSM-025). Пишет export_logs.py из agent_eval.evaluate().",
-  "generated": "2026-07-16T06:33:53",
+  "generated": "2026-07-16T17:00:37",
   "grade_scale": "A≥9.0 | B≥7.5 | C≥5.0 (pass) | D≥2.5 (FAIL) | E<2.5",
   "trace_note": "trace_len info-only (VSM-022 superseded→VSM-024); harbor block — progressive enhancement",
   "token_note": "token-spend deferred→VSM-024 (instrumentation pending)",
   "product": [
     {
       "task_id": "task",
-      "score": 1.3,
-      "grade": "E",
+      "score": 2.8,
+      "grade": "D",
       "passed": false,
       "components": {
-        "verdict": 0.0,
+        "verdict": 1.0,
         "pytest": 0.0,
         "efficiency": 1.5,
         "harbor_bonus": 0.3,
         "penalty_timeout": 0.0,
-        "penalty_exit": -0.5
+        "penalty_exit": 0.0
       },
-      "summary": "task [1.3/E] scientific-computing·medium · 212s · trace3 · pytest0/0 · exit1. harbor(terminated_by=no_observations, attempts=1).",
-      "category": "scientific-computing",
-      "difficulty": "medium"
+      "summary": "task [2.8/D] market_analysis·hard · 128s · trace3 · pytest0/0 · exit0. harbor(terminated_by=no_observations, attempts=1).",
+      "category": "market_analysis",
+      "difficulty": "hard"
     }
   ],
   "systems": [
@@ -53,14 +53,14 @@
   ],
   "breakdown": {
     "by_difficulty": {
-      "medium": {
+      "hard": {
         "total": 1,
         "passed": 0,
         "pass_rate": 0.0
       }
     },
     "by_category": {
-      "scientific-computing": {
+      "market_analysis": {
         "total": 1,
         "passed": 0,
         "pass_rate": 0.0
@@ -69,7 +69,7 @@
   },
   "summary": {
     "product_count": 1,
-    "product_avg": 1.3,
+    "product_avg": 2.8,
     "product_pass": 0,
     "system_count": 2,
     "system_avg": 9.0,

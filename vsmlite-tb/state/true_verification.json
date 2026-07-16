@@ -1,0 +1,2021 @@
+{
+  "_comment": "true_verifier registry — strict attribution verdicts (VSM-037).",
+  "generated": "2026-07-16T17:23:04",
+  "total": 251,
+  "counts": {
+    "genuine_pass": 14,
+    "false_positive": 8,
+    "fail": 229,
+    "unknown": 0
+  },
+  "verdicts": [
+    {
+      "task": "acl-permissions-inheritance",
+      "trial": "acl-permissions-inheritance__8TxdwHL",
+      "tb_reward": 0.0,
+      "strict_verdict": "fail",
+      "strict_reward": 0.0,
+      "reason": "TB reward<1.0 (verifier не прошёл)"
+    },
+    {
+      "task": "acl-permissions-inheritance",
+      "trial": "acl-permissions-inheritance__FLydoHU",
+      "tb_reward": 0.0,
+      "strict_verdict": "fail",
+      "strict_reward": 0.0,
+      "reason": "TB reward<1.0 (verifier не прошёл)"
+    },
+    {
+      "task": "acl-permissions-inheritance",
+      "trial": "acl-permissions-inheritance__b8At4ng",
+      "tb_reward": 1.0,
+      "strict_verdict": "false_positive",
+      "strict_reward": 0.0,
+      "reason": "overlay-collision: reward=1.0 но продукт не работал (s1_control.verdict=fail_no_checkpoint (продукт признал провал); terminated_by=no_observations (triad не нашла что тестить); s1_artifacts пуст (продукт ничего не создал))"
+    },
+    {
+      "task": "acl-permissions-inheritance",
+      "trial": "acl-permissions-inheritance__cikMCBG",
+      "tb_reward": 0.0,
+      "strict_verdict": "fail",
+      "strict_reward": 0.0,
+      "reason": "TB reward<1.0 (verifier не прошёл)"
+    },
+    {
+      "task": "acl-permissions-inheritance",
+      "trial": "acl-permissions-inheritance__tCXHheT",
+      "tb_reward": 0.0,
+      "strict_verdict": "fail",
+      "strict_reward": 0.0,
+      "reason": "TB reward<1.0 (verifier не прошёл)"
+    },
+    {
+      "task": "acl-permissions-inheritance",
+      "trial": "acl-permissions-inheritance__wBWzb5i",
+      "tb_reward": 1.0,
+      "strict_verdict": "genuine_pass",
+      "strict_reward": 1.0,
+      "reason": "продукт работал: s1_artifacts=1 files, terminated_by=task_resolved, tool_calls=5"
+    },
+    {
+      "task": "amuse-install",
+      "trial": "amuse-install__2BfekpB",
+      "tb_reward": null,
+      "strict_verdict": "fail",
+      "strict_reward": 0.0,
+      "reason": "TB reward<1.0 (verifier не прошёл)"
+    },
+    {
+      "task": "amuse-install",
+      "trial": "amuse-install__5CBnxdp",
+      "tb_reward": 0.0,
+      "strict_verdict": "fail",
+      "strict_reward": 0.0,
+      "reason": "TB reward<1.0 (verifier не прошёл)"
+    },
+    {
+      "task": "amuse-install",
+      "trial": "amuse-install__8Msadph",
+      "tb_reward": null,
+      "strict_verdict": "fail",
+      "strict_reward": 0.0,
+      "reason": "TB reward<1.0 (verifier не прошёл)"
+    },
+    {
+      "task": "amuse-install",
+      "trial": "amuse-install__PLE8yfE",
+      "tb_reward": 0.0,
+      "strict_verdict": "fail",
+      "strict_reward": 0.0,
+      "reason": "TB reward<1.0 (verifier не прошёл)"
+    },
+    {
+      "task": "amuse-install",
+      "trial": "amuse-install__envXYmJ",
+      "tb_reward": 0.0,
+      "strict_verdict": "fail",
+      "strict_reward": 0.0,
+      "reason": "TB reward<1.0 (verifier не прошёл)"
+    },
+    {
+      "task": "anomaly-detection-ranking",
+      "trial": "anomaly-detection-ranking__8G3yRAb",
+      "tb_reward": 0.0,
+      "strict_verdict": "fail",
+      "strict_reward": 0.0,
+      "reason": "TB reward<1.0 (verifier не прошёл)"
+    },
+    {
+      "task": "anomaly-detection-ranking",
+      "trial": "anomaly-detection-ranking__JmwMf2Z",
+      "tb_reward": null,
+      "strict_verdict": "fail",
+      "strict_reward": 0.0,
+      "reason": "TB reward<1.0 (verifier не прошёл)"
+    },
+    {
+      "task": "anomaly-detection-ranking",
+      "trial": "anomaly-detection-ranking__oT3nUNc",
+      "tb_reward": 0.0,
+      "strict_verdict": "fail",
+      "strict_reward": 0.0,
+      "reason": "TB reward<1.0 (verifier не прошёл)"
+    },
+    {
+      "task": "anomaly-detection-ranking",
+      "trial": "anomaly-detection-ranking__vh4kXKR",
+      "tb_reward": 0.0,
+      "strict_verdict": "fail",
+      "strict_reward": 0.0,
+      "reason": "TB reward<1.0 (verifier не прошёл)"
+    },
+    {
+      "task": "anomaly-detection-ranking",
+      "trial": "anomaly-detection-ranking__yPU9pgH",
+      "tb_reward": 1.0,
+      "strict_verdict": "genuine_pass",
+      "strict_reward": 1.0,
+      "reason": "продукт работал: s1_artifacts=2 files, tool_calls=3"
+    },
+    {
+      "task": "api-endpoint-permission-canonica",
+      "trial": "api-endpoint-permission-canonica__5pAgACF",
+      "tb_reward": 0.0,
+      "strict_verdict": "fail",
+      "strict_reward": 0.0,
+      "reason": "TB reward<1.0 (verifier не прошёл)"
+    },
+    {
+      "task": "api-endpoint-permission-canonica",
+      "trial": "api-endpoint-permission-canonica__6Q8dU3H",
+      "tb_reward": 0.0,
+      "strict_verdict": "fail",
+      "strict_reward": 0.0,
+      "reason": "TB reward<1.0 (verifier не прошёл)"
+    },
+    {
+      "task": "api-endpoint-permission-canonica",
+      "trial": "api-endpoint-permission-canonica__9EsLcQ7",
+      "tb_reward": 0.0,
+      "strict_verdict": "fail",
+      "strict_reward": 0.0,
+      "reason": "TB reward<1.0 (verifier не прошёл)"
+    },
+    {
+      "task": "api-endpoint-permission-canonica",
+      "trial": "api-endpoint-permission-canonica__NHd6MZv",
+      "tb_reward": null,
+      "strict_verdict": "fail",
+      "strict_reward": 0.0,
+      "reason": "TB reward<1.0 (verifier не прошёл)"
+    },
+    {
+      "task": "api-endpoint-permission-canonica",
+      "trial": "api-endpoint-permission-canonica__QRRx6N6",
+      "tb_reward": 0.0,
+      "strict_verdict": "fail",
+      "strict_reward": 0.0,
+      "reason": "TB reward<1.0 (verifier не прошёл)"
+    },
+    {
+      "task": "api-endpoint-permission-canonica",
+      "trial": "api-endpoint-permission-canonica__ZNuWxpj",
+      "tb_reward": null,
+      "strict_verdict": "fail",
+      "strict_reward": 0.0,
+      "reason": "TB reward<1.0 (verifier не прошёл)"
+    },
+    {
+      "task": "api-endpoint-permission-canonica",
+      "trial": "api-endpoint-permission-canonica__aEJmpLQ",
+      "tb_reward": 0.0,
+      "strict_verdict": "fail",
+      "strict_reward": 0.0,
+      "reason": "TB reward<1.0 (verifier не прошёл)"
+    },
+    {
+      "task": "api-endpoint-permission-canonica",
+      "trial": "api-endpoint-permission-canonica__ghEKJSa",
+      "tb_reward": 0.0,
+      "strict_verdict": "fail",
+      "strict_reward": 0.0,
+      "reason": "TB reward<1.0 (verifier не прошёл)"
+    },
+    {
+      "task": "api-endpoint-permission-canonica",
+      "trial": "api-endpoint-permission-canonica__kffyUgC",
+      "tb_reward": 0.0,
+      "strict_verdict": "fail",
+      "strict_reward": 0.0,
+      "reason": "TB reward<1.0 (verifier не прошёл)"
+    },
+    {
+      "task": "api-endpoint-permission-canonica",
+      "trial": "api-endpoint-permission-canonica__qsZuyZR",
+      "tb_reward": 0.0,
+      "strict_verdict": "fail",
+      "strict_reward": 0.0,
+      "reason": "TB reward<1.0 (verifier не прошёл)"
+    },
+    {
+      "task": "application-debug",
+      "trial": "application-debug__3GG9D69",
+      "tb_reward": null,
+      "strict_verdict": "fail",
+      "strict_reward": 0.0,
+      "reason": "TB reward<1.0 (verifier не прошёл)"
+    },
+    {
+      "task": "application-debug",
+      "trial": "application-debug__KZyPLAJ",
+      "tb_reward": 0.0,
+      "strict_verdict": "fail",
+      "strict_reward": 0.0,
+      "reason": "TB reward<1.0 (verifier не прошёл)"
+    },
+    {
+      "task": "application-debug",
+      "trial": "application-debug__NzfACNf",
+      "tb_reward": 0.0,
+      "strict_verdict": "fail",
+      "strict_reward": 0.0,
+      "reason": "TB reward<1.0 (verifier не прошёл)"
+    },
+    {
+      "task": "application-debug",
+      "trial": "application-debug__PvYwFv9",
+      "tb_reward": 0.0,
+      "strict_verdict": "fail",
+      "strict_reward": 0.0,
+      "reason": "TB reward<1.0 (verifier не прошёл)"
+    },
+    {
+      "task": "application-debug",
+      "trial": "application-debug__RDSEWp2",
+      "tb_reward": 0.0,
+      "strict_verdict": "fail",
+      "strict_reward": 0.0,
+      "reason": "TB reward<1.0 (verifier не прошёл)"
+    },
+    {
+      "task": "application-debug",
+      "trial": "application-debug__RLySJ4C",
+      "tb_reward": 0.0,
+      "strict_verdict": "fail",
+      "strict_reward": 0.0,
+      "reason": "TB reward<1.0 (verifier не прошёл)"
+    },
+    {
+      "task": "application-debug",
+      "trial": "application-debug__TqqMaJk",
+      "tb_reward": 0.0,
+      "strict_verdict": "fail",
+      "strict_reward": 0.0,
+      "reason": "TB reward<1.0 (verifier не прошёл)"
+    },
+    {
+      "task": "application-debug",
+      "trial": "application-debug__ay8k82N",
+      "tb_reward": 0.0,
+      "strict_verdict": "fail",
+      "strict_reward": 0.0,
+      "reason": "TB reward<1.0 (verifier не прошёл)"
+    },
+    {
+      "task": "application-debug",
+      "trial": "application-debug__deRaHpg",
+      "tb_reward": 0.0,
+      "strict_verdict": "fail",
+      "strict_reward": 0.0,
+      "reason": "TB reward<1.0 (verifier не прошёл)"
+    },
+    {
+      "task": "application-debug",
+      "trial": "application-debug__vHaTxLg",
+      "tb_reward": 0.0,
+      "strict_verdict": "fail",
+      "strict_reward": 0.0,
+      "reason": "TB reward<1.0 (verifier не прошёл)"
+    },
+    {
+      "task": "application-debug",
+      "trial": "application-debug__wnKH3Cw",
+      "tb_reward": 0.0,
+      "strict_verdict": "fail",
+      "strict_reward": 0.0,
+      "reason": "TB reward<1.0 (verifier не прошёл)"
+    },
+    {
+      "task": "auth_token_race_condition",
+      "trial": "auth_token_race_condition__DuCurqW",
+      "tb_reward": 0.0,
+      "strict_verdict": "fail",
+      "strict_reward": 0.0,
+      "reason": "TB reward<1.0 (verifier не прошёл)"
+    },
+    {
+      "task": "auth_token_race_condition",
+      "trial": "auth_token_race_condition__GLUVcEu",
+      "tb_reward": 1.0,
+      "strict_verdict": "genuine_pass",
+      "strict_reward": 1.0,
+      "reason": "продукт работал: s1_artifacts=1 files, s1_control.verdict=pass, tool_calls=4"
+    },
+    {
+      "task": "auth_token_race_condition",
+      "trial": "auth_token_race_condition__K7pUz78",
+      "tb_reward": 0.0,
+      "strict_verdict": "fail",
+      "strict_reward": 0.0,
+      "reason": "TB reward<1.0 (verifier не прошёл)"
+    },
+    {
+      "task": "auth_token_race_condition",
+      "trial": "auth_token_race_condition__yY7gZN5",
+      "tb_reward": 0.0,
+      "strict_verdict": "fail",
+      "strict_reward": 0.0,
+      "reason": "TB reward<1.0 (verifier не прошёл)"
+    },
+    {
+      "task": "bandit-delayed-feedback",
+      "trial": "bandit-delayed-feedback__Fnr5GJT",
+      "tb_reward": 0.0,
+      "strict_verdict": "fail",
+      "strict_reward": 0.0,
+      "reason": "TB reward<1.0 (verifier не прошёл)"
+    },
+    {
+      "task": "bandit-delayed-feedback",
+      "trial": "bandit-delayed-feedback__JuDxTCh",
+      "tb_reward": 0.0,
+      "strict_verdict": "fail",
+      "strict_reward": 0.0,
+      "reason": "TB reward<1.0 (verifier не прошёл)"
+    },
+    {
+      "task": "bandit-delayed-feedback",
+      "trial": "bandit-delayed-feedback__ahAZRe4",
+      "tb_reward": 0.0,
+      "strict_verdict": "fail",
+      "strict_reward": 0.0,
+      "reason": "TB reward<1.0 (verifier не прошёл)"
+    },
+    {
+      "task": "bandit-delayed-feedback",
+      "trial": "bandit-delayed-feedback__hdu4dSL",
+      "tb_reward": 0.0,
+      "strict_verdict": "fail",
+      "strict_reward": 0.0,
+      "reason": "TB reward<1.0 (verifier не прошёл)"
+    },
+    {
+      "task": "bash-log-processor-fix",
+      "trial": "bash-log-processor-fix__JDf3PNL",
+      "tb_reward": 0.0,
+      "strict_verdict": "fail",
+      "strict_reward": 0.0,
+      "reason": "TB reward<1.0 (verifier не прошёл)"
+    },
+    {
+      "task": "bash-log-processor-fix",
+      "trial": "bash-log-processor-fix__JmrzUuB",
+      "tb_reward": 0.0,
+      "strict_verdict": "fail",
+      "strict_reward": 0.0,
+      "reason": "TB reward<1.0 (verifier не прошёл)"
+    },
+    {
+      "task": "bash-log-processor-fix",
+      "trial": "bash-log-processor-fix__SmkQMWk",
+      "tb_reward": 0.0,
+      "strict_verdict": "fail",
+      "strict_reward": 0.0,
+      "reason": "TB reward<1.0 (verifier не прошёл)"
+    },
+    {
+      "task": "bash-log-processor-fix",
+      "trial": "bash-log-processor-fix__rh6Hz4a",
+      "tb_reward": 0.0,
+      "strict_verdict": "fail",
+      "strict_reward": 0.0,
+      "reason": "TB reward<1.0 (verifier не прошёл)"
+    },
+    {
+      "task": "basic-message-queue",
+      "trial": "basic-message-queue__DJWJra9",
+      "tb_reward": 0.0,
+      "strict_verdict": "fail",
+      "strict_reward": 0.0,
+      "reason": "TB reward<1.0 (verifier не прошёл)"
+    },
+    {
+      "task": "basic-message-queue",
+      "trial": "basic-message-queue__ZhNxMEH",
+      "tb_reward": 1.0,
+      "strict_verdict": "genuine_pass",
+      "strict_reward": 1.0,
+      "reason": "продукт работал: s1_artifacts=10 files, s1_control.verdict=pass, terminated_by=task_resolved"
+    },
+    {
+      "task": "basic-message-queue",
+      "trial": "basic-message-queue__pGJEV8i",
+      "tb_reward": 0.0,
+      "strict_verdict": "fail",
+      "strict_reward": 0.0,
+      "reason": "TB reward<1.0 (verifier не прошёл)"
+    },
+    {
+      "task": "basic-message-queue",
+      "trial": "basic-message-queue__v9Yix2s",
+      "tb_reward": 0.0,
+      "strict_verdict": "fail",
+      "strict_reward": 0.0,
+      "reason": "TB reward<1.0 (verifier не прошёл)"
+    },
+    {
+      "task": "battery-charging-optimization",
+      "trial": "battery-charging-optimization__Pe5LCLT",
+      "tb_reward": 0.0,
+      "strict_verdict": "fail",
+      "strict_reward": 0.0,
+      "reason": "TB reward<1.0 (verifier не прошёл)"
+    },
+    {
+      "task": "battery-charging-optimization",
+      "trial": "battery-charging-optimization__RBUVoRU",
+      "tb_reward": 0.0,
+      "strict_verdict": "fail",
+      "strict_reward": 0.0,
+      "reason": "TB reward<1.0 (verifier не прошёл)"
+    },
+    {
+      "task": "battery-charging-optimization",
+      "trial": "battery-charging-optimization__oe39qWK",
+      "tb_reward": 0.0,
+      "strict_verdict": "fail",
+      "strict_reward": 0.0,
+      "reason": "TB reward<1.0 (verifier не прошёл)"
+    },
+    {
+      "task": "battery-charging-optimization",
+      "trial": "battery-charging-optimization__tc9FzWo",
+      "tb_reward": 0.0,
+      "strict_verdict": "fail",
+      "strict_reward": 0.0,
+      "reason": "TB reward<1.0 (verifier не прошёл)"
+    },
+    {
+      "task": "bloom-filter-cache-penetration-p",
+      "trial": "bloom-filter-cache-penetration-p__6RKkjka",
+      "tb_reward": 0.0,
+      "strict_verdict": "fail",
+      "strict_reward": 0.0,
+      "reason": "TB reward<1.0 (verifier не прошёл)"
+    },
+    {
+      "task": "bloom-filter-cache-penetration-p",
+      "trial": "bloom-filter-cache-penetration-p__jD2DdTv",
+      "tb_reward": 0.0,
+      "strict_verdict": "fail",
+      "strict_reward": 0.0,
+      "reason": "TB reward<1.0 (verifier не прошёл)"
+    },
+    {
+      "task": "bloom-filter-cache-penetration-p",
+      "trial": "bloom-filter-cache-penetration-p__qcZvCCb",
+      "tb_reward": 0.0,
+      "strict_verdict": "fail",
+      "strict_reward": 0.0,
+      "reason": "TB reward<1.0 (verifier не прошёл)"
+    },
+    {
+      "task": "bloom-filter-cache-penetration-p",
+      "trial": "bloom-filter-cache-penetration-p__vVk3w5X",
+      "tb_reward": 0.0,
+      "strict_verdict": "fail",
+      "strict_reward": 0.0,
+      "reason": "TB reward<1.0 (verifier не прошёл)"
+    },
+    {
+      "task": "book-portfolio-analysis",
+      "trial": "book-portfolio-analysis__6S4L5hi",
+      "tb_reward": 0.0,
+      "strict_verdict": "fail",
+      "strict_reward": 0.0,
+      "reason": "TB reward<1.0 (verifier не прошёл)"
+    },
+    {
+      "task": "book-portfolio-analysis",
+      "trial": "book-portfolio-analysis__F3xRWFD",
+      "tb_reward": 0.0,
+      "strict_verdict": "fail",
+      "strict_reward": 0.0,
+      "reason": "TB reward<1.0 (verifier не прошёл)"
+    },
+    {
+      "task": "book-portfolio-analysis",
+      "trial": "book-portfolio-analysis__PqfMZyS",
+      "tb_reward": 0.0,
+      "strict_verdict": "fail",
+      "strict_reward": 0.0,
+      "reason": "TB reward<1.0 (verifier не прошёл)"
+    },
+    {
+      "task": "book-portfolio-analysis",
+      "trial": "book-portfolio-analysis__TSwsjeW",
+      "tb_reward": 0.0,
+      "strict_verdict": "fail",
+      "strict_reward": 0.0,
+      "reason": "TB reward<1.0 (verifier не прошёл)"
+    },
+    {
+      "task": "book-portfolio-analysis",
+      "trial": "book-portfolio-analysis__WKbv3iy",
+      "tb_reward": null,
+      "strict_verdict": "fail",
+      "strict_reward": 0.0,
+      "reason": "TB reward<1.0 (verifier не прошёл)"
+    },
+    {
+      "task": "book-portfolio-analysis",
+      "trial": "book-portfolio-analysis__eESnJoo",
+      "tb_reward": 0.0,
+      "strict_verdict": "fail",
+      "strict_reward": 0.0,
+      "reason": "TB reward<1.0 (verifier не прошёл)"
+    },
+    {
+      "task": "book-portfolio-analysis",
+      "trial": "book-portfolio-analysis__mp5g7Pw",
+      "tb_reward": 0.0,
+      "strict_verdict": "fail",
+      "strict_reward": 0.0,
+      "reason": "TB reward<1.0 (verifier не прошёл)"
+    },
+    {
+      "task": "book-portfolio-analysis",
+      "trial": "book-portfolio-analysis__wZrdmdf",
+      "tb_reward": null,
+      "strict_verdict": "fail",
+      "strict_reward": 0.0,
+      "reason": "TB reward<1.0 (verifier не прошёл)"
+    },
+    {
+      "task": "bracket-sequence-restoration",
+      "trial": "bracket-sequence-restoration__8dxCqyf",
+      "tb_reward": 0.0,
+      "strict_verdict": "fail",
+      "strict_reward": 0.0,
+      "reason": "TB reward<1.0 (verifier не прошёл)"
+    },
+    {
+      "task": "bracket-sequence-restoration",
+      "trial": "bracket-sequence-restoration__MFmbce5",
+      "tb_reward": 0.0,
+      "strict_verdict": "fail",
+      "strict_reward": 0.0,
+      "reason": "TB reward<1.0 (verifier не прошёл)"
+    },
+    {
+      "task": "bracket-sequence-restoration",
+      "trial": "bracket-sequence-restoration__XGwjFZ9",
+      "tb_reward": 0.0,
+      "strict_verdict": "fail",
+      "strict_reward": 0.0,
+      "reason": "TB reward<1.0 (verifier не прошёл)"
+    },
+    {
+      "task": "bracket-sequence-restoration",
+      "trial": "bracket-sequence-restoration__aU83XxG",
+      "tb_reward": 1.0,
+      "strict_verdict": "genuine_pass",
+      "strict_reward": 1.0,
+      "reason": "продукт работал: s1_artifacts=1 files, s1_control.verdict=pass, terminated_by=task_resolved, tool_calls=4"
+    },
+    {
+      "task": "bracket-sequence-restoration",
+      "trial": "bracket-sequence-restoration__eg7E9wH",
+      "tb_reward": 0.0,
+      "strict_verdict": "fail",
+      "strict_reward": 0.0,
+      "reason": "TB reward<1.0 (verifier не прошёл)"
+    },
+    {
+      "task": "bracket-sequence-restoration",
+      "trial": "bracket-sequence-restoration__hCMSi5f",
+      "tb_reward": 0.0,
+      "strict_verdict": "fail",
+      "strict_reward": 0.0,
+      "reason": "TB reward<1.0 (verifier не прошёл)"
+    },
+    {
+      "task": "bracket-sequence-restoration",
+      "trial": "bracket-sequence-restoration__mPx29VS",
+      "tb_reward": 1.0,
+      "strict_verdict": "genuine_pass",
+      "strict_reward": 1.0,
+      "reason": "продукт работал: s1_artifacts=2 files, s1_control.verdict=pass, terminated_by=task_resolved, tool_calls=4"
+    },
+    {
+      "task": "breast-cancer-mlflow",
+      "trial": "breast-cancer-mlflow__8X6mKsa",
+      "tb_reward": 0.0,
+      "strict_verdict": "fail",
+      "strict_reward": 0.0,
+      "reason": "TB reward<1.0 (verifier не прошёл)"
+    },
+    {
+      "task": "breast-cancer-mlflow",
+      "trial": "breast-cancer-mlflow__EwKvLYL",
+      "tb_reward": 0.0,
+      "strict_verdict": "fail",
+      "strict_reward": 0.0,
+      "reason": "TB reward<1.0 (verifier не прошёл)"
+    },
+    {
+      "task": "breast-cancer-mlflow",
+      "trial": "breast-cancer-mlflow__MXjQxyP",
+      "tb_reward": 0.0,
+      "strict_verdict": "fail",
+      "strict_reward": 0.0,
+      "reason": "TB reward<1.0 (verifier не прошёл)"
+    },
+    {
+      "task": "breast-cancer-mlflow",
+      "trial": "breast-cancer-mlflow__SFJHWtn",
+      "tb_reward": 0.0,
+      "strict_verdict": "fail",
+      "strict_reward": 0.0,
+      "reason": "TB reward<1.0 (verifier не прошёл)"
+    },
+    {
+      "task": "breast-cancer-mlflow",
+      "trial": "breast-cancer-mlflow__b9aK4sw",
+      "tb_reward": 0.0,
+      "strict_verdict": "fail",
+      "strict_reward": 0.0,
+      "reason": "TB reward<1.0 (verifier не прошёл)"
+    },
+    {
+      "task": "breast-cancer-mlflow",
+      "trial": "breast-cancer-mlflow__g3NnaLn",
+      "tb_reward": null,
+      "strict_verdict": "fail",
+      "strict_reward": 0.0,
+      "reason": "TB reward<1.0 (verifier не прошёл)"
+    },
+    {
+      "task": "breast-cancer-mlflow",
+      "trial": "breast-cancer-mlflow__jRgnu3c",
+      "tb_reward": null,
+      "strict_verdict": "fail",
+      "strict_reward": 0.0,
+      "reason": "TB reward<1.0 (verifier не прошёл)"
+    },
+    {
+      "task": "breast-cancer-mlflow",
+      "trial": "breast-cancer-mlflow__qkv8SHD",
+      "tb_reward": 0.0,
+      "strict_verdict": "fail",
+      "strict_reward": 0.0,
+      "reason": "TB reward<1.0 (verifier не прошёл)"
+    },
+    {
+      "task": "broken-python",
+      "trial": "broken-python__KFfJwBV",
+      "tb_reward": null,
+      "strict_verdict": "fail",
+      "strict_reward": 0.0,
+      "reason": "TB reward<1.0 (verifier не прошёл)"
+    },
+    {
+      "task": "broken-python",
+      "trial": "broken-python__PntkDPa",
+      "tb_reward": 1.0,
+      "strict_verdict": "false_positive",
+      "strict_reward": 0.0,
+      "reason": "overlay-collision: reward=1.0 но продукт не работал (s1_control.verdict=fail_no_checkpoint (продукт признал провал); terminated_by=no_observations (triad не нашла что тестить); s1_artifacts пуст (продукт ничего не создал))"
+    },
+    {
+      "task": "broken-python",
+      "trial": "broken-python__Y5cHr5v",
+      "tb_reward": 1.0,
+      "strict_verdict": "false_positive",
+      "strict_reward": 0.0,
+      "reason": "overlay-collision: reward=1.0 но продукт не работал (s1_control.verdict=fail_no_checkpoint (продукт признал провал); terminated_by=no_observations (triad не нашла что тестить); s1_artifacts пуст (продукт ничего не создал))"
+    },
+    {
+      "task": "broken-python",
+      "trial": "broken-python__daxA3iP",
+      "tb_reward": 1.0,
+      "strict_verdict": "false_positive",
+      "strict_reward": 0.0,
+      "reason": "overlay-collision: reward=1.0 но продукт не работал (s1_control.verdict=fail_no_checkpoint (продукт признал провал); terminated_by=no_observations (triad не нашла что тестить); s1_artifacts пуст (продукт ничего не создал))"
+    },
+    {
+      "task": "broken-python",
+      "trial": "broken-python__dmbUHn6",
+      "tb_reward": null,
+      "strict_verdict": "fail",
+      "strict_reward": 0.0,
+      "reason": "TB reward<1.0 (verifier не прошёл)"
+    },
+    {
+      "task": "broken-python",
+      "trial": "broken-python__kfe5mZu",
+      "tb_reward": 1.0,
+      "strict_verdict": "false_positive",
+      "strict_reward": 0.0,
+      "reason": "overlay-collision: reward=1.0 но продукт не работал (s1_control.verdict=fail_no_checkpoint (продукт признал провал); terminated_by=no_observations (triad не нашла что тестить); s1_artifacts пуст (продукт ничего не создал))"
+    },
+    {
+      "task": "broken-python",
+      "trial": "broken-python__otwfKB8",
+      "tb_reward": 1.0,
+      "strict_verdict": "false_positive",
+      "strict_reward": 0.0,
+      "reason": "overlay-collision: reward=1.0 но продукт не работал (s1_control.verdict=fail_no_checkpoint (продукт признал провал); terminated_by=no_observations (triad не нашла что тестить); s1_artifacts пуст (продукт ничего не создал))"
+    },
+    {
+      "task": "broken-python",
+      "trial": "broken-python__p5ogWq8",
+      "tb_reward": 1.0,
+      "strict_verdict": "genuine_pass",
+      "strict_reward": 1.0,
+      "reason": "продукт работал: s1_control.verdict=pass"
+    },
+    {
+      "task": "broken-python",
+      "trial": "broken-python__wtCweov",
+      "tb_reward": 1.0,
+      "strict_verdict": "false_positive",
+      "strict_reward": 0.0,
+      "reason": "overlay-collision: reward=1.0 но продукт не работал (s1_control.verdict=fail_no_checkpoint (продукт признал провал); terminated_by=no_observations (triad не нашла что тестить); s1_artifacts пуст (продукт ничего не создал))"
+    },
+    {
+      "task": "broken-python",
+      "trial": "broken-python__xJnrf3e",
+      "tb_reward": 1.0,
+      "strict_verdict": "false_positive",
+      "strict_reward": 0.0,
+      "reason": "overlay-collision: reward=1.0 но продукт не работал (s1_control.verdict=fail_no_checkpoint (продукт признал провал); terminated_by=no_observations (triad не нашла что тестить); s1_artifacts пуст (продукт ничего не создал))"
+    },
+    {
+      "task": "build-cython-ext",
+      "trial": "build-cython-ext__MFPs87i",
+      "tb_reward": 0.0,
+      "strict_verdict": "fail",
+      "strict_reward": 0.0,
+      "reason": "TB reward<1.0 (verifier не прошёл)"
+    },
+    {
+      "task": "build-cython-ext",
+      "trial": "build-cython-ext__YQxMoTj",
+      "tb_reward": 0.0,
+      "strict_verdict": "fail",
+      "strict_reward": 0.0,
+      "reason": "TB reward<1.0 (verifier не прошёл)"
+    },
+    {
+      "task": "build-cython-ext",
+      "trial": "build-cython-ext__dA2Nrpn",
+      "tb_reward": 0.0,
+      "strict_verdict": "fail",
+      "strict_reward": 0.0,
+      "reason": "TB reward<1.0 (verifier не прошёл)"
+    },
+    {
+      "task": "build-cython-ext",
+      "trial": "build-cython-ext__rEetMV3",
+      "tb_reward": 0.0,
+      "strict_verdict": "fail",
+      "strict_reward": 0.0,
+      "reason": "TB reward<1.0 (verifier не прошёл)"
+    },
+    {
+      "task": "build-merkle-tree-cli-sha512",
+      "trial": "build-merkle-tree-cli-sha512__8sUqWU3",
+      "tb_reward": 0.0,
+      "strict_verdict": "fail",
+      "strict_reward": 0.0,
+      "reason": "TB reward<1.0 (verifier не прошёл)"
+    },
+    {
+      "task": "build-merkle-tree-cli-sha512",
+      "trial": "build-merkle-tree-cli-sha512__AXnxt8J",
+      "tb_reward": 0.0,
+      "strict_verdict": "fail",
+      "strict_reward": 0.0,
+      "reason": "TB reward<1.0 (verifier не прошёл)"
+    },
+    {
+      "task": "build-merkle-tree-cli-sha512",
+      "trial": "build-merkle-tree-cli-sha512__MNeXTCu",
+      "tb_reward": 0.0,
+      "strict_verdict": "fail",
+      "strict_reward": 0.0,
+      "reason": "TB reward<1.0 (verifier не прошёл)"
+    },
+    {
+      "task": "build-merkle-tree-cli-sha512",
+      "trial": "build-merkle-tree-cli-sha512__mDkdMPP",
+      "tb_reward": 0.0,
+      "strict_verdict": "fail",
+      "strict_reward": 0.0,
+      "reason": "TB reward<1.0 (verifier не прошёл)"
+    },
+    {
+      "task": "build-system-task-ordering",
+      "trial": "build-system-task-ordering__2fRuUEV",
+      "tb_reward": 0.0,
+      "strict_verdict": "fail",
+      "strict_reward": 0.0,
+      "reason": "TB reward<1.0 (verifier не прошёл)"
+    },
+    {
+      "task": "build-system-task-ordering",
+      "trial": "build-system-task-ordering__8dhRRkb",
+      "tb_reward": 0.0,
+      "strict_verdict": "fail",
+      "strict_reward": 0.0,
+      "reason": "TB reward<1.0 (verifier не прошёл)"
+    },
+    {
+      "task": "build-system-task-ordering",
+      "trial": "build-system-task-ordering__YMjUprZ",
+      "tb_reward": 0.0,
+      "strict_verdict": "fail",
+      "strict_reward": 0.0,
+      "reason": "TB reward<1.0 (verifier не прошёл)"
+    },
+    {
+      "task": "california-housing-api",
+      "trial": "california-housing-api__8koDiwS",
+      "tb_reward": 0.0,
+      "strict_verdict": "fail",
+      "strict_reward": 0.0,
+      "reason": "TB reward<1.0 (verifier не прошёл)"
+    },
+    {
+      "task": "california-housing-api",
+      "trial": "california-housing-api__AeeczhS",
+      "tb_reward": null,
+      "strict_verdict": "fail",
+      "strict_reward": 0.0,
+      "reason": "TB reward<1.0 (verifier не прошёл)"
+    },
+    {
+      "task": "california-housing-api",
+      "trial": "california-housing-api__KsFoSaP",
+      "tb_reward": null,
+      "strict_verdict": "fail",
+      "strict_reward": 0.0,
+      "reason": "TB reward<1.0 (verifier не прошёл)"
+    },
+    {
+      "task": "california-housing-api",
+      "trial": "california-housing-api__REy9ezi",
+      "tb_reward": null,
+      "strict_verdict": "fail",
+      "strict_reward": 0.0,
+      "reason": "TB reward<1.0 (verifier не прошёл)"
+    },
+    {
+      "task": "california-housing-api",
+      "trial": "california-housing-api__SieB3Yn",
+      "tb_reward": 0.0,
+      "strict_verdict": "fail",
+      "strict_reward": 0.0,
+      "reason": "TB reward<1.0 (verifier не прошёл)"
+    },
+    {
+      "task": "california-housing-api",
+      "trial": "california-housing-api__eFvKUS7",
+      "tb_reward": 0.0,
+      "strict_verdict": "fail",
+      "strict_reward": 0.0,
+      "reason": "TB reward<1.0 (verifier не прошёл)"
+    },
+    {
+      "task": "california-housing-api",
+      "trial": "california-housing-api__mbaRr3a",
+      "tb_reward": 0.0,
+      "strict_verdict": "fail",
+      "strict_reward": 0.0,
+      "reason": "TB reward<1.0 (verifier не прошёл)"
+    },
+    {
+      "task": "chained-forensic-extraction_2026",
+      "trial": "chained-forensic-extraction_2026__Zg2cJtG",
+      "tb_reward": 0.0,
+      "strict_verdict": "fail",
+      "strict_reward": 0.0,
+      "reason": "TB reward<1.0 (verifier не прошёл)"
+    },
+    {
+      "task": "chained-forensic-extraction_2026",
+      "trial": "chained-forensic-extraction_2026__cEbzu3v",
+      "tb_reward": null,
+      "strict_verdict": "fail",
+      "strict_reward": 0.0,
+      "reason": "TB reward<1.0 (verifier не прошёл)"
+    },
+    {
+      "task": "chained-forensic-extraction_2026",
+      "trial": "chained-forensic-extraction_2026__m6KhV6x",
+      "tb_reward": 0.0,
+      "strict_verdict": "fail",
+      "strict_reward": 0.0,
+      "reason": "TB reward<1.0 (verifier не прошёл)"
+    },
+    {
+      "task": "chained-forensic-extraction_2026",
+      "trial": "chained-forensic-extraction_2026__sfS4xwQ",
+      "tb_reward": null,
+      "strict_verdict": "fail",
+      "strict_reward": 0.0,
+      "reason": "TB reward<1.0 (verifier не прошёл)"
+    },
+    {
+      "task": "competitive-programming-solver",
+      "trial": "competitive-programming-solver__6Z7UaQd",
+      "tb_reward": 0.0,
+      "strict_verdict": "fail",
+      "strict_reward": 0.0,
+      "reason": "TB reward<1.0 (verifier не прошёл)"
+    },
+    {
+      "task": "competitive-programming-solver",
+      "trial": "competitive-programming-solver__NiSSJ7s",
+      "tb_reward": 0.0,
+      "strict_verdict": "fail",
+      "strict_reward": 0.0,
+      "reason": "TB reward<1.0 (verifier не прошёл)"
+    },
+    {
+      "task": "competitive-programming-solver",
+      "trial": "competitive-programming-solver__i3C7FPh",
+      "tb_reward": 0.0,
+      "strict_verdict": "fail",
+      "strict_reward": 0.0,
+      "reason": "TB reward<1.0 (verifier не прошёл)"
+    },
+    {
+      "task": "constraints-scheduling",
+      "trial": "constraints-scheduling__2SXTCbE",
+      "tb_reward": 1.0,
+      "strict_verdict": "genuine_pass",
+      "strict_reward": 1.0,
+      "reason": "продукт работал: s1_artifacts=2 files, s1_control.verdict=pass, terminated_by=task_resolved, tool_calls=7"
+    },
+    {
+      "task": "constraints-scheduling",
+      "trial": "constraints-scheduling__C4Rkfap",
+      "tb_reward": 0.0,
+      "strict_verdict": "fail",
+      "strict_reward": 0.0,
+      "reason": "TB reward<1.0 (verifier не прошёл)"
+    },
+    {
+      "task": "constraints-scheduling",
+      "trial": "constraints-scheduling__L92J8jH",
+      "tb_reward": 0.0,
+      "strict_verdict": "fail",
+      "strict_reward": 0.0,
+      "reason": "TB reward<1.0 (verifier не прошёл)"
+    },
+    {
+      "task": "constraints-scheduling",
+      "trial": "constraints-scheduling__qFHRVWi",
+      "tb_reward": 0.0,
+      "strict_verdict": "fail",
+      "strict_reward": 0.0,
+      "reason": "TB reward<1.0 (verifier не прошёл)"
+    },
+    {
+      "task": "constraints-scheduling",
+      "trial": "constraints-scheduling__z8utw6F",
+      "tb_reward": 0.0,
+      "strict_verdict": "fail",
+      "strict_reward": 0.0,
+      "reason": "TB reward<1.0 (verifier не прошёл)"
+    },
+    {
+      "task": "container-registry-optimization",
+      "trial": "container-registry-optimization__8eW2aCK",
+      "tb_reward": 0.0,
+      "strict_verdict": "fail",
+      "strict_reward": 0.0,
+      "reason": "TB reward<1.0 (verifier не прошёл)"
+    },
+    {
+      "task": "container-registry-optimization",
+      "trial": "container-registry-optimization__9xyKzSA",
+      "tb_reward": 0.0,
+      "strict_verdict": "fail",
+      "strict_reward": 0.0,
+      "reason": "TB reward<1.0 (verifier не прошёл)"
+    },
+    {
+      "task": "container-registry-optimization",
+      "trial": "container-registry-optimization__vmWzSDv",
+      "tb_reward": 0.0,
+      "strict_verdict": "fail",
+      "strict_reward": 0.0,
+      "reason": "TB reward<1.0 (verifier не прошёл)"
+    },
+    {
+      "task": "convolutional-layers",
+      "trial": "convolutional-layers__CoaDXPR",
+      "tb_reward": 0.0,
+      "strict_verdict": "fail",
+      "strict_reward": 0.0,
+      "reason": "TB reward<1.0 (verifier не прошёл)"
+    },
+    {
+      "task": "convolutional-layers",
+      "trial": "convolutional-layers__CppJAez",
+      "tb_reward": 0.0,
+      "strict_verdict": "fail",
+      "strict_reward": 0.0,
+      "reason": "TB reward<1.0 (verifier не прошёл)"
+    },
+    {
+      "task": "convolutional-layers",
+      "trial": "convolutional-layers__nFUoAix",
+      "tb_reward": 1.0,
+      "strict_verdict": "genuine_pass",
+      "strict_reward": 1.0,
+      "reason": "продукт работал: s1_artifacts=8 files, tool_calls=10"
+    },
+    {
+      "task": "corrupted-filesystem-recovery",
+      "trial": "corrupted-filesystem-recovery__4fRCbuz",
+      "tb_reward": 0.0,
+      "strict_verdict": "fail",
+      "strict_reward": 0.0,
+      "reason": "TB reward<1.0 (verifier не прошёл)"
+    },
+    {
+      "task": "corrupted-filesystem-recovery",
+      "trial": "corrupted-filesystem-recovery__K3Xodpt",
+      "tb_reward": 0.0,
+      "strict_verdict": "fail",
+      "strict_reward": 0.0,
+      "reason": "TB reward<1.0 (verifier не прошёл)"
+    },
+    {
+      "task": "corrupted-filesystem-recovery",
+      "trial": "corrupted-filesystem-recovery__MEcT8rJ",
+      "tb_reward": 0.0,
+      "strict_verdict": "fail",
+      "strict_reward": 0.0,
+      "reason": "TB reward<1.0 (verifier не прошёл)"
+    },
+    {
+      "task": "corrupted-filesystem-recovery",
+      "trial": "corrupted-filesystem-recovery__SebqWyx",
+      "tb_reward": 0.0,
+      "strict_verdict": "fail",
+      "strict_reward": 0.0,
+      "reason": "TB reward<1.0 (verifier не прошёл)"
+    },
+    {
+      "task": "corrupted-filesystem-recovery",
+      "trial": "corrupted-filesystem-recovery__jn8BUFz",
+      "tb_reward": 0.0,
+      "strict_verdict": "fail",
+      "strict_reward": 0.0,
+      "reason": "TB reward<1.0 (verifier не прошёл)"
+    },
+    {
+      "task": "corrupted-filesystem-recovery",
+      "trial": "corrupted-filesystem-recovery__kbADeFX",
+      "tb_reward": null,
+      "strict_verdict": "fail",
+      "strict_reward": 0.0,
+      "reason": "TB reward<1.0 (verifier не прошёл)"
+    },
+    {
+      "task": "cosign-keyless-signing",
+      "trial": "cosign-keyless-signing__eHyHtbv",
+      "tb_reward": null,
+      "strict_verdict": "fail",
+      "strict_reward": 0.0,
+      "reason": "TB reward<1.0 (verifier не прошёл)"
+    },
+    {
+      "task": "cosign-keyless-signing",
+      "trial": "cosign-keyless-signing__hsduVYt",
+      "tb_reward": 0.0,
+      "strict_verdict": "fail",
+      "strict_reward": 0.0,
+      "reason": "TB reward<1.0 (verifier не прошёл)"
+    },
+    {
+      "task": "cpp-daemon-sighup-segfault",
+      "trial": "cpp-daemon-sighup-segfault__CfHKRGv",
+      "tb_reward": 0.0,
+      "strict_verdict": "fail",
+      "strict_reward": 0.0,
+      "reason": "TB reward<1.0 (verifier не прошёл)"
+    },
+    {
+      "task": "cryptographic-protocol-verifier",
+      "trial": "cryptographic-protocol-verifier__cmENf4q",
+      "tb_reward": 0.0,
+      "strict_verdict": "fail",
+      "strict_reward": 0.0,
+      "reason": "TB reward<1.0 (verifier не прошёл)"
+    },
+    {
+      "task": "csv-json-jsonl-merger",
+      "trial": "csv-json-jsonl-merger__DPX6sm2",
+      "tb_reward": 1.0,
+      "strict_verdict": "genuine_pass",
+      "strict_reward": 1.0,
+      "reason": "продукт работал: s1_artifacts=2 files, s1_control.verdict=pass, terminated_by=task_resolved, tool_calls=3"
+    },
+    {
+      "task": "db-migration-local-storage",
+      "trial": "db-migration-local-storage__PjujrcH",
+      "tb_reward": null,
+      "strict_verdict": "fail",
+      "strict_reward": 0.0,
+      "reason": "TB reward<1.0 (verifier не прошёл)"
+    },
+    {
+      "task": "distributed-test-execution-sched",
+      "trial": "distributed-test-execution-sched__34SAGby",
+      "tb_reward": 0.0,
+      "strict_verdict": "fail",
+      "strict_reward": 0.0,
+      "reason": "TB reward<1.0 (verifier не прошёл)"
+    },
+    {
+      "task": "distributed-test-execution-sched",
+      "trial": "distributed-test-execution-sched__72KPvF9",
+      "tb_reward": null,
+      "strict_verdict": "fail",
+      "strict_reward": 0.0,
+      "reason": "TB reward<1.0 (verifier не прошёл)"
+    },
+    {
+      "task": "distributed-test-execution-sched",
+      "trial": "distributed-test-execution-sched__EtxaSCo",
+      "tb_reward": 0.0,
+      "strict_verdict": "fail",
+      "strict_reward": 0.0,
+      "reason": "TB reward<1.0 (verifier не прошёл)"
+    },
+    {
+      "task": "distributed-test-execution-sched",
+      "trial": "distributed-test-execution-sched__EzJdhMj",
+      "tb_reward": null,
+      "strict_verdict": "fail",
+      "strict_reward": 0.0,
+      "reason": "TB reward<1.0 (verifier не прошёл)"
+    },
+    {
+      "task": "distributed-test-execution-sched",
+      "trial": "distributed-test-execution-sched__LxCTcRt",
+      "tb_reward": 0.0,
+      "strict_verdict": "fail",
+      "strict_reward": 0.0,
+      "reason": "TB reward<1.0 (verifier не прошёл)"
+    },
+    {
+      "task": "distributed-test-execution-sched",
+      "trial": "distributed-test-execution-sched__tXntnX6",
+      "tb_reward": 0.0,
+      "strict_verdict": "fail",
+      "strict_reward": 0.0,
+      "reason": "TB reward<1.0 (verifier не прошёл)"
+    },
+    {
+      "task": "distributed-test-execution-sched",
+      "trial": "distributed-test-execution-sched__y9Adhyt",
+      "tb_reward": 0.0,
+      "strict_verdict": "fail",
+      "strict_reward": 0.0,
+      "reason": "TB reward<1.0 (verifier не прошёл)"
+    },
+    {
+      "task": "ekf-localization",
+      "trial": "ekf-localization__SBQhB2K",
+      "tb_reward": 0.0,
+      "strict_verdict": "fail",
+      "strict_reward": 0.0,
+      "reason": "TB reward<1.0 (verifier не прошёл)"
+    },
+    {
+      "task": "etl_checkpoint_resume_bug",
+      "trial": "etl_checkpoint_resume_bug__XiqhGxX",
+      "tb_reward": null,
+      "strict_verdict": "fail",
+      "strict_reward": 0.0,
+      "reason": "TB reward<1.0 (verifier не прошёл)"
+    },
+    {
+      "task": "fix-js-network-controller",
+      "trial": "fix-js-network-controller__DKE7UPi",
+      "tb_reward": null,
+      "strict_verdict": "fail",
+      "strict_reward": 0.0,
+      "reason": "TB reward<1.0 (verifier не прошёл)"
+    },
+    {
+      "task": "fix-js-network-controller",
+      "trial": "fix-js-network-controller__TrHfpAe",
+      "tb_reward": null,
+      "strict_verdict": "fail",
+      "strict_reward": 0.0,
+      "reason": "TB reward<1.0 (verifier не прошёл)"
+    },
+    {
+      "task": "fix-js-network-controller",
+      "trial": "fix-js-network-controller__UB2g2Pr",
+      "tb_reward": null,
+      "strict_verdict": "fail",
+      "strict_reward": 0.0,
+      "reason": "TB reward<1.0 (verifier не прошёл)"
+    },
+    {
+      "task": "fix-js-network-controller",
+      "trial": "fix-js-network-controller__VGcHwsu",
+      "tb_reward": null,
+      "strict_verdict": "fail",
+      "strict_reward": 0.0,
+      "reason": "TB reward<1.0 (verifier не прошёл)"
+    },
+    {
+      "task": "fix-js-network-controller",
+      "trial": "fix-js-network-controller__qN7XeXG",
+      "tb_reward": null,
+      "strict_verdict": "fail",
+      "strict_reward": 0.0,
+      "reason": "TB reward<1.0 (verifier не прошёл)"
+    },
+    {
+      "task": "fix_async_worker_queue",
+      "trial": "fix_async_worker_queue__mRYnjVz",
+      "tb_reward": 1.0,
+      "strict_verdict": "genuine_pass",
+      "strict_reward": 1.0,
+      "reason": "продукт работал: s1_artifacts=1 files, tool_calls=3"
+    },
+    {
+      "task": "floor-plan-geometry",
+      "trial": "floor-plan-geometry__m5fvAJJ",
+      "tb_reward": 0.0,
+      "strict_verdict": "fail",
+      "strict_reward": 0.0,
+      "reason": "TB reward<1.0 (verifier не прошёл)"
+    },
+    {
+      "task": "game-of-stones",
+      "trial": "game-of-stones__ZQpz74o",
+      "tb_reward": 0.0,
+      "strict_verdict": "fail",
+      "strict_reward": 0.0,
+      "reason": "TB reward<1.0 (verifier не прошёл)"
+    },
+    {
+      "task": "git-repo-forensics",
+      "trial": "git-repo-forensics__DWPqtUM",
+      "tb_reward": 0.0,
+      "strict_verdict": "fail",
+      "strict_reward": 0.0,
+      "reason": "TB reward<1.0 (verifier не прошёл)"
+    },
+    {
+      "task": "git-repo-forensics",
+      "trial": "git-repo-forensics__bAsAxXZ",
+      "tb_reward": 0.0,
+      "strict_verdict": "fail",
+      "strict_reward": 0.0,
+      "reason": "TB reward<1.0 (verifier не прошёл)"
+    },
+    {
+      "task": "git-repo-forensics",
+      "trial": "git-repo-forensics__enA5Kt5",
+      "tb_reward": 0.0,
+      "strict_verdict": "fail",
+      "strict_reward": 0.0,
+      "reason": "TB reward<1.0 (verifier не прошёл)"
+    },
+    {
+      "task": "git-repo-forensics",
+      "trial": "git-repo-forensics__rz7p4Zu",
+      "tb_reward": 0.0,
+      "strict_verdict": "fail",
+      "strict_reward": 0.0,
+      "reason": "TB reward<1.0 (verifier не прошёл)"
+    },
+    {
+      "task": "git-repo-forensics",
+      "trial": "git-repo-forensics__wzDRg5n",
+      "tb_reward": null,
+      "strict_verdict": "fail",
+      "strict_reward": 0.0,
+      "reason": "TB reward<1.0 (verifier не прошёл)"
+    },
+    {
+      "task": "grid-pathfinding",
+      "trial": "grid-pathfinding__A2oVVFA",
+      "tb_reward": 0.0,
+      "strict_verdict": "fail",
+      "strict_reward": 0.0,
+      "reason": "TB reward<1.0 (verifier не прошёл)"
+    },
+    {
+      "task": "grid-pathfinding",
+      "trial": "grid-pathfinding__PYxwD5q",
+      "tb_reward": 0.0,
+      "strict_verdict": "fail",
+      "strict_reward": 0.0,
+      "reason": "TB reward<1.0 (verifier не прошёл)"
+    },
+    {
+      "task": "grpc-plant-position-server",
+      "trial": "grpc-plant-position-server__5xvYEGZ",
+      "tb_reward": 0.0,
+      "strict_verdict": "fail",
+      "strict_reward": 0.0,
+      "reason": "TB reward<1.0 (verifier не прошёл)"
+    },
+    {
+      "task": "grpc-plant-position-server",
+      "trial": "grpc-plant-position-server__ZCX7Wek",
+      "tb_reward": 0.0,
+      "strict_verdict": "fail",
+      "strict_reward": 0.0,
+      "reason": "TB reward<1.0 (verifier не прошёл)"
+    },
+    {
+      "task": "grpc-plant-position-server",
+      "trial": "grpc-plant-position-server__pBbazdh",
+      "tb_reward": 0.0,
+      "strict_verdict": "fail",
+      "strict_reward": 0.0,
+      "reason": "TB reward<1.0 (verifier не прошёл)"
+    },
+    {
+      "task": "html-index-analysis",
+      "trial": "html-index-analysis__KG2HzuV",
+      "tb_reward": 0.0,
+      "strict_verdict": "fail",
+      "strict_reward": 0.0,
+      "reason": "TB reward<1.0 (verifier не прошёл)"
+    },
+    {
+      "task": "image-tile-identification",
+      "trial": "image-tile-identification__oTY27Hj",
+      "tb_reward": 0.0,
+      "strict_verdict": "fail",
+      "strict_reward": 0.0,
+      "reason": "TB reward<1.0 (verifier не прошёл)"
+    },
+    {
+      "task": "industrial-kiln-controller",
+      "trial": "industrial-kiln-controller__B3zWAAt",
+      "tb_reward": null,
+      "strict_verdict": "fail",
+      "strict_reward": 0.0,
+      "reason": "TB reward<1.0 (verifier не прошёл)"
+    },
+    {
+      "task": "jsonl-aggregator",
+      "trial": "jsonl-aggregator__2M6oFYm",
+      "tb_reward": 1.0,
+      "strict_verdict": "genuine_pass",
+      "strict_reward": 1.0,
+      "reason": "продукт работал: terminated_by=task_resolved"
+    },
+    {
+      "task": "jsonl-aggregator",
+      "trial": "jsonl-aggregator__5poudkc",
+      "tb_reward": 0.0,
+      "strict_verdict": "fail",
+      "strict_reward": 0.0,
+      "reason": "TB reward<1.0 (verifier не прошёл)"
+    },
+    {
+      "task": "jsonl-aggregator",
+      "trial": "jsonl-aggregator__BhAR8cz",
+      "tb_reward": 0.0,
+      "strict_verdict": "fail",
+      "strict_reward": 0.0,
+      "reason": "TB reward<1.0 (verifier не прошёл)"
+    },
+    {
+      "task": "jsonl-aggregator",
+      "trial": "jsonl-aggregator__DdAXQvj",
+      "tb_reward": 0.0,
+      "strict_verdict": "fail",
+      "strict_reward": 0.0,
+      "reason": "TB reward<1.0 (verifier не прошёл)"
+    },
+    {
+      "task": "jsonl-aggregator",
+      "trial": "jsonl-aggregator__EYVaxjH",
+      "tb_reward": 1.0,
+      "strict_verdict": "genuine_pass",
+      "strict_reward": 1.0,
+      "reason": "продукт работал: terminated_by=task_resolved"
+    },
+    {
+      "task": "jsonl-aggregator",
+      "trial": "jsonl-aggregator__FzUJhfY",
+      "tb_reward": 1.0,
+      "strict_verdict": "genuine_pass",
+      "strict_reward": 1.0,
+      "reason": "продукт работал: s1_artifacts=2 files, s1_control.verdict=pass, terminated_by=task_resolved, tool_calls=5"
+    },
+    {
+      "task": "jsonl-aggregator",
+      "trial": "jsonl-aggregator__HQtmvCe",
+      "tb_reward": 0.0,
+      "strict_verdict": "fail",
+      "strict_reward": 0.0,
+      "reason": "TB reward<1.0 (verifier не прошёл)"
+    },
+    {
+      "task": "jsonl-aggregator",
+      "trial": "jsonl-aggregator__Hk4nGNf",
+      "tb_reward": 0.0,
+      "strict_verdict": "fail",
+      "strict_reward": 0.0,
+      "reason": "TB reward<1.0 (verifier не прошёл)"
+    },
+    {
+      "task": "jsonl-aggregator",
+      "trial": "jsonl-aggregator__LiGdATB",
+      "tb_reward": 0.0,
+      "strict_verdict": "fail",
+      "strict_reward": 0.0,
+      "reason": "TB reward<1.0 (verifier не прошёл)"
+    },
+    {
+      "task": "jsonl-aggregator",
+      "trial": "jsonl-aggregator__NWG9PD9",
+      "tb_reward": null,
+      "strict_verdict": "fail",
+      "strict_reward": 0.0,
+      "reason": "TB reward<1.0 (verifier не прошёл)"
+    },
+    {
+      "task": "jsonl-aggregator",
+      "trial": "jsonl-aggregator__Nmo2oR7",
+      "tb_reward": 0.0,
+      "strict_verdict": "fail",
+      "strict_reward": 0.0,
+      "reason": "TB reward<1.0 (verifier не прошёл)"
+    },
+    {
+      "task": "jsonl-aggregator",
+      "trial": "jsonl-aggregator__ShkjUmu",
+      "tb_reward": null,
+      "strict_verdict": "fail",
+      "strict_reward": 0.0,
+      "reason": "TB reward<1.0 (verifier не прошёл)"
+    },
+    {
+      "task": "jsonl-aggregator",
+      "trial": "jsonl-aggregator__dKkAb3W",
+      "tb_reward": 0.0,
+      "strict_verdict": "fail",
+      "strict_reward": 0.0,
+      "reason": "TB reward<1.0 (verifier не прошёл)"
+    },
+    {
+      "task": "jsonl-aggregator",
+      "trial": "jsonl-aggregator__eBNZoeK",
+      "tb_reward": null,
+      "strict_verdict": "fail",
+      "strict_reward": 0.0,
+      "reason": "TB reward<1.0 (verifier не прошёл)"
+    },
+    {
+      "task": "jsonl-aggregator",
+      "trial": "jsonl-aggregator__euTwcBH",
+      "tb_reward": null,
+      "strict_verdict": "fail",
+      "strict_reward": 0.0,
+      "reason": "TB reward<1.0 (verifier не прошёл)"
+    },
+    {
+      "task": "jsonl-aggregator",
+      "trial": "jsonl-aggregator__i5wrmdo",
+      "tb_reward": null,
+      "strict_verdict": "fail",
+      "strict_reward": 0.0,
+      "reason": "TB reward<1.0 (verifier не прошёл)"
+    },
+    {
+      "task": "jsonl-aggregator",
+      "trial": "jsonl-aggregator__orckmyP",
+      "tb_reward": 0.0,
+      "strict_verdict": "fail",
+      "strict_reward": 0.0,
+      "reason": "TB reward<1.0 (verifier не прошёл)"
+    },
+    {
+      "task": "jsonl-aggregator",
+      "trial": "jsonl-aggregator__qMf54fm",
+      "tb_reward": 0.0,
+      "strict_verdict": "fail",
+      "strict_reward": 0.0,
+      "reason": "TB reward<1.0 (verifier не прошёл)"
+    },
+    {
+      "task": "jsonl-aggregator",
+      "trial": "jsonl-aggregator__quS2XPJ",
+      "tb_reward": 0.0,
+      "strict_verdict": "fail",
+      "strict_reward": 0.0,
+      "reason": "TB reward<1.0 (verifier не прошёл)"
+    },
+    {
+      "task": "jsonl-aggregator",
+      "trial": "jsonl-aggregator__qzKysy8",
+      "tb_reward": null,
+      "strict_verdict": "fail",
+      "strict_reward": 0.0,
+      "reason": "TB reward<1.0 (verifier не прошёл)"
+    },
+    {
+      "task": "jsonl-aggregator",
+      "trial": "jsonl-aggregator__zFZNYfL",
+      "tb_reward": 0.0,
+      "strict_verdict": "fail",
+      "strict_reward": 0.0,
+      "reason": "TB reward<1.0 (verifier не прошёл)"
+    },
+    {
+      "task": "log-summary",
+      "trial": "log-summary__6ScSYfw",
+      "tb_reward": 0.0,
+      "strict_verdict": "fail",
+      "strict_reward": 0.0,
+      "reason": "TB reward<1.0 (verifier не прошёл)"
+    },
+    {
+      "task": "log-summary",
+      "trial": "log-summary__BpDJedo",
+      "tb_reward": 0.0,
+      "strict_verdict": "fail",
+      "strict_reward": 0.0,
+      "reason": "TB reward<1.0 (verifier не прошёл)"
+    },
+    {
+      "task": "log-summary",
+      "trial": "log-summary__LbjKRpk",
+      "tb_reward": 0.0,
+      "strict_verdict": "fail",
+      "strict_reward": 0.0,
+      "reason": "TB reward<1.0 (verifier не прошёл)"
+    },
+    {
+      "task": "log-summary",
+      "trial": "log-summary__MYhbTpT",
+      "tb_reward": 0.0,
+      "strict_verdict": "fail",
+      "strict_reward": 0.0,
+      "reason": "TB reward<1.0 (verifier не прошёл)"
+    },
+    {
+      "task": "log-summary",
+      "trial": "log-summary__hyBztm9",
+      "tb_reward": null,
+      "strict_verdict": "fail",
+      "strict_reward": 0.0,
+      "reason": "TB reward<1.0 (verifier не прошёл)"
+    },
+    {
+      "task": "log-summary",
+      "trial": "log-summary__nhLMfWn",
+      "tb_reward": 0.0,
+      "strict_verdict": "fail",
+      "strict_reward": 0.0,
+      "reason": "TB reward<1.0 (verifier не прошёл)"
+    },
+    {
+      "task": "malicious-package-forensics",
+      "trial": "malicious-package-forensics__9Gxa74H",
+      "tb_reward": null,
+      "strict_verdict": "fail",
+      "strict_reward": 0.0,
+      "reason": "TB reward<1.0 (verifier не прошёл)"
+    },
+    {
+      "task": "malicious-package-forensics",
+      "trial": "malicious-package-forensics__AmUahfS",
+      "tb_reward": 0.0,
+      "strict_verdict": "fail",
+      "strict_reward": 0.0,
+      "reason": "TB reward<1.0 (verifier не прошёл)"
+    },
+    {
+      "task": "monorepo-changelog-cli",
+      "trial": "monorepo-changelog-cli__T68vncv",
+      "tb_reward": 0.0,
+      "strict_verdict": "fail",
+      "strict_reward": 0.0,
+      "reason": "TB reward<1.0 (verifier не прошёл)"
+    },
+    {
+      "task": "monorepo-changelog-cli",
+      "trial": "monorepo-changelog-cli__wxURZnT",
+      "tb_reward": 0.0,
+      "strict_verdict": "fail",
+      "strict_reward": 0.0,
+      "reason": "TB reward<1.0 (verifier не прошёл)"
+    },
+    {
+      "task": "multi-labeller",
+      "trial": "multi-labeller__geHTdWR",
+      "tb_reward": null,
+      "strict_verdict": "fail",
+      "strict_reward": 0.0,
+      "reason": "TB reward<1.0 (verifier не прошёл)"
+    },
+    {
+      "task": "multi-labeller",
+      "trial": "multi-labeller__jzF5HuV",
+      "tb_reward": 0.0,
+      "strict_verdict": "fail",
+      "strict_reward": 0.0,
+      "reason": "TB reward<1.0 (verifier не прошёл)"
+    },
+    {
+      "task": "multi-labeller",
+      "trial": "multi-labeller__kcigc3j",
+      "tb_reward": null,
+      "strict_verdict": "fail",
+      "strict_reward": 0.0,
+      "reason": "TB reward<1.0 (verifier не прошёл)"
+    },
+    {
+      "task": "multi-labeller",
+      "trial": "multi-labeller__tXDhQUz",
+      "tb_reward": null,
+      "strict_verdict": "fail",
+      "strict_reward": 0.0,
+      "reason": "TB reward<1.0 (verifier не прошёл)"
+    },
+    {
+      "task": "neutron-submission",
+      "trial": "neutron-submission__TQdm3cJ",
+      "tb_reward": null,
+      "strict_verdict": "fail",
+      "strict_reward": 0.0,
+      "reason": "TB reward<1.0 (verifier не прошёл)"
+    },
+    {
+      "task": "okhttp-trailers-crash",
+      "trial": "okhttp-trailers-crash__7k7CYPY",
+      "tb_reward": null,
+      "strict_verdict": "fail",
+      "strict_reward": 0.0,
+      "reason": "TB reward<1.0 (verifier не прошёл)"
+    },
+    {
+      "task": "pdf-table-parsing",
+      "trial": "pdf-table-parsing__DetA5KT",
+      "tb_reward": 0.0,
+      "strict_verdict": "fail",
+      "strict_reward": 0.0,
+      "reason": "TB reward<1.0 (verifier не прошёл)"
+    },
+    {
+      "task": "pgn-chess-repair-puzzles",
+      "trial": "pgn-chess-repair-puzzles__t8L5JXB",
+      "tb_reward": null,
+      "strict_verdict": "fail",
+      "strict_reward": 0.0,
+      "reason": "TB reward<1.0 (verifier не прошёл)"
+    },
+    {
+      "task": "playing-card-recognition",
+      "trial": "playing-card-recognition__YEUm2fj",
+      "tb_reward": 0.0,
+      "strict_verdict": "fail",
+      "strict_reward": 0.0,
+      "reason": "TB reward<1.0 (verifier не прошёл)"
+    },
+    {
+      "task": "playing-card-recognition",
+      "trial": "playing-card-recognition__s5cebLD",
+      "tb_reward": 0.0,
+      "strict_verdict": "fail",
+      "strict_reward": 0.0,
+      "reason": "TB reward<1.0 (verifier не прошёл)"
+    },
+    {
+      "task": "publisher-market-analysis",
+      "trial": "publisher-market-analysis__SAeDLuH",
+      "tb_reward": 0.0,
+      "strict_verdict": "fail",
+      "strict_reward": 0.0,
+      "reason": "TB reward<1.0 (verifier не прошёл)"
+    },
+    {
+      "task": "publisher-market-analysis",
+      "trial": "publisher-market-analysis__XVjdbNM",
+      "tb_reward": null,
+      "strict_verdict": "fail",
+      "strict_reward": 0.0,
+      "reason": "TB reward<1.0 (verifier не прошёл)"
+    },
+    {
+      "task": "publisher-market-analysis",
+      "trial": "publisher-market-analysis__bbqNB42",
+      "tb_reward": null,
+      "strict_verdict": "fail",
+      "strict_reward": 0.0,
+      "reason": "TB reward<1.0 (verifier не прошёл)"
+    },
+    {
+      "task": "publisher-market-analysis",
+      "trial": "publisher-market-analysis__befxLiE",
+      "tb_reward": 0.0,
+      "strict_verdict": "fail",
+      "strict_reward": 0.0,
+      "reason": "TB reward<1.0 (verifier не прошёл)"
+    },
+    {
+      "task": "publisher-market-analysis",
+      "trial": "publisher-market-analysis__igsn9yB",
+      "tb_reward": null,
+      "strict_verdict": "fail",
+      "strict_reward": 0.0,
+      "reason": "TB reward<1.0 (verifier не прошёл)"
+    },
+    {
+      "task": "publisher-market-analysis",
+      "trial": "publisher-market-analysis__u8jsQys",
+      "tb_reward": 0.0,
+      "strict_verdict": "fail",
+      "strict_reward": 0.0,
+      "reason": "TB reward<1.0 (verifier не прошёл)"
+    },
+    {
+      "task": "raft-log-repair-concurrent-acces",
+      "trial": "raft-log-repair-concurrent-acces__tT5AThV",
+      "tb_reward": 0.0,
+      "strict_verdict": "fail",
+      "strict_reward": 0.0,
+      "reason": "TB reward<1.0 (verifier не прошёл)"
+    },
+    {
+      "task": "reverse-engineer-stack-vm",
+      "trial": "reverse-engineer-stack-vm__E7HtWAf",
+      "tb_reward": null,
+      "strict_verdict": "fail",
+      "strict_reward": 0.0,
+      "reason": "TB reward<1.0 (verifier не прошёл)"
+    },
+    {
+      "task": "reverse-engineer-stack-vm",
+      "trial": "reverse-engineer-stack-vm__TwJ9jCr",
+      "tb_reward": null,
+      "strict_verdict": "fail",
+      "strict_reward": 0.0,
+      "reason": "TB reward<1.0 (verifier не прошёл)"
+    },
+    {
+      "task": "reverse-engineer-stack-vm",
+      "trial": "reverse-engineer-stack-vm__WC26jU6",
+      "tb_reward": null,
+      "strict_verdict": "fail",
+      "strict_reward": 0.0,
+      "reason": "TB reward<1.0 (verifier не прошёл)"
+    },
+    {
+      "task": "reverse-engineer-stack-vm",
+      "trial": "reverse-engineer-stack-vm__kABTWST",
+      "tb_reward": null,
+      "strict_verdict": "fail",
+      "strict_reward": 0.0,
+      "reason": "TB reward<1.0 (verifier не прошёл)"
+    },
+    {
+      "task": "rsa-jwt-token-api-redis-blacklis",
+      "trial": "rsa-jwt-token-api-redis-blacklis__JPVHxaZ",
+      "tb_reward": null,
+      "strict_verdict": "fail",
+      "strict_reward": 0.0,
+      "reason": "TB reward<1.0 (verifier не прошёл)"
+    },
+    {
+      "task": "sakila-sqlite-queries",
+      "trial": "sakila-sqlite-queries__zNJaFKW",
+      "tb_reward": null,
+      "strict_verdict": "fail",
+      "strict_reward": 0.0,
+      "reason": "TB reward<1.0 (verifier не прошёл)"
+    },
+    {
+      "task": "schedule-vacation",
+      "trial": "schedule-vacation__5YLmLFa",
+      "tb_reward": 0.0,
+      "strict_verdict": "fail",
+      "strict_reward": 0.0,
+      "reason": "TB reward<1.0 (verifier не прошёл)"
+    },
+    {
+      "task": "schedule-vacation",
+      "trial": "schedule-vacation__5vifATX",
+      "tb_reward": 0.0,
+      "strict_verdict": "fail",
+      "strict_reward": 0.0,
+      "reason": "TB reward<1.0 (verifier не прошёл)"
+    },
+    {
+      "task": "schedule-vacation",
+      "trial": "schedule-vacation__R43UYf3",
+      "tb_reward": 0.0,
+      "strict_verdict": "fail",
+      "strict_reward": 0.0,
+      "reason": "TB reward<1.0 (verifier не прошёл)"
+    },
+    {
+      "task": "security-breach-incident-respons",
+      "trial": "security-breach-incident-respons__7bb4WTT",
+      "tb_reward": 0.0,
+      "strict_verdict": "fail",
+      "strict_reward": 0.0,
+      "reason": "TB reward<1.0 (verifier не прошёл)"
+    },
+    {
+      "task": "security-breach-incident-respons",
+      "trial": "security-breach-incident-respons__DvgqVmD",
+      "tb_reward": null,
+      "strict_verdict": "fail",
+      "strict_reward": 0.0,
+      "reason": "TB reward<1.0 (verifier не прошёл)"
+    },
+    {
+      "task": "security-breach-incident-respons",
+      "trial": "security-breach-incident-respons__nVK2Br3",
+      "tb_reward": null,
+      "strict_verdict": "fail",
+      "strict_reward": 0.0,
+      "reason": "TB reward<1.0 (verifier не прошёл)"
+    },
+    {
+      "task": "security-breach-incident-respons",
+      "trial": "security-breach-incident-respons__pLFtXBx",
+      "tb_reward": null,
+      "strict_verdict": "fail",
+      "strict_reward": 0.0,
+      "reason": "TB reward<1.0 (verifier не прошёл)"
+    },
+    {
+      "task": "sign-vector-game",
+      "trial": "sign-vector-game__4jsBfxM",
+      "tb_reward": null,
+      "strict_verdict": "fail",
+      "strict_reward": 0.0,
+      "reason": "TB reward<1.0 (verifier не прошёл)"
+    },
+    {
+      "task": "simple-database-query-tool",
+      "trial": "simple-database-query-tool__7R35CaF",
+      "tb_reward": 0.0,
+      "strict_verdict": "fail",
+      "strict_reward": 0.0,
+      "reason": "TB reward<1.0 (verifier не прошёл)"
+    },
+    {
+      "task": "simple-database-query-tool",
+      "trial": "simple-database-query-tool__9us8zYc",
+      "tb_reward": null,
+      "strict_verdict": "fail",
+      "strict_reward": 0.0,
+      "reason": "TB reward<1.0 (verifier не прошёл)"
+    },
+    {
+      "task": "simple-database-query-tool",
+      "trial": "simple-database-query-tool__EP9yd3i",
+      "tb_reward": null,
+      "strict_verdict": "fail",
+      "strict_reward": 0.0,
+      "reason": "TB reward<1.0 (verifier не прошёл)"
+    },
+    {
+      "task": "simple-database-query-tool",
+      "trial": "simple-database-query-tool__JJbXhEy",
+      "tb_reward": null,
+      "strict_verdict": "fail",
+      "strict_reward": 0.0,
+      "reason": "TB reward<1.0 (verifier не прошёл)"
+    },
+    {
+      "task": "submission_a63937a5_20251224_152",
+      "trial": "submission_a63937a5_20251224_152__axvs5UB",
+      "tb_reward": 0.0,
+      "strict_verdict": "fail",
+      "strict_reward": 0.0,
+      "reason": "TB reward<1.0 (verifier не прошёл)"
+    },
+    {
+      "task": "submission_a63937a5_20251224_152",
+      "trial": "submission_a63937a5_20251224_152__fhtbvC6",
+      "tb_reward": null,
+      "strict_verdict": "fail",
+      "strict_reward": 0.0,
+      "reason": "TB reward<1.0 (verifier не прошёл)"
+    },
+    {
+      "task": "submission_a63937a5_20251224_152",
+      "trial": "submission_a63937a5_20251224_152__tJRvd5u",
+      "tb_reward": 0.0,
+      "strict_verdict": "fail",
+      "strict_reward": 0.0,
+      "reason": "TB reward<1.0 (verifier не прошёл)"
+    },
+    {
+      "task": "task-xxe-exploit",
+      "trial": "task-xxe-exploit__CEQjEZu",
+      "tb_reward": null,
+      "strict_verdict": "fail",
+      "strict_reward": 0.0,
+      "reason": "TB reward<1.0 (verifier не прошёл)"
+    },
+    {
+      "task": "task-xxe-exploit",
+      "trial": "task-xxe-exploit__NJfHEJ2",
+      "tb_reward": null,
+      "strict_verdict": "fail",
+      "strict_reward": 0.0,
+      "reason": "TB reward<1.0 (verifier не прошёл)"
+    },
+    {
+      "task": "task-xxe-exploit",
+      "trial": "task-xxe-exploit__X3PgMHo",
+      "tb_reward": null,
+      "strict_verdict": "fail",
+      "strict_reward": 0.0,
+      "reason": "TB reward<1.0 (verifier не прошёл)"
+    },
+    {
+      "task": "task-xxe-exploit",
+      "trial": "task-xxe-exploit__ze3NLJJ",
+      "tb_reward": null,
+      "strict_verdict": "fail",
+      "strict_reward": 0.0,
+      "reason": "TB reward<1.0 (verifier не прошёл)"
+    },
+    {
+      "task": "torch-pipeline-parallelism",
+      "trial": "torch-pipeline-parallelism__DfM59bv",
+      "tb_reward": null,
+      "strict_verdict": "fail",
+      "strict_reward": 0.0,
+      "reason": "TB reward<1.0 (verifier не прошёл)"
+    },
+    {
+      "task": "torch-pipeline-parallelism",
+      "trial": "torch-pipeline-parallelism__LJTuNDm",
+      "tb_reward": null,
+      "strict_verdict": "fail",
+      "strict_reward": 0.0,
+      "reason": "TB reward<1.0 (verifier не прошёл)"
+    },
+    {
+      "task": "torch-pipeline-parallelism",
+      "trial": "torch-pipeline-parallelism__RV35bKQ",
+      "tb_reward": 0.0,
+      "strict_verdict": "fail",
+      "strict_reward": 0.0,
+      "reason": "TB reward<1.0 (verifier не прошёл)"
+    },
+    {
+      "task": "torch-pipeline-parallelism",
+      "trial": "torch-pipeline-parallelism__gGKFVJe",
+      "tb_reward": 0.0,
+      "strict_verdict": "fail",
+      "strict_reward": 0.0,
+      "reason": "TB reward<1.0 (verifier не прошёл)"
+    },
+    {
+      "task": "tsl-test-case-generation",
+      "trial": "tsl-test-case-generation__SBHLxw8",
+      "tb_reward": 0.0,
+      "strict_verdict": "fail",
+      "strict_reward": 0.0,
+      "reason": "TB reward<1.0 (verifier не прошёл)"
+    },
+    {
+      "task": "word-derangement-mapping",
+      "trial": "word-derangement-mapping__VcvFrht",
+      "tb_reward": 0.0,
+      "strict_verdict": "fail",
+      "strict_reward": 0.0,
+      "reason": "TB reward<1.0 (verifier не прошёл)"
+    }
+  ]
+}

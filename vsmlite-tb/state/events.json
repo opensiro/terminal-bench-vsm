@@ -150,5 +150,29 @@
     "from": 7,
     "to": 8,
     "detail": "#7 → #8"
+  },
+  {
+    "ts": "2026-07-16T07:21:12",
+    "type": "cycle.completed",
+    "field": "cycle_count",
+    "from": 8,
+    "to": 9,
+    "detail": "#8 → #9"
+  },
+  {
+    "ts": "2026-07-16T17:00:37",
+    "type": "cycle.completed",
+    "field": "cycle_count",
+    "from": 9,
+    "to": 10,
+    "detail": "#9 → #10"
+  },
+  {
+    "ts": "2026-07-16T17:00:37",
+    "type": "issue.changed",
+    "field": "issues.count",
+    "from": 35,
+    "to": 36,
+    "detail": "+VSM-036"
   }
 ]
