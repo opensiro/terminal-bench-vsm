@@ -1,0 +1,94 @@
+id: VSM-038
+source_system: S1            # synthesis-operator: eval infrastructure (test.sh network)
+signal_type: gap             # gap — test.sh не мог выполниться (DNS fail → no reward)
+severity: S1                 # бьёт по核心: ВСЕ trials где test.sh needs network ломались
+target_unit: meta            # eval/harbor_config_template.yaml + host-network-compose.yaml
+
+title: "Container DNS unreliable (WSL2+VPN-TUN) → test.sh RewardFileNotFoundError"
+
+summary: |
+  КОРНЕВАЯ ПРИЧИНА завершающих инфра-провалов: TB `tests/test.sh` (verifier phase,
+  запускается harbour внутри контейнера после продукта) делает сетевые операции:
+  apt-get update, curl astral.sh/uv, uv pip install pytest. Docker default-bridge
+  DNS в этом окружении (WSL2 + VPN-TUN) ненадёжён → "Temporary failure resolving
+  'deb.debian.org'" → test.sh не пишет reward.txt → RewardFileNotFoundError →
+  trial падает БЕЗ оценки продукта.
+
+  Это CANONICAL TB verifier pattern (harbor-cookbook: все recipes так делают —
+  apt-get + curl uv в test.sh). Не наша бага, а среда. Leaderboard-серверы TB
+  имеют рабочую контейнерную сеть; наша WSL2+VPN-TUN — нет.
+
+  МАСШТАБ: блокировал ~все задачи где test.sh использует сеть (большинство TB
+  задач — test.sh качает uv/pytest как canonical pattern). Без этого фикса
+  eval-пайплайн не мог произвести валидные runs для leaderboard-сабмита.
+
+  КЛЮЧЕВОЕ ИССЛЕДОВАНИЕ: TB leaderboard принимает ЗАЛОГИРОВАННЫЕ runs (result.json
+  + артефакты), НЕ перегоняет. Reward фиксируется test.sh в МОМЕНТ нашего прогона.
+  Значит test.sh обязан выполниться у нас → сеть обязана работать.
+
+  АЛЬТЕРНАТИВЫ (рассмотрены, отвергнуты):
+  - Custom verifier (verifier.import_path): test.sh нельзя вынести на host
+    (пути /tests, /app, /logs/verifier контейнерные, 85/94 test_outputs.py
+    хардкодят /app). Diffs + warning рискованны по integrity-policy.
+  - Modify test.sh: ломает TB ground truth, риск отклонения сабмита.
+  - Mirror env (UV_INDEX_URL): apt не имеет env-var, нужны sources.list правки.
+
+evidence:
+  - "state/harbor-trials/api-endpoint-permission-canonica__feQE9er/verifier/test-stdout.txt → 'Err:1 http://deb.debian.org/debian bookworm InRelease / Temporary failure resolving deb.debian.org'"
+  - "state/harbor-trials/acl-permissions-inheritance__tPoQxSx/ → verifier/ пустой, RewardFileNotFoundError (test.sh даже не стартовал — agent OOM exit 137)"
+  - "harbor-cookbook dns-blacklisting recipe: test.sh делает apt-get update + curl uv (canonical pattern, подтверждено)"
+  - "harbour source: EnvironmentConfig не имеет network_mode field; extra_docker_compose (list[Path]) — единственный hook (base.py:236-245)"
+  - "Host DNS works: 172.22.160.1 resolver, apt-get/pyyaml verified на host docker build (VSM-035)"
+
+root_cause: |
+  Docker default-bridge network в WSL2+VPN-TUN не резолвит DNS для внешних
+  хостов (deb.debian.org, astral.sh, pypi.org). Host-сеть работает (172.22.160.1
+  resolver). test.sh запускается harbour в контейнере (shared mode: тот же
+  контейнер где работал agent), наследуя bridge-сеть → DNS fail.
+
+proposal: |
+  Реализовано (этот issue = фиксация). network_mode: host через extra compose
+  overlay: контейнер (agent + verifier разделяют его) использует host network
+  stack напрямую. Host DNS работает → test.sh apt-get/curl/uv проходят.
+
+  eval/host-network-compose.yaml:
+    services:
+      main:
+        network_mode: host
+
+  eval/harbor_config_template.yaml:
+    environment:
+      extra_docker_compose:
+        - <ABS_EVAL>/host-network-compose.yaml
+
+  harbour mergeит extra compose последним (last-file-wins для network_mode).
+  egress control OFF для PUBLIC policy → нет конфликта с sidecar routing.
+
+  test.sh НЕ модифицирован (TB ground truth нетронут). Меняется только network
+  namespace контейнера.
+
+acceptance:
+  - "test.sh apt-get update + curl uv + uv pip install проходят в контейнере — ВЫПОЛНЕНО (acl smoke: test-stdout.txt 2.8MB, apt-get Get:1..16 OK)"
+  - "reward.txt пишется test.sh (не RewardFileNotFoundError) — ВЫПОЛНЕНО (acl reward=1.0)"
+  - "Продукт оценивается (не падает на verifier network) — ВЫПОЛНЕНО (acl task_resolved reward=1.0)"
+  - "test.sh не модифицирован (TB ground truth) — ВЫПОЛНЕНО"
+  - "Submission-safe (leaderboard не инспектирует network_mode) — ВЫПОЛНЕНО"
+
+needs_human_decision: false   # infra-fix, root cause ясен, submission-safe
+
+references:
+  - VSM-035   # offline overlay layer — снял build-network DNS для product-runtime deps
+  - VSM-036   # WORKDIR fix
+  - VSM-037   # true-verifier (атрибуция reward) — complement, не замена
+  - meta/cycle-runbook.md   # стандарт запуска (теперь с host-network)
+  - meta/verifier-architecture.md   # ASCII-схема (verifier phase = где жил баг)
+  - harbor-cookbook dns-blacklisting   # canonical test.sh pattern (apt-get + curl uv)
+
+notes:
+  - "Trade-off: network_mode: host убирает network isolation контейнера (видит host-порты). Приемлемо для eval-окружения (sandboxed tasks)."
+  - "Не решает OOM продукта (acl ранее exit 137 — продукт memory). Это отдельная проблема (workers=1, или более мощная машина)."
+  - "build-network всё ещё bridge (docker compose build без build.network). Но VSM-035 offline layer снял эту проблему (COPY --from, zero network в overlay build). host-network нужен только для RUN (test.sh внутри контейнера)."
+  - "Leaderboard-сабмит: reward в result.json = от РЕАЛЬНОГО test.sh (не модифицированного). network_mode невидим для валидации бота."
+
+created: 2026-07-16
+updated: 2026-07-16
