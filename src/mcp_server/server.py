@@ -62,9 +62,16 @@ class MCPServer:
             self.trace.append(tc)
             return result
         except Exception as exc:
-            tc = ToolCall(idx=idx, tool=name, args=args, observation="", error=f"{type(exc).__name__}: {exc}")
+            err_msg = f"{type(exc).__name__}: {exc}"
+            tc = ToolCall(idx=idx, tool=name, args=args, observation=err_msg,
+                          exit_code=1, error=err_msg)
             self.trace.append(tc)
-            return {"error": str(exc)}
+            # VSM-034 TERTIARY-1: surface exceptions as stderr+exit_code=1 so the
+            # agent loop records a failure_observation (was: silent {"error":...}
+            # with no exit_code → invisible failure, file not created but step
+            # treated as success).
+            return {"stdout": "", "stderr": err_msg, "exit_code": 1,
+                    "time_seconds": 0.0}
 
     def list_tools(self) -> list[dict]:
         return list(self.tools.values())
