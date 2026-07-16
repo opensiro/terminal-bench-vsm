@@ -157,12 +157,26 @@ def _read_text(path: Path) -> str:
 def _parse_reward(reward_txt: str, result_json: dict | None) -> float:
     """Extract reward as float. Prefer reward.txt (verifier output), fall back
     to result.json.verifier_result.rewards.reward, default 0.0 (fail).
+
+    VSM-034 SECONDARY-3: surface reward.txt corruption instead of masking it.
+    A malformed reward.txt (e.g. '0.0\\n0.0' from a re-run on a non-fresh
+    /logs volume) used to fail `float()` silently and fall through to the
+    result.json fallback with no trace — metrics looked clean while the
+    verifier output was actually broken. We now warn on stderr so the next
+    eval batch exposes this for a source-level fix.
     """
     if reward_txt:
         try:
             return float(reward_txt)
         except ValueError:
-            pass
+            # Corruption observed: log loudly so it shows in trial logs rather
+            # than being silently swallowed by the fallback path.
+            preview = reward_txt.strip().replace("\n", "\\n")[:120]
+            print(
+                f"warning: reward.txt not a float (corrupted?): {preview!r}; "
+                f"falling back to result.json",
+                file=sys.stderr,
+            )
     if result_json:
         rewards = (result_json.get("verifier_result") or {}).get("rewards") or {}
         try:
