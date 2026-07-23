@@ -121,3 +121,14 @@ vsmlite/
   Стаффорда Бира.
 - vsmforge (не разработан) — целевая фабрика; контракт агрегации описан в
   [`ref/vsmforge-target.md`](ref/vsmforge-target.md) и [`meta/vsmforge-digest.md`](meta/vsmforge-digest.md).
+
+## Audit (for external reviewers)
+
+- [`POC_LOGS.md`](POC_LOGS.md) — proof-of-concept evidence: chronological record
+  of what the maturation loop and eval pipeline have actually run (15 cycles,
+  5 train batches, eval runs), with explicit caveats about what is proven
+  (pipeline integrity) vs. what is not (full benchmark performance).
+- [`SECURITY.md`](SECURITY.md) — secret-handling policy, reporting process, and
+  pre-publish checklist.
+- [`public-report/`](public-report/) — external baseline cards (frontier anchors
+  for A(t), kept separate from our own runs).
