@@ -1,20 +1,36 @@
-# ── runtime state (лёгкие артефакты) ──
+# ── Secrets & credentials (NEVER commit) ──
+# .env / secret files must never enter version control. If real credentials
+# are ever pushed, they must be considered compromised and rotated immediately.
+# See SECURITY.md for the reporting process.
+.env
+.env.*
+!.env.example
+*.secret
+secrets.json
+credentials.json
+*.pem
+*.key
+id_rsa*
+*.pfx
+*.p12
+
+# ── runtime state (lightweight artifacts) ──
 state/*.tmp
 .venv/
 __pycache__/
 *.pyc
 
-# ── первичные материалы Beer VSM (binary, не входят в темплейт) ──
-# Оставлены в рабочей папке как референс; см. ref/bibliography.md.
+# ── primary Beer VSM materials (binary, not part of the template) ──
+# Kept in the working tree as reference; see ref/bibliography.md.
 *.pdf
 
-# ── генерируемые run-промпты ──
+# ── generated run prompts ──
 runs/
 
-# ── локальные данные домена (не темплейт) ──
+# ── local domain data (not part of the template) ──
 state/domain_draft.local.yaml
 
-# ── ZCode session artifacts (не часть темплейта) ──
+# ── ZCode session artifacts (not part of the template) ──
 .zcode/
 
 # ── OS / editor ──
@@ -26,23 +42,23 @@ state/domain_draft.local.yaml
 # ── Claude Code local overrides ──
 .claude/settings.local.json
 
-# ── eval/: кеш скачанного датасета TB Dev Set v2 (~100 задач, не в git) ──
+# ── eval/: downloaded TB Dev Set v2 dataset cache (~100 tasks, not in git) ──
 .cache/
 
-# ── eval/: артефакты прогонов (если будут вне state/) ──
+# ── eval/: run artifacts (if they end up outside state/) ──
 eval/runs/
 
-# ── harbor: trial артефакты (логи, trajectory, docker configs) — генерируются ──
+# ── harbor: trial artifacts (logs, trajectory, docker configs) — generated ──
 state/harbor-trials/
 
 # ── eval run-logs (batch/smoke logs, regenerable) ──
 state/logs/
 
-# ── archives: исторические раны (tar.gz, восстановимы из harbor-trials) ──
-# manifest'ы (state/archives/*.manifest.md) трекаются — они контекст.
+# ── archives: historical runs (tar.gz, restorable from harbor-trials) ──
+# Manifests (state/archives/*.manifest.md) ARE tracked — they are context.
 state/archives/*.tar.gz
 
-# ── временные backups (smoke-test и т.п.) ──
+# ── temporary backups (smoke-test, etc.) ──
 *.smoke-backup
 
 # ── process log (VSM-025): regenerable from state/events.json, runtime-only ──

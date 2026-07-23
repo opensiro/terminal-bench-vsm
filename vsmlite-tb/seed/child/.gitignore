@@ -1,3 +1,17 @@
+# ── Secrets & credentials (NEVER commit) ──
+.env
+.env.*
+!.env.example
+*.secret
+secrets.json
+credentials.json
+*.pem
+*.key
+id_rsa*
+*.pfx
+*.p12
+
+# ── runtime ──
 state/*.tmp
 __pycache__/
 *.pyc

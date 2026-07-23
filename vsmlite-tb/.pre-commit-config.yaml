@@ -1,0 +1,19 @@
+# Pre-commit hooks for vsmlite-tb.
+#
+# Purpose: keep secrets out of version control before they reach the public
+# repository. See SECURITY.md for the full secret-handling policy and the
+# pre-publish checklist.
+#
+# Install once:
+#   pip install pre-commit
+#   pre-commit install
+#
+# Scan the full history manually (e.g. before going public):
+#   gitleaks detect --source . --verbose
+
+repos:
+  - repo: https://github.com/gitleaks/gitleaks
+    rev: v8.21.2  # pinned; bump deliberately after verifying the new release
+    hooks:
+      - id: gitleaks
+        name: detect leaked secrets (gitleaks)
