@@ -1,26 +1,26 @@
 {
   "_comment": "agent_eval.json — скоринг 0-10 (A-E, D<0.5=FAIL) работы агентов (VSM-025). Пишет export_logs.py из agent_eval.evaluate().",
-  "generated": "2026-07-16T17:00:37",
+  "generated": "2026-07-17T01:08:54",
   "grade_scale": "A≥9.0 | B≥7.5 | C≥5.0 (pass) | D≥2.5 (FAIL) | E<2.5",
   "trace_note": "trace_len info-only (VSM-022 superseded→VSM-024); harbor block — progressive enhancement",
   "token_note": "token-spend deferred→VSM-024 (instrumentation pending)",
   "product": [
     {
       "task_id": "task",
-      "score": 2.8,
-      "grade": "D",
-      "passed": false,
+      "score": 7.3,
+      "grade": "C",
+      "passed": true,
       "components": {
-        "verdict": 1.0,
+        "verdict": 6.0,
         "pytest": 0.0,
-        "efficiency": 1.5,
+        "efficiency": 1.0,
         "harbor_bonus": 0.3,
         "penalty_timeout": 0.0,
         "penalty_exit": 0.0
       },
-      "summary": "task [2.8/D] market_analysis·hard · 128s · trace3 · pytest0/0 · exit0. harbor(terminated_by=no_observations, attempts=1).",
-      "category": "market_analysis",
-      "difficulty": "hard"
+      "summary": "task [7.3/C] software-engineering·easy · 329s · trace5 · pytest0/0 · exit0. harbor(terminated_by=no_observations, attempts=1).",
+      "category": "software-engineering",
+      "difficulty": "easy"
     }
   ],
   "systems": [
@@ -53,24 +53,24 @@
   ],
   "breakdown": {
     "by_difficulty": {
-      "hard": {
+      "easy": {
         "total": 1,
-        "passed": 0,
-        "pass_rate": 0.0
+        "passed": 1,
+        "pass_rate": 1.0
       }
     },
     "by_category": {
-      "market_analysis": {
+      "software-engineering": {
         "total": 1,
-        "passed": 0,
-        "pass_rate": 0.0
+        "passed": 1,
+        "pass_rate": 1.0
       }
     }
   },
   "summary": {
     "product_count": 1,
-    "product_avg": 2.8,
-    "product_pass": 0,
+    "product_avg": 7.3,
+    "product_pass": 1,
     "system_count": 2,
     "system_avg": 9.0,
     "system_idle": 4

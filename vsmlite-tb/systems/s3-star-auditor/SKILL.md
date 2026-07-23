@@ -21,6 +21,22 @@
 | **recursion** | units могут стать VSM (есть `units/README.md` реестр) |
 | **structure vs intent** | реальные файлы child соответствуют заявленной maturation_state |
 
+## Audit focus: evaluation_integrity (VSM-032 — честность оценки)
+
+> Cross-provider-модель здесь особенно ценна: основной стек может быть смещён в
+> оценке собственного продукта. «Нечестная оценка = нежизнеспособная организация» —
+> если метрика A(t) построена на подтасованном/утёкшем замере, она ничего не значит.
+
+| Проверка | Что искать | Механизм верификации |
+|---|---|---|
+| **мембрана VSM-002** | `../vsm/`, `../src/` не упоминают TB/harbor/benchmark | `scripts/validate.sh §2c` + `eval/membrane.py: verify_neutrality()` |
+| **no leakage** | TB-фрейминг снимается мембраной перед продуктом | `eval/membrane.py: translate()` — канарейка и оценочные термины вырезаны |
+| **anti-reward-hacking** | `tests/` копируются в контейнер ПОСЛЕ фазы агента | `eval/grader.py` (порядок: agent → cp tests → run) |
+| **verifier correctness** | verifier пишет `1`/`0` в `/logs/verifier/reward.txt`, парсинг корректен | `eval/grader.py: grade()` |
+| **no train_on_eval** | продукт не обучается на eval-разметке (hard constraint) | grep продукта на fine-tuning/eval-training паттерны |
+| **stateless продукта** | каждый `mcp_server.server` — свежий процесс (CONTRACT §5) | `eval/agent_phase.py` — stateless spawn |
+| **metric isolation** | external baselines (`public-report/`) НЕ смешаны с A(t) | `public-report/README.md` invariant; A(t) читает только `state/dev_metrics.json` |
+
 ## Протокол
 1. Случайный сэмпл 3–5 аспектов жизнеспособности (schedule).
 2. Сверка по артефактам, не self-reports. Если агент child говорит «S2 работает» —

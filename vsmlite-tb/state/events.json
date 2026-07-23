@@ -174,5 +174,85 @@
     "from": 35,
     "to": 36,
     "detail": "+VSM-036"
+  },
+  {
+    "ts": "2026-07-16T21:43:34",
+    "type": "cycle.completed",
+    "field": "cycle_count",
+    "from": 10,
+    "to": 11,
+    "detail": "#10 → #11"
+  },
+  {
+    "ts": "2026-07-16T21:43:34",
+    "type": "issue.changed",
+    "field": "issues.count",
+    "from": 36,
+    "to": 38,
+    "detail": "+VSM-037,VSM-038"
+  },
+  {
+    "ts": "2026-07-16T23:42:01",
+    "type": "cycle.completed",
+    "field": "cycle_count",
+    "from": 11,
+    "to": 12,
+    "detail": "#11 → #12"
+  },
+  {
+    "ts": "2026-07-17T00:28:05",
+    "type": "cycle.completed",
+    "field": "cycle_count",
+    "from": 12,
+    "to": 13,
+    "detail": "#12 → #13"
+  },
+  {
+    "ts": "2026-07-17T00:48:08",
+    "type": "cycle.completed",
+    "field": "cycle_count",
+    "from": 13,
+    "to": 14,
+    "detail": "#13 → #14"
+  },
+  {
+    "ts": "2026-07-17T01:08:54",
+    "type": "autonomy.changed",
+    "field": "autonomy.current",
+    "from": 0.175,
+    "to": 0.475,
+    "detail": "A(t) 0.175 → 0.475"
+  },
+  {
+    "ts": "2026-07-17T01:08:54",
+    "type": "autonomy.verdict",
+    "field": "autonomy.verdict",
+    "from": "DEPENDENT",
+    "to": "SEMI-AUTONOMOUS",
+    "detail": "DEPENDENT → SEMI-AUTONOMOUS"
+  },
+  {
+    "ts": "2026-07-17T01:08:54",
+    "type": "cycle.completed",
+    "field": "cycle_count",
+    "from": 14,
+    "to": 15,
+    "detail": "#14 → #15"
+  },
+  {
+    "ts": "2026-07-17T01:08:54",
+    "type": "eval.run",
+    "field": "summary.pass_rate",
+    "from": 0.0,
+    "to": 1.0,
+    "detail": "100% (1 tasks)"
+  },
+  {
+    "ts": "2026-07-17T01:08:54",
+    "type": "issue.changed",
+    "field": "issues.count",
+    "from": 38,
+    "to": 39,
+    "detail": "+VSM-039"
   }
 ]

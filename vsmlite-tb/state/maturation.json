@@ -8,9 +8,9 @@
     "S3*"
   ],
   "autonomy": {
-    "current": 0.175,
+    "current": 0.475,
     "target": 1.0,
-    "verdict": "DEPENDENT",
+    "verdict": "SEMI-AUTONOMOUS",
     "signs": {
       "s5_sign": {
         "value": 1.0,
@@ -33,9 +33,9 @@
         "meets": false
       },
       "eval_sign": {
-        "value": 0.0,
+        "value": 1.0,
         "from": "dev_metrics",
-        "meets": false
+        "meets": true
       }
     },
     "weights": {
@@ -48,7 +48,7 @@
   "child_initialized": true,
   "last_primitive": "Create",
   "last_transition": "Phase 3 → Phase 4",
-  "cycle_count": 10,
-  "updated": "2026-07-16",
-  "last_cycle_at": "2026-07-16T17:00:36"
+  "cycle_count": 15,
+  "updated": "2026-07-17",
+  "last_cycle_at": "2026-07-17T01:08:53"
 }

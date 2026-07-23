@@ -34,8 +34,8 @@ vsmlite — **не** фабрика и **не** приложение прикл�
 | **S1** | Operations — синтез дочернего VSM | `synthesis-operator` (планирует primitive/phase) + `child-dispatcher` (исполняет в `../vsm/`) |
 | **S2** | Coordination — anti-looping, изоляция, маршрутизация | `.claude/agents/s2-coordinator.md`, `systems/s2-coordinator/` |
 | **S3** | Control/Optimization — A(t), бюджет, ресурсы созревания | `s3-optimizer` |
-| **S3\*** | Audit — независимый (другая модель, read-only) аудит жизнеспособности дочернего VSM | `s3-star-auditor` |
-| **S4** | Intelligence — скан среды прикладного домена дочернего VSM | `s4-scout` |
+| **S3\*** | Audit — независимый (другая модель, read-only) аудит: child viability + evaluation_integrity (VSM-032) | `s3-star-auditor` |
+| **S4** | Intelligence — скан среды (два домена, VSM-032): product-domain (`s4-scout`) + benchmark-domain (`s4-bench-scout`) | `s4-scout`, `s4-bench-scout` |
 | **S5** | Policy/Identity — **архитектор** (VSM-005): вмешивается в дочерний VSM при алгедонике от S3/S3\*/S4, рутинно бездействует; каждое вмешательство = +1 к intervention metric (публичный индикатор автономности) | `CLAUDE.md` + `s5-guardian` |
 
 **S5 = архитектор (VSM-005):** рутинно НЕ вмешивается (S1-S4 работают автономно).

@@ -1,0 +1,50 @@
+{
+  "batch_id": "train__20260717-004002",
+  "profile": "train",
+  "timestamp": "2026-07-17T00:40:02",
+  "started_at": "2026-07-17T00:40:02",
+  "finished_at": "2026-07-17T00:48:04",
+  "wall_clock_sec": 482.0,
+  "workers": 1,
+  "tasks_total": 2,
+  "summary": {
+    "total": 1,
+    "passed": 0,
+    "failed": 0,
+    "error": 1,
+    "pass_rate": 0.0
+  },
+  "trend_direction": "flat",
+  "trend_delta": 0.0,
+  "per_task": [
+    {
+      "task_id": "task",
+      "status": "failed",
+      "duration_sec": 135.6,
+      "reward": 0.0
+    },
+    {
+      "task_id": "task",
+      "status": "error",
+      "duration_sec": 168.5,
+      "reward": 0.0
+    }
+  ],
+  "observations": [
+    {
+      "type": "zero_pass",
+      "severity": "warn",
+      "detail": "0/1 passed — no task resolved",
+      "detector": "rule:zero_pass"
+    },
+    {
+      "type": "infra_cluster",
+      "severity": "warn",
+      "detail": "1/1 (100%) tasks errored — likely infra",
+      "detector": "rule:infra_share"
+    }
+  ],
+  "decision": "ok_with_concerns: 2 warnings",
+  "issues_raised": [],
+  "decided_at": "2026-07-17T00:48:05"
+}

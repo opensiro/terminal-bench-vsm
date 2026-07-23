@@ -206,26 +206,42 @@ system_3:
 system_3_star:
   agent: s3-star-auditor
   cadence: on_demand
-  schedule: "случайный сэмпл аспектов жизнеспособности дочернего VSM"
+  schedule: "случайный сэмпл аспектов жизнеспособности дочернего VSM и честности оценки"
   provider_constraint:
     must_differ_from: s1       # КРИТИЧНО: другой модель-провайдер
-    reason: "ловить коррелированные галлюцинации/ошибки в оценке жизнеспособности"
+    reason: "ловить коррелированные галлюцинации/ошибки в оценке жизнеспособности и смещение в оценке собственного продукта"
   reporting_target: s3_and_human   # критика — сразу человеку (алгедоник)
-  audit_focus: child_viability   # OSM «брак = нежизнособная организация»; структурный аудит, не QA
+  audit_focuses:               # VSM-032: список фокусов (раньше скаляр audit_focus)
+    - child_viability          # OSM «брак = нежизнеспособная организация»; структурный аудит, не QA
+    - evaluation_integrity     # VSM-032: честность оценки (мембрана/no-leakage/anti-reward-hacking/metric isolation)
   independence_rules:
     - read_only_access_to_child
     - never_trust_agent_self_reports
     - verify_child_structure_vs_stated_intent
+    - verify_evaluation_membrane_and_metric_isolation   # VSM-032
     - flag_any_attempt_to_influence_audit
 
 # ───────────────────────────── S4 — Intelligence ─────────────────────────────
 system_4:
-  agent: s4-scout
+  agent: s4-scout              # продукт-домен (competitors/LLM-tech/vsmforge/osm) — без изменений
   cadence: on_demand
+  # VSM-032: среда мультигранна → два S4-scout'а по доменам. S4 = «скан среды
+  # системы (child VSM)», среда = product-domain + benchmark-domain. Это доменная
+  # специализация внутри S4 (Beer: environment has multiple facets), не новая система.
+  domain_split:
+    product_domain: s4-scout          # существующий: competitors/LLM-tech/vsmforge/osm
+    benchmark_domain: s4-bench-scout  # новый (VSM-032): TB-2.1/frontier-baselines/leaderboard
   monitoring:
     domain_environment: []     # внешние факторы прикладного домена (tailor на init)
     vsmforge_roadmap: [forward_contract_status, telemetry_contract_changes]
     osm_evolution: [new_primitives, phase_criteria_refinements]
+  # VSM-032: sources для s4-bench-scout (benchmark-domain). External baselines НЕ
+  # смешиваются с A(t) (invariant public-report/README.md).
+  benchmark_monitoring:
+    - tb_dataset_structure      # .cache/tb-2-verified/ (local, stable) → meta/tb2-structure.md
+    - frontier_baselines        # public-report/ + web (GLM-5.2/Opus/Sonnet) → meta/frontier-baselines.md
+    - tb_version_evolution      # релизы TB, instruction/env-fixes (drift-detection)
+    - leaderboard_signals       # community results, harness-comparability
   premises_register:           # допущения, которые надо перепроверять
     - premise: "A(t) → 1 достижимо за разумное число циклов"
       check_frequency: per_cycle

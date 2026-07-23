@@ -88,5 +88,50 @@
     "verdict": "DEPENDENT",
     "decision": "ok_with_concerns: 2 warnings",
     "issue_created": null
+  },
+  {
+    "cycle": 11,
+    "timestamp": "2026-07-16T21:43:32",
+    "pass_rate": 0.0,
+    "autonomy": 0.175,
+    "verdict": "DEPENDENT",
+    "decision": "ok_with_concerns: 1 warnings",
+    "issue_created": null
+  },
+  {
+    "cycle": 12,
+    "timestamp": "2026-07-16T23:41:59",
+    "pass_rate": 0.0,
+    "autonomy": 0.175,
+    "verdict": "DEPENDENT",
+    "decision": "ok_with_concerns: 2 warnings",
+    "issue_created": null
+  },
+  {
+    "cycle": 13,
+    "timestamp": "2026-07-17T00:28:04",
+    "pass_rate": 0.0,
+    "autonomy": 0.175,
+    "verdict": "DEPENDENT",
+    "decision": "ok_with_concerns: 2 warnings",
+    "issue_created": null
+  },
+  {
+    "cycle": 14,
+    "timestamp": "2026-07-17T00:48:05",
+    "pass_rate": 0.0,
+    "autonomy": 0.175,
+    "verdict": "DEPENDENT",
+    "decision": "ok_with_concerns: 2 warnings",
+    "issue_created": null
+  },
+  {
+    "cycle": 15,
+    "timestamp": "2026-07-17T01:08:53",
+    "pass_rate": 1.0,
+    "autonomy": 0.475,
+    "verdict": "SEMI-AUTONOMOUS",
+    "decision": "ok_no_action",
+    "issue_created": null
   }
 ]

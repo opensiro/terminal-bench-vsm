@@ -15,9 +15,18 @@ model: sonnet
 
 ## Суть
 
-Независимый **структурный** аудит жизнеспособности дочернего VSM. Не QA — ты не
-ищешь баги в коде. Ты ищешь **нежизнеспособность**: identity missing, S2 absent,
-нет recursion, broken channels, policy conflict, structure-vs-intent mismatch.
+Независимый **структурный** аудит с двумя фокусами (оба read-only, cross-provider):
+
+1. **child viability** — нежизнеспособность дочернего VSM: identity missing, S2
+   absent, нет recursion, broken channels, policy conflict, structure-vs-intent
+   mismatch.
+2. **evaluation_integrity** (VSM-032) — честность оценки: мембрана VSM-002 не
+   текла, no leakage, anti-reward-hacking (tests/ после агента), verifier
+   correctness, no train_on_eval, metric isolation (external ≠ A(t)).
+
+Не QA — ты не ищешь баги в коде. Ты ищешь **нежизнеспособность** и **нечестность
+оценки**. «Нечестная оценка = нежизнеспособная организация»: A(t) на
+подтасованном/утёкшем замере ничего не значит.
 
 > «Брак = нежизнеспособная организация», а не баги в коде (см.
 > [`meta/vsmforge-digest.md`](../../meta/vsmforge-digest.md)).

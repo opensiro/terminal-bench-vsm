@@ -1,0 +1,108 @@
+id: VSM-032
+source_system: S5            # архитектурное решение о структуре vsmlite (добавление системы + audit-focus)
+signal_type: policy          # identity/structure-affecting
+severity: S2                 # не ломает viability; расширяет intelligence + audit
+target_unit: meta            # структура vsmlite-tb (родитель)
+
+title: "Два S4-scout'а по доменам среды + S3* evaluation_integrity + baseline snapshot 0.0.1"
+
+summary: |
+  Среда, которую сканирует S4, мультигранна. Канон Beer/OSM: S4 = «outside-and-then»
+  — скан среды системы (child VSM). Среда разделена на два домена, каждый со своим
+  scout'ом (доменная специализация внутри S4, не новая система):
+    - product-domain (s4-scout, существующий): competitors, LLM-tech, mini-swe-agent
+      эволюция, recovery-подходы.
+    - benchmark-domain (s4-bench-scout, НОВЫЙ): Terminal-Bench 2.1, frontier-модели
+      (GLM-5.2/Opus/Sonnet), leaderboard, структура датасета, общие fail-кластеры.
+
+  S3* (независимый аудит на ДРУГОЙ модели) получает второй audit-focus —
+  evaluation_integrity (канонически чистое расширение: cross-provider-модель ловит
+  смещение в оценке собственного продукта). Не смешивается с benchmark-research.
+
+  Создан baseline-snapshot продукта vsm-baseline-0.0.1 (structural; pass-rate TBD
+  до готовности инфры) в public-report/ — точка отсчёта для frontier-сравнения.
+  Invariant public-report/ расширен: теперь external + internal-snapshot (оба
+  read-only-фиксации, НЕ смешиваются с A(t)).
+
+  Обоснование декомпозиции: «внутренние данные → S3, интернет → S4» — ось
+  ортогональна ролям Beer. Канонически роли привязаны к объекту наблюдения
+  относительно системы (child VSM), не к источнику данных. Бенчмарк TB-2.1 = часть
+  среды (оценочный стенд внешне к продукту), поэтому ЛЮБОЙ его анализ (интернет
+  И локальный датасет) = S4. Метрика продукта на бенчмарке (pass-rate) уже feeds
+  S3 через eval_sign → A(t); «бенчмарк-как-объект» остаётся S4.
+
+evidence:
+  - "systems/s4-bench-scout/ — новый S4 benchmark-domain (SOUL/SKILL/HEARTBEAT/TASK)"
+  - ".claude/agents/s4-bench-scout.md — agent definition (model: inherit)"
+  - "systems/s3-star-auditor/SKILL.md — audit focus evaluation_integrity (VSM-032)"
+  - "vsmlite.yaml → system_4.domain_split + system_3_star.audit_focuses (раньше скаляр audit_focus)"
+  - "meta/tb2-structure.md — stable digest TB-2.1 (89 задач, 16 категорий, difficulty, schema)"
+  - "meta/frontier-baselines.md — volatile digest (GLM-5.2 79.8%, Opus 61.8%, Sonnet 50.3%)"
+  - "public-report/vsm-baseline-0.0.1.md — structural snapshot продукта (pass-rate TBD)"
+  - "public-report/README.md — расширенный invariant (internal baseline snapshot ≠ A(t))"
+  - "public-report/GLM-5.2-FP8_TB-2.1_mini-swe-agent.md — frontier-якорь 79.8% (VSM-028)"
+
+proposal: |
+  Принять структуру «два S4-scout'а по доменам среды + S3* evaluation_integrity»:
+  1. s4-bench-scout (benchmark-domain S4) — новый агент + каталог systems/.
+  2. s4-scout (product-domain S4) — без изменений.
+  3. S3* — второй audit-focus evaluation_integrity (мембрана/no-leakage/
+     anti-reward-hacking/metric isolation); child_viability без изменений.
+  4. vsm-baseline-0.0.1 — structural snapshot продукта в public-report/.
+  5. Два standing-digest'а в meta/: tb2-structure.md (stable) + frontier-baselines.md (volatile).
+
+  Альтернативы, рассмотренные и отвергнутые:
+  - «внутренние → S3, интернет → S4»: ось источника данных ортогональна Beer-ролям;
+    бенчмарк = среда → S4 независимо от источника.
+  - «отдельный utility-research-агент вне VSM»: не ложится в канон, вне permission matrix.
+  - «нагрузить S3* benchmark-research»: ломает provider_constraint (S3* = viability/integrity
+    audit, не research; смешивание ломает чистоту аудита).
+  - «один S4 с двумя monitoring-доменами»: смешивает объекты (продукт vs стенд).
+
+acceptance:
+  - "make validate GREEN (инвариант не нарушен новыми файлами)"
+  - "python3 scripts/autonomy.py работает (s4_sign читает state/intel.json — не сломан)"
+  - "python3 scripts/render_data.py работает (телеметрия рендерится)"
+  - "grep по vsm/+src/ чист от terminal-bench/harbor (мембрана VSM-002 сохранена)"
+  - "vsmlite.yaml валиден (YAML парсится); system_3_star.audit_focuses — список"
+  - "bench-scout пишет сигналы с source_domain: benchmark (отличие от product)"
+
+needs_human_decision: true   # добавление системы + audit-focus + расширение invariant = policy-level
+
+policy_question: |
+  Принять архитектуру «два S4-scout'а (product + benchmark domain) + S3*
+  evaluation_integrity + internal baseline snapshot 0.0.1»?
+
+options:
+  - id: accept
+    label: "Accept (как реализовано)"
+    hint: "Два S4 по доменам, S3* +evaluation_integrity, snapshot в public-report/. Канонически чисто. (Реком.)"
+  - id: accept-no-snapshot
+    label: "Accept, но snapshot вынести из public-report/"
+    hint: "Агенты + S3* принимаем, но vsm-baseline-0.0.1 — в meta/baselines/ (public-report оставить external-only по VSM-028)."
+  - id: single-s4
+    label: "Только один S4 (два monitoring-домена)"
+    hint: "Не плодить второго scout'а; смешать домены в одном s4-scout. Меньше файлов."
+  - id: defer
+    label: "Defer"
+    hint: "Отложить до появления 2-го объекта в benchmark-domain (пока один бенчмарк = один scout избыточен)."
+
+status: triage
+decision: ""
+selected_options: []
+
+references:
+  - VSM-028   # public-report конвенция — расширяется internal snapshot'ом
+  - VSM-005   # parent isolation + env-type awareness — основа для domain split
+  - VSM-002   # мембрана — то, что S3* evaluation_integrity аудирует
+  - VSM-027   # Harbor-Index (frontier-gap) — родственный benchmark-intelligence
+
+notes:
+  - "OSM/Beer: S4 = environment scan; environment is multifaceted → domain split каноничен."
+  - "S3* evaluation_integrity особенно ценен на cross-provider: основной стек смещён в оценке себя."
+  - "pass-rate vsm-baseline-0.0.1 = TBD: инфра-раннер (harbour) достраивается отдельным агентом."
+  - "bench-scout пишет в state/intel.json (кормит s4_sign → A(t)) с source_domain: benchmark; подробный кеш — state/bench_intel.json."
+  - "child-dispatcher не требуется: bench-scout не мутирует ../vsm/, ../src/."
+
+created: 2026-07-15
+updated: 2026-07-15

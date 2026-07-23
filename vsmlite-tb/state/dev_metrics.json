@@ -1,5 +1,5 @@
 {
-  "generated": "2026-07-16",
+  "generated": "2026-07-17",
   "profile": "train",
   "dataset": "open-thoughts/OpenThoughts-TB-dev-v2",
   "harness": "claude-code",
@@ -11,14 +11,14 @@
     "pass_rate": 0.0
   },
   "by_category": {
-    "market_analysis": {
+    "geometry": {
       "total": 1,
       "passed": 0,
       "pass_rate": 0.0
     }
   },
   "by_difficulty": {
-    "hard": {
+    "medium": {
       "total": 1,
       "passed": 0,
       "pass_rate": 0.0
@@ -29,21 +29,23 @@
       "task_id": "task",
       "status": "failed",
       "passed": false,
-      "category": "market_analysis",
-      "difficulty": "hard",
-      "agent_duration_sec": 128.0,
+      "category": "geometry",
+      "difficulty": "medium",
+      "agent_duration_sec": 453.9,
       "trace_len": 3,
       "failure_obs_count": 0,
-      "timestamp": "2026-07-16T16:53:18",
+      "timestamp": "2026-07-17T07:04:34",
       "error": null,
       "agent_exit_code": 0,
       "timed_out": false,
       "harbor": {
-        "trial_name": "publisher-market-analysis__SAeDLuH",
+        "trial_name": "floor-plan-geometry__BojPs4L",
         "terminated_by": "no_observations",
         "verdict": "task_failed",
         "attempts": 1,
-        "reward": 0.0
+        "reward": 0.0,
+        "strict_verdict": "fail",
+        "strict_reward": 0.0
       }
     }
   ]

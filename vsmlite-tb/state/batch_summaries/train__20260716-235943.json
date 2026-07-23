@@ -1,0 +1,68 @@
+{
+  "batch_id": "train__20260716-235943",
+  "profile": "train",
+  "timestamp": "2026-07-16T23:59:43",
+  "started_at": "2026-07-16T23:59:43",
+  "finished_at": "2026-07-17T00:28:04",
+  "wall_clock_sec": 1701.4,
+  "workers": 2,
+  "tasks_total": 5,
+  "summary": {
+    "total": 1,
+    "passed": 0,
+    "failed": 1,
+    "error": 0,
+    "pass_rate": 0.0
+  },
+  "trend_direction": "flat",
+  "trend_delta": 0.0,
+  "per_task": [
+    {
+      "task_id": "task",
+      "status": "failed",
+      "duration_sec": 153.6,
+      "reward": 0.0
+    },
+    {
+      "task_id": "task",
+      "status": "error",
+      "duration_sec": 398.9,
+      "reward": 0.0
+    },
+    {
+      "task_id": "task",
+      "status": "failed",
+      "duration_sec": 414.2,
+      "reward": 0.0
+    },
+    {
+      "task_id": "submission_a63937a5_20251224_152124",
+      "status": "error",
+      "duration_sec": null,
+      "reward": null
+    },
+    {
+      "task_id": "task",
+      "status": "failed",
+      "duration_sec": 456.1,
+      "reward": 0.0
+    }
+  ],
+  "observations": [
+    {
+      "type": "zero_pass",
+      "severity": "warn",
+      "detail": "0/1 passed — no task resolved",
+      "detector": "rule:zero_pass"
+    },
+    {
+      "type": "infra_cluster",
+      "severity": "warn",
+      "detail": "2/1 (200%) tasks errored — likely infra",
+      "detector": "rule:infra_share"
+    }
+  ],
+  "decision": "ok_with_concerns: 2 warnings",
+  "issues_raised": [],
+  "decided_at": "2026-07-17T00:28:04"
+}

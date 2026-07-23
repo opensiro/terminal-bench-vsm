@@ -89,5 +89,28 @@
     "s5_intervention_cycles": 0,
     "intervention_share": 0.0,
     "eval_pass_rate": 0.0
+  },
+  {
+    "date": "2026-07-17",
+    "autonomy_score": 0.475,
+    "maturation_phase": "Phase 4",
+    "coverage_ratio": 0.0,
+    "validate_pass_rate": null,
+    "drift_score": 0.0,
+    "triple_index": {
+      "actuality": "",
+      "capability": "",
+      "potentiality": "",
+      "measurement": ""
+    },
+    "balance_s3_s4": {
+      "ratio": null,
+      "status": "unknown",
+      "alert": false
+    },
+    "s5_intervention_count": 0,
+    "s5_intervention_cycles": 0,
+    "intervention_share": 0.0,
+    "eval_pass_rate": 1.0
   }
 ]

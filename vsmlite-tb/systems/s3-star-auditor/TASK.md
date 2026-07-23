@@ -7,8 +7,12 @@
 - trigger: `{on-demand | post-phase-transition}`
 
 **Твоя задача:**
-1. Сэмпл 3–5 аспектов из SKILL.md → audit focus.
+1. Сэмпл 3–5 аспектов из SKILL.md → audit focus (child viability **и/или**
+   evaluation_integrity — VSM-032; выбор аспектов за тобой, покрывай оба фокуса
+   в череде запусков).
 2. Для каждого — **read-only** сверка по артефактам `../vsm/` (не self-reports).
+   Для evaluation_integrity — сверяй `scripts/validate.sh §2c`, `eval/membrane.py`,
+   порядок фаз в `eval/grader.py`, grep продукта на leakage/train_on_eval.
 3. Сформируй findings в `state/audit.json`:
    ```json
    { "findings": [ { "aspect", "verdict": "green|yellow|red", "evidence", "summary" } ] }

@@ -17,8 +17,8 @@ Per-agent файлы для систем синтеза/координации/�
 | **S1** | Operations — синтез дочернего VSM | [`synthesis-operator/`](synthesis-operator/) (планирует) + `child-dispatcher` (исполняет) |
 | **S2** | Coordination — anti-looping, изоляция, маршрутизация | [`s2-coordinator/`](s2-coordinator/) |
 | **S3** | Control/Optimization — A(t), бюджет, ресурсы созревания | [`s3-optimizer/`](s3-optimizer/) |
-| **S3\*** | Audit — независимый аудит жизнеспособности дочернего VSM (ДРУГАЯ модель) | [`s3-star-auditor/`](s3-star-auditor/) |
-| **S4** | Intelligence — скан среды прикладного домена дочернего VSM | [`s4-scout/`](s4-scout/) |
+| **S3\*** | Audit — независимый аудит (ДРУГАЯ модель): child viability + evaluation_integrity (VSM-032) | [`s3-star-auditor/`](s3-star-auditor/) |
+| **S4** | Intelligence — скан среды (два домена, VSM-032): product-domain + benchmark-domain | [`s4-scout/`](s4-scout/) (product) + [`s4-bench-scout/`](s4-bench-scout/) (benchmark) |
 | **S5** | Policy/Identity — [`../CLAUDE.md`](../CLAUDE.md) + [`s5-guardian/`](s5-guardian/) | |
 
 ## Permission matrix (модель коммуникации VSM)
@@ -33,8 +33,9 @@ Per-agent файлы для систем синтеза/координации/�
 | **S5** | — | ✅ | ✅ | — | ✅ | — | ⚡решения |
 
 - **S1 → S2 only**: синтез-оператор доносит через координатора, не напрямую.
-- **S3\* read-only**: аудитор наблюдает дочерний VSM, не модифицирует.
-- **S4 → S2, S5**: разведка доносит до координации и политики.
+- **S3\* read-only**: аудитор наблюдает дочерний VSM + оценочный стенд, не модифицирует.
+- **S4 → S2, S5**: разведка доносит до координации и политики. Два scout'а (VSM-032):
+  `s4-scout` (product-domain) + `s4-bench-scout` (benchmark-domain) — оба по matrix S4.
 - **⚡ Алгедонический байпас**: `severity S0/S1` минует иерархию → напрямую S5/human.
 
 ## Карта цикла (что делает каждый)
@@ -43,8 +44,8 @@ Per-agent файлы для систем синтеза/координации/�
 /vsmlite-cycle
   ├─ S2 (s2-coordinator)     статус дочернего VSM, конфликты, изоляция → state/status.json
   ├─ S3 (s3-optimizer)       A(t)/бюджет созревания, отклонения, готовность к фазе → state/metrics.json
-  ├─ S3* (s3-star-auditor)   независимый аудит жизнеспособности child (ДРУГАЯ модель) → state/audit.json
-  ├─ S4 (s4-scout)           среда домена: пробелы, дрейф child-vs-seed, weak signals → state/intel.json
+  ├─ S3* (s3-star-auditor)   независимый аудит child viability + evaluation_integrity (ДРУГАЯ модель) → state/audit.json
+  ├─ S4 (s4-scout + s4-bench-scout)  среда: product-domain + benchmark-domain; weak signals → state/intel.json
   └─ S5 (s5-guardian)        дайджест: что needs_human_decision → VSM-NNN + REPL-вопрос
 ```
 

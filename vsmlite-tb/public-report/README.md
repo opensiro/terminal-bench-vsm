@@ -56,5 +56,26 @@ config · FAILED · ERRORED · Caveats**. Числа проверять на а�
 | Артефакт | Что хранит | Чьё | Меняется |
 |---|---|---|---|
 | `state/dev_metrics.json` | наши прогоны → A(t) | продукт (наше) | да (upsert) |
-| `public-report/*.md` | внешние baseline-ы | community / official | нет (фиксация) |
+| `public-report/*.md` (external) | внешние baseline-ы | community / official | нет (фиксация) |
+| `public-report/*.md` (internal snapshot) | structural snapshot нашего продукта — точка отсчёта | продукт (наше) | нет (фиксация на дату) |
 | `issues/VSM-*.yaml` | алгедонические сигналы | vsmlite-meta | lifecycle (triage→done) |
+
+### Invariant: internal baseline snapshot
+
+С VSM-032 в `public-report/` появляется **второй тип карточек** — internal
+structural snapshot нашего продукта (`Reproducibility: verified-in-this-repo`).
+Отличие от external community-карточек и от A(t):
+
+- **internal snapshot** (напр. `vsm-baseline-0.0.1.md`) — фиксация структуры
+  продукта на дату (контракты, фаза, A(t) на момент). Это **точка отсчёта**, относительно
+  которой benchmark-intelligence (s4-bench-scout) меряет прогресс продукта vs frontier.
+- **НЕ пересчитывается** автоматически (в отличие от `state/dev_metrics.json` → A(t),
+  который upsert'ится каждым прогоном). Новый snapshot = новая карточка с новым
+  version-суффиксом (`vsm-baseline-0.0.2.md`, …).
+- **НЕ external**: помечается `Reproducibility: verified-in-this-repo`, чтобы не
+  спутать с community-reported числами.
+- Pass-rate в snapshot'е может быть **TBD** (если инфра-раннер ещё не готов) —
+  это валидное состояние, не ошибка.
+
+Invariant сохранён: external ≠ A(t), и теперь также internal-snapshot ≠ A(t)
+(оба живут в `public-report/`, оба read-only-фиксации, не пересчитываются).
