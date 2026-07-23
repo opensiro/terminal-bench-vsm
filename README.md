@@ -1,113 +1,122 @@
 # terminal-bench-vsm
 
-> **Продукт = failure-aware coding harness.** Этот monorepo содержит продукт
-> (`vsm/` + `src/`) и его калибровочный стенд / layer оценки (`vsmlite-tb/`).
-> Продукт — benchmark-agnostic: он не знает, что его оценивают. Калибровочный
-> стенд сейчас — Terminal Bench 2.1, но взаимозаменяем (мог быть SWE-bench,
-> мог быть реальный поток тикетов).
+> **Product = a failure-aware coding harness.** This monorepo contains the
+> product (`vsm/` + `src/`) and its calibration stand / evaluation layer
+> (`vsmlite-tb/`). The product is benchmark-agnostic: it does not know it is
+> being evaluated. The calibration stand is currently Terminal Bench 2.1, but is
+> interchangeable (it could be SWE-bench, or a real ticket stream).
 
-## Архитектура: продукт ↔ оценщик
+## Architecture: product ↔ evaluator
 
 ```
 ┌──────────────────────────────────────────────────────────────────┐
-│  vsmlite-tb/  — РОДИТЕЛЬ = evaluation/growing layer              │  ← ЗНАЕТ про TB
-│  миссия: вырастить продукт и оценить его через Terminal Bench      │     (это «стенд»)
-│  S3: pass_rate / coverage по категориям TB                         │
-│  S4: эволюция TB (когда сменится версия — basta)                   │
-│  S5: identity оценщика + membrane (transduction на границе)        │
+│  vsmlite-tb/  — PARENT = evaluation/growing layer                │  ← KNOWS about TB
+│  mission: grow the product and evaluate it via Terminal Bench      │     (this is the "stand")
+│  S3: pass_rate / coverage per TB category                          │
+│  S4: TB evolution (when the version changes — basta)               │
+│  S5: evaluator identity + membrane (transduction at the boundary)  │
 │  hard constraints: train_on_eval, use_harbor_tb2,                  │
 │    leak_evaluation_context_to_product                              │
 └──────────────────────┬───────────────────────────────────────────┘
-                       │ мембрана product↔evaluation (VSM-002)
-                       │ TB-задача → generic coding task (TB-фрейминг снимается)
+                       │ product↔evaluation membrane (VSM-002)
+                       │ TB task → generic coding task (TB framing is stripped)
 ┌──────────────────────▼───────────────────────────────────────────┐
-│  vsm/  — ПРОДУКТ (дочерний VSM = failure-aware coding harness)    │  ← НЕ ЗНАЕТ про TB
-│  миссия: жизнеспособный coding harness для long-horizon агентов    │     (вовсе)
-│  S1: солвер (запускается harness'ем = этим VSM)                    │
-│  S2: координация recovery (anti-repetition одинаковых неудач)      │
-│  S3: failure classifier → recovery policy → retry                  │
-│  S3*: независимый аудит recovery                                   │
-│  S4: coding patterns / recovery-policy expansions (интернет)       │
-│  S5: identity продукта (general-purpose, не оптимизируется под     │
-│       конкретный оценочный набор)                                  │
-│  KPI: failure_recovery_rate, retry_efficiency,                     │
-│       policy_effectiveness, classifier_precision                   │
+│  vsm/  — PRODUCT (child VSM = failure-aware coding harness)      │  ← DOES NOT know about TB
+│  mission: a viable coding harness for long-horizon agents           │     (at all)
+│  S1: solver (launched by the harness = this VSM)                    │
+│  S2: recovery coordination (anti-repetition of identical failures)  │
+│  S3: failure classifier → recovery policy → retry                   │
+│  S3*: independent recovery audit                                    │
+│  S4: coding patterns / recovery-policy expansions (internet)        │
+│  S5: product identity (general-purpose, not optimized for a         │
+│      specific evaluation set)                                       │
+│  KPI: failure_recovery_rate, retry_efficiency,                      │
+│       policy_effectiveness, classifier_precision                    │
 └──────────────────────┬───────────────────────────────────────────┘
                        │
 ┌──────────────────────▼───────────────────────────────────────────┐
-│  src/  — данные и инфраструктура продукта                          │  ← НЕ ЗНАЕТ про TB
-│  - failure_taxonomy.yaml — первичная онтология (классы сбоев →     │
+│  src/  — product data and infrastructure                           │  ← DOES NOT know about TB
+│  - failure_taxonomy.yaml — primary ontology (failure classes →     │
 │    recovery policies: InstallTool / CreateFreshVenv /              │
 │    ResetAndReplay / RetryWithSmallerScope / EscalateToS3)          │
-│  - run cache: traces + verdicts (verdict — от продукта)            │
-│  - Skill DB: general-purpose coding patterns (пополняется S4)      │
-│  - session sync: coordination space для мультиагентных прогонов    │
+│  - run cache: traces + verdicts (verdict — from the product)       │
+│  - Skill DB: general-purpose coding patterns (populated by S4)     │
+│  - session sync: coordination space for multi-agent runs           │
 └──────────────────────────────────────────────────────────────────┘
 ```
 
-**Принцип оценки (blinded).** Продукт (`vsm/` + `src/`) полностью agnostic — не
-знает о Terminal Bench ни в design-time, ни в runtime, ни в S5. Даже факт, что
-его оценивают, скрыт. Это делает меру качества честной: продукт не может
-оптимизироваться под оценочный набор. Знание о TB живёт только в `vsmlite-tb/`
-(родитель-оценщик) и в этом корневом README.
+**Evaluation principle (blinded).** The product (`vsm/` + `src/`) is fully
+agnostic — it does not know about Terminal Bench in design-time, runtime, or
+S5. Even the fact that it is being evaluated is hidden. This keeps the quality
+measure honest: the product cannot optimize for the evaluation set. Knowledge
+of TB lives only in `vsmlite-tb/` (the parent evaluator) and in this root
+README.
 
-## Два режима рабочей директории (cwd)
+## Two working-directory (cwd) modes
 
-Структура **portable**: никаких хардкодов абсолютных путей, только относительные.
+The structure is **portable**: no absolute-path hardcoding, only relative paths.
 
-| Режим | cwd | Кто работает | Что видно |
+| Mode | cwd | Who works | What is visible |
 |---|---|---|---|
-| **dev** | `vsmlite-tb/` | человек + Claude Code (разработка/оценка продукта) | вся структура monorepo; команды `/vsmlite-*` |
-| **prod** | cwd оценочного стенда (контейнер) | продукт (`vsm/`) как harness для солвера | **только** coding task + tools + environment; TB-структура физически невидима (мембрана усиливается изоляцией контейнера) |
+| **dev** | `vsmlite-tb/` | human + Claude Code (product development/evaluation) | the whole monorepo structure; `/vsmlite-*` commands |
+| **prod** | the evaluation stand's cwd (container) | the product (`vsm/`) as a harness for the solver | **only** the coding task + tools + environment; the TB structure is physically invisible (the membrane is reinforced by container isolation) |
 
-В prod продукт сам поднимается как harness для солвера (архитектура: VSM = harness,
-солвер = S1). Оценочный стенд подаёт TB-задачи через membrane; продукт получает
-generic coding task.
+In prod the product itself comes up as a harness for the solver (architecture:
+VSM = harness, solver = S1). The evaluation stand feeds TB tasks through the
+membrane; the product receives a generic coding task.
 
 ## Hard constraints (NEVER)
 
-**В продукте (`vsm/` + `src/`)** — product-level, не знают про TB:
-- `optimize_for_specific_evaluator` — оставаться general-purpose coding harness.
-- `skip_failure_classification` — всегда failure → classifier → policy → retry (blind retry запрещён).
-- `circumvent_recovery` — не повторять одну и ту же неудачу >N раз.
+**In the product (`vsm/` + `src/`)** — product-level, unaware of TB:
+- `optimize_for_specific_evaluator` — stay a general-purpose coding harness.
+- `skip_failure_classification` — always failure → classifier → policy → retry (blind retry is forbidden).
+- `circumvent_recovery` — do not repeat the same failure more than N times.
 
-**В оценщике (`vsmlite-tb/`)** — evaluation-stand constraints:
-- `train_on_eval` — тренировка на eval-разметке TB запрещена правилами бенчмарка.
-- `use_harbor_tb2` — `github.com/harbor-framework/terminal-bench-2` не используется
-  ни в каком виде (явное требование).
-- `leak_evaluation_context_to_product` — не протекать знанием о TB в продукт.
+**In the evaluator (`vsmlite-tb/`)** — evaluation-stand constraints:
+- `train_on_eval` — training on TB eval labels is forbidden by the benchmark rules.
+- `use_harbor_tb2` — `github.com/harbor-framework/terminal-bench-2` is not used
+  in any form (explicit requirement).
+- `leak_evaluation_context_to_product` — do not leak knowledge of TB into the product.
 
-## Basta (только человек принимает решения)
+## Basta (only the human decides)
 
-- публикация / сабмит результатов;
-- смена целевой версии TB;
-- удаление прогонов / данных / логов;
-- изменения identity / values / never-do (продукта или оценщика);
-- добавление нового класса сбоя в failure taxonomy продукта.
+- publishing / submitting results;
+- changing the target TB version;
+- deleting runs / data / logs;
+- changing identity / values / never-do (of the product or the evaluator);
+- adding a new failure class to the product's failure taxonomy.
 
 ## Quick start
 
 ```bash
-# dev-режим: открыться в vsmlite-tb/ в Claude Code
+# dev mode: open vsmlite-tb/ in Claude Code
 cd vsmlite-tb/
-# команды родительского VSM (оценщика):
-#   /vsmlite-cycle    (полный S2→S3→S3*→S4→S5 с дайджестом)
+# parent VSM (evaluator) commands:
+#   /vsmlite-cycle    (full S2→S3→S3*→S4→S5 with a digest)
 #   /vsmlite-check    (viability-check + invariant-grep)
 
-# монитор (static HTML, без бэкенда):
+# monitor (static HTML, no backend):
 cd vsmlite-tb/monitor && python3 -m http.server 8765
-#   → http://localhost:8765/            (maturation продукта / 4 знака A(t))
-#   → http://localhost:8765/issues.html  (VSM-NNN, вкл. VSM-002 — концептуальный поворот)
+#   → http://localhost:8765/            (product maturation / 4 signs of A(t))
+#   → http://localhost:8765/issues.html  (VSM-NNN, incl. VSM-002 — the conceptual pivot)
 ```
 
-## Лицензия
+## Evaluation artifacts
 
-**TBD.** Intent — open source. Конкретная лицензия — basta-решение человека
-(юридическое), не выбрано. До выбора: default — все права защищены.
+- **[EVALUATION_EXAMPLES.md](EVALUATION_EXAMPLES.md)** — three reproducible
+  self-correction loops (VSM-037, VSM-039, VSM-034 TERTIARY-2) for an external
+  auditor: each is backed by a real issue file, fix/merge commits, and a
+  state-log entry. Shows how the system (GLM model + deterministic scripts)
+  detects its own error, localizes the root cause, fixes it, and validates.
 
-## История
+## License
 
-`vsmlite-tb/` изначально был отдельным git-репозиторием (template, 5 коммитов);
-история сохранена в git bundle. Концептуальная эволюция продукта видна в коммитах:
-init → TB-bound → `refactor(product)` (VSM-002) → benchmark-agnostic failure-aware
-coding harness.
+**TBD.** Intent — open source. The specific license is a basta-decision of the
+human (legal), not yet chosen. Until chosen: default — all rights reserved.
+
+## History
+
+`vsmlite-tb/` was originally a standalone git repository (a template, 5 commits);
+the history is preserved in a git bundle. The conceptual evolution of the
+product is visible in the commits: init → TB-bound → `refactor(product)`
+(VSM-002) → a benchmark-agnostic failure-aware coding harness.
