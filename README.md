@@ -6,6 +6,14 @@
 > being evaluated. The calibration stand is currently Terminal Bench 2.1, but is
 > interchangeable (it could be SWE-bench, or a real ticket stream).
 
+## Working on OpenSiro?
+
+Repository-local work stays here.
+
+For contributor roles, authority, escalation, cross-repository coordination, or organizational evolution across public OpenSiro projects, start at [`opensiro/vsm-oss-organization/CONTRIBUTOR_START.md`](https://github.com/opensiro/vsm-oss-organization/blob/main/CONTRIBUTOR_START.md).
+
+Following that route does not make this experimental repository part of the bounded VSM Harness S1 plane. Also note that this repository is publicly readable but its license is currently TBD; public availability must not be confused with an open-source license.
+
 ## Architecture: product ↔ evaluator
 
 ```
