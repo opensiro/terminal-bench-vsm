@@ -111,8 +111,7 @@ cd vsmlite-tb/monitor && python3 -m http.server 8765
 
 ## License
 
-**TBD.** Intent — open source. The specific license is a basta-decision of the
-human (legal), not yet chosen. Until chosen: default — all rights reserved.
+This repository is licensed under the [Apache License 2.0](LICENSE).
 
 ## History
 
